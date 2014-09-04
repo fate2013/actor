@@ -1,0 +1,10 @@
+{
+    listen_addr: ":9001"
+    tcp_nodelay: true
+    dragons: [
+        {
+            host: "127.0.0.1"
+            port: 9002
+        }
+    ]
+}

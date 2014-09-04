@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	//"github.com/funkygao/dragon/actor"
 	"github.com/funkygao/dragon/server"
 	"github.com/funkygao/golib/locking"
 	"github.com/funkygao/golib/signal"
@@ -44,5 +45,14 @@ func main() {
 	}()
 
 	setupLogging(options.logFile, options.logLevel)
+
+	server := server.NewServer()
+	server.LoadConfig(options.configFile)
+	server.Launch()
+
+	//actor := actor.NewActor(server)
+	//actor.Mainloop()
+
+	shutdown()
 
 }
