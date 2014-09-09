@@ -38,6 +38,8 @@ import (
 type Actor struct {
 	server *server.Server
 
+	stopChan chan bool
+
 	mutex *sync.Mutex
 	queue *pqueue.PriorityQueue
 }
@@ -48,9 +50,9 @@ func NewActor(server *server.Server) *Actor {
 	this.queue = pqueue.New()
 	heap.Init(this.queue)
 	this.mutex = new(sync.Mutex)
+	this.stopChan = make(chan bool)
 
 	return this
-
 }
 
 func (this *Actor) add() {
@@ -80,35 +82,59 @@ func (this *Actor) waitForUpstreamRequests() {
 				continue
 			}
 
+			defer conn.Close()
+
+			// each conn is persitent conn
 			go this.handleUpstreamRequest(conn)
 		}
 	}()
 
 }
 
-func (this *Actor) handleUpstreamRequest(client net.Conn) {
-	defer client.Close()
-
-	buf := make([]byte, 1024) // TODO reusable mem pool
-	bytesRead, err := client.Read(buf)
-	if err != nil {
-
-	}
-	client.Write([]byte("ok"))
-
-	this.parseUpstreamRequest(buf[:bytesRead])
-
+func (this *Actor) stop() {
+	close(this.stopChan)
 }
 
-func (this *Actor) parseUpstreamRequest(body []byte) {
-	var req map[string]interface{}
-	err := json.Unmarshal(body, req)
-	if err != nil {
+func (this *Actor) handleUpstreamRequest(conn net.Conn) {
+	buf := make([]byte, 1024) // TODO reusable mem pool
+	var (
+		ever      = false
+		err       error
+		cmd       string
+		bytesRead int
+		req       map[string]interface{}
+	)
 
-	}
+	for ever {
+		bytesRead, err = conn.Read(buf)
+		if err != nil {
 
-	cmd := req["cmd"].(string)
-	if cmd != "" {
+		}
+		conn.Write([]byte(RESPONSE_OK))
+
+		err = json.Unmarshal(buf[:bytesRead], req)
+		if err != nil {
+			log.Error(err.Error())
+			continue
+		}
+
+		cmd = req["cmd"].(string)
+		switch cmd {
+		case CMD_START_MARCH:
+			break
+
+		case CMD_SPEEDUP_MARCH:
+
+		case CMD_RECALL_MARCH:
+		}
+
+		select {
+		case <-this.stopChan:
+			ever = false
+
+		default:
+			break
+		}
 
 	}
 
