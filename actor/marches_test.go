@@ -15,3 +15,17 @@ func TestMarchesStruct(t *testing.T) {
 	}
 
 }
+
+func TestSmoking(t *testing.T) {
+	marches := newMarches()
+	marches.set(march{uid: 1, marchId: 1, opTime: 3, op: "startMarch"})
+	marches.set(march{uid: 2, marchId: 2, opTime: 2, op: "startMarch"})
+	marches.set(march{uid: 2, marchId: 2, opTime: 8, op: "recall"})
+	t.Logf("%#v %#v\n", marches.m, marches.sortedKeys())
+	actor := NewActor(nil)
+	for i := range marches.sortedKeys() {
+		t.Logf("%#v\n", marches.m[marches.k[i]])
+		actor.callback(marches.m[marches.k[i]])
+	}
+
+}

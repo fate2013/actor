@@ -42,6 +42,8 @@ type Actor struct {
 
 	mutex *sync.Mutex
 	queue *pqueue.PriorityQueue
+
+	marches *marches
 }
 
 func NewActor(server *server.Server) *Actor {
@@ -51,6 +53,7 @@ func NewActor(server *server.Server) *Actor {
 	heap.Init(this.queue)
 	this.mutex = new(sync.Mutex)
 	this.stopChan = make(chan bool)
+	this.marches = newMarches()
 
 	return this
 }
@@ -100,9 +103,8 @@ func (this *Actor) handleUpstreamRequest(conn net.Conn) {
 	var (
 		ever      = false
 		err       error
-		cmd       string
 		bytesRead int
-		req       map[string]interface{}
+		req       march
 	)
 
 	for ever {
@@ -118,15 +120,7 @@ func (this *Actor) handleUpstreamRequest(conn net.Conn) {
 			continue
 		}
 
-		cmd = req["cmd"].(string)
-		switch cmd {
-		case CMD_START_MARCH:
-			break
-
-		case CMD_SPEEDUP_MARCH:
-
-		case CMD_RECALL_MARCH:
-		}
+		this.marches.set(req)
 
 		select {
 		case <-this.stopChan:

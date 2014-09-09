@@ -7,10 +7,10 @@ import (
 )
 
 type march struct {
-	uid     int64
-	marchId int64
-	opTime  int
-	op      string
+	uid     int64  `json:uid`
+	marchId int64  `json:march_id`
+	opTime  int    `json:optime`
+	op      string `json:op`
 }
 
 // sorted map
@@ -57,8 +57,10 @@ func (this *marches) sortedKeys() []int {
 }
 
 func (this *marches) set(march march) {
-	this.m[march.opTime] = march
+	this.lock.Lock()
+	defer this.lock.Unlock()
 
+	this.m[march.opTime] = march
 }
 
 func (this *marches) del(march march) {
