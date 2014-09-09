@@ -1,44 +1,17 @@
 package actor
 
 import (
-	log "github.com/funkygao/golib/log4go"
-	"net"
+	"time"
 )
 
-func (this *Actor) Mainloop() {
-	// listen for incoming directed request and put into chan
-	this.run()
+func (this *Actor) ServeForever() {
+	this.waitForUpstreamRequests()
 
-	for {
-		// loop through the requests and dispatch to tile bucket handlers
+	ticker := time.NewTicker(time.Duration(this.server.Int("upstream_tick", 1)) * time.Second)
+	defer ticker.Stop()
+
+	for _ = range ticker.C {
 
 	}
-
-}
-
-func (this *Actor) run() {
-	listener, err := net.Listen("tcp4", this.server.String("listen_addr", ":9002"))
-	if err != nil {
-		panic(err)
-	}
-
-	defer listener.Close()
-
-	go func() {
-		for {
-			conn, err := listener.Accept()
-			if err != nil {
-				log.Error(err)
-				continue
-			}
-
-			go this.handleRequest(conn)
-
-		}
-	}()
-
-}
-
-func (this *Actor) handleRequest(client net.Conn) {
 
 }

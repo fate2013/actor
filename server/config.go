@@ -14,5 +14,6 @@ func (this *Server) LoadConfig(fn string) *Server {
 	if err != nil {
 		panic(err)
 	}
+
 	return this
 }

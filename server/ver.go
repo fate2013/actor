@@ -19,5 +19,4 @@ func ShowVersionAndExit() {
 	fmt.Fprintf(os.Stderr, "Built with %s %s for %s %s\n", runtime.Compiler,
 		runtime.Version(), runtime.GOOS, runtime.GOARCH)
 	os.Exit(0)
-
 }
