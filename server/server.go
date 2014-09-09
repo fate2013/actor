@@ -8,14 +8,16 @@ import (
 type Server struct {
 	*conf.Conf
 
+	name       string
 	configFile string
 	StartedAt  time.Time
 	pid        int
 	hostname   string
 }
 
-func NewServer() (this *Server) {
+func NewServer(name string) (this *Server) {
 	this = new(Server)
+	this.name = name
 
 	return
 }

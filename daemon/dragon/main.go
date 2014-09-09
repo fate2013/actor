@@ -46,7 +46,7 @@ func main() {
 
 	setupLogging(options.logFile, options.logLevel)
 
-	server := server.NewServer()
+	server := server.NewServer("dragon")
 	server.LoadConfig(options.configFile)
 	server.Launch()
 

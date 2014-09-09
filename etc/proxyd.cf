@@ -1,0 +1,12 @@
+{
+    tcp_nodelay: true
+    
+    dragons: [
+        "127.0.0.1:9002",
+    ]
+
+    pm: {
+    	max_outstanding_sessions: 20
+    	start_servers: 10
+    }
+}
