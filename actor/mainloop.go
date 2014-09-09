@@ -14,18 +14,16 @@ func (this *Actor) ServeForever() {
 	ticker := time.NewTicker(time.Duration(this.server.Int("upstream_tick", 1)) * time.Second)
 	defer ticker.Stop()
 
-	var march march
 	var now time.Time
-	for _ = range ticker.C {
-		now = time.Now()
-		for optime := range this.marches.sortedKeys() {
-			march = this.marches.m[this.marches.k[optime]]
-			if now.Unix() >= int64(march.Optime) {
-				// time to do op
-				go this.callback(march)
+	for {
+		select {
+		case <-ticker.C:
+			now = time.Now()
+			for _, m := range this.marches.pullInBatch(now) {
+				go this.callback(m)
 			}
-		}
 
+		}
 	}
 
 }

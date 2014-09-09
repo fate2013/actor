@@ -58,17 +58,6 @@ func NewActor(server *server.Server) *Actor {
 	return this
 }
 
-func (this *Actor) add() {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
-
-}
-
-func (this *Actor) PeekOrPop() interface{} {
-	return this.queue.Peek()
-
-}
-
 func (this *Actor) waitForUpstreamRequests() {
 	listener, err := net.Listen("tcp4", this.server.String("listen_addr", ":9002"))
 	if err != nil {
@@ -110,8 +99,10 @@ func (this *Actor) handleUpstreamRequest(conn net.Conn) {
 	for ever {
 		bytesRead, err = conn.Read(buf)
 		if err != nil {
-
+			log.Error(err.Error())
+			break
 		}
+
 		conn.Write([]byte(RESPONSE_OK))
 
 		err = json.Unmarshal(buf[:bytesRead], req)

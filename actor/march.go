@@ -3,6 +3,7 @@ package actor
 import (
 	"sort"
 	"sync"
+	"time"
 )
 
 type march struct {
@@ -10,6 +11,8 @@ type march struct {
 	MarchId int64  `json:"march_id"`
 	Optime  int    `json:"optime,omitempty"`
 	Op      string `json:"op,omitempty"`
+	X       int    `json:"x"`
+	Y       int    `json:"y"`
 }
 
 // sorted map
@@ -62,4 +65,17 @@ func (this *marches) set(march march) {
 
 func (this *marches) del(march march) {
 	delete(this.m, march.Optime)
+}
+
+func (this *marches) pullInBatch(t time.Time) []march {
+	r := make([]march, 0)
+	for optime := range this.sortedKeys() {
+		march := this.m[this.k[optime]]
+		if t.Unix() >= int64(march.Optime) {
+			r = append(r, march)
+
+		}
+	}
+
+	return r
 }
