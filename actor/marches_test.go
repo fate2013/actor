@@ -6,9 +6,9 @@ import (
 
 func TestMarchesStruct(t *testing.T) {
 	marches := newMarches()
-	marches.set(march{uid: 1, marchId: 1, opTime: 3, op: "startMarch"})
-	marches.set(march{uid: 2, marchId: 2, opTime: 2, op: "startMarch"})
-	marches.set(march{uid: 2, marchId: 2, opTime: 8, op: "recall"})
+	marches.set(march{Uid: 1, MarchId: 1, Optime: 3, Op: "startMarch"})
+	marches.set(march{Uid: 2, MarchId: 2, Optime: 2, Op: "startMarch"})
+	marches.set(march{Uid: 2, MarchId: 2, Optime: 8, Op: "recall"})
 	t.Logf("%#v %#v\n", marches.m, marches.sortedKeys())
 	for i := range marches.sortedKeys() {
 		t.Logf("%#v\n", marches.m[marches.k[i]])
@@ -18,9 +18,9 @@ func TestMarchesStruct(t *testing.T) {
 
 func TestSmoking(t *testing.T) {
 	marches := newMarches()
-	marches.set(march{uid: 1, marchId: 1, opTime: 3, op: "startMarch"})
-	marches.set(march{uid: 2, marchId: 2, opTime: 2, op: "startMarch"})
-	marches.set(march{uid: 2, marchId: 2, opTime: 8, op: "recall"})
+	marches.set(march{Uid: 1, MarchId: 1, Optime: 3, Op: "startMarch"})
+	marches.set(march{Uid: 2, MarchId: 2, Optime: 2, Op: "startMarch"})
+	marches.set(march{Uid: 2, MarchId: 2, Optime: 8, Op: "recall"})
 	t.Logf("%#v %#v\n", marches.m, marches.sortedKeys())
 	actor := NewActor(nil)
 	for i := range marches.sortedKeys() {

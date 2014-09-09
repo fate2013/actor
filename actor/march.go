@@ -1,16 +1,15 @@
 package actor
 
 import (
-	"fmt"
 	"sort"
 	"sync"
 )
 
 type march struct {
-	uid     int64  `json:uid`
-	marchId int64  `json:march_id`
-	opTime  int    `json:optime`
-	op      string `json:op`
+	Uid     int64  `json:"uid"`
+	MarchId int64  `json:"march_id"`
+	Optime  int    `json:"optime,omitempty"`
+	Op      string `json:"op,omitempty"`
 }
 
 // sorted map
@@ -32,7 +31,7 @@ func (this *marches) Len() int {
 }
 
 func (this *marches) Less(i, j int) bool {
-	return this.m[this.k[i]].opTime < this.m[this.k[j]].opTime
+	return this.m[this.k[i]].Optime < this.m[this.k[j]].Optime
 
 }
 
@@ -49,8 +48,6 @@ func (this *marches) sortedKeys() []int {
 		i++
 	}
 
-	fmt.Println(this.k)
-
 	sort.Sort(this)
 	return this.k
 
@@ -60,9 +57,9 @@ func (this *marches) set(march march) {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 
-	this.m[march.opTime] = march
+	this.m[march.Optime] = march
 }
 
 func (this *marches) del(march march) {
-	delete(this.m, march.opTime)
+	delete(this.m, march.Optime)
 }

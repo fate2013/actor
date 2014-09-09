@@ -20,7 +20,7 @@ func (this *Actor) ServeForever() {
 		now = time.Now()
 		for optime := range this.marches.sortedKeys() {
 			march = this.marches.m[this.marches.k[optime]]
-			if now.Unix() >= int64(march.opTime) {
+			if now.Unix() >= int64(march.Optime) {
 				// time to do op
 				go this.callback(march)
 			}
@@ -31,10 +31,12 @@ func (this *Actor) ServeForever() {
 }
 
 func (this *Actor) callback(m march) {
+	m.Op = "" // omitempty
+	m.Optime = 0
 	buf, _ := json.Marshal(m)
 	fmt.Println(string(buf), m)
 	body := bytes.NewBuffer(buf)
-	url := fmt.Sprintf("http://localhost/api/?class=r&method=%s", m.op)
+	url := fmt.Sprintf("http://localhost/api/?class=r&method=%s", m.Op)
 	res, err := http.Post(url, "application/json", body)
 	if err != nil {
 
