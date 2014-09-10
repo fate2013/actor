@@ -13,22 +13,28 @@ func (this *Actor) ServeForever() {
 		panic(err)
 	}
 
-	go func() {
-		for {
-			conn, err := listener.Accept()
-			if err != nil {
-				log.Error(err)
-				continue
-			}
+	go this.runAcceptor(listener)
 
-			defer conn.Close()
+	this.runScheduler()
+}
 
-			// each conn is persitent conn
-			atomic.AddInt32(&this.totalSessionN, 1)
-			go this.runInboundSession(conn)
+func (this *Actor) runAcceptor(listener net.Listener) {
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Error(err)
+			continue
 		}
-	}()
 
+		defer conn.Close()
+
+		// each conn is persitent conn
+		atomic.AddInt32(&this.totalSessionN, 1)
+		go this.runInboundSession(conn)
+	}
+}
+
+func (this *Actor) runScheduler() {
 	schedTicker := time.NewTicker(
 		time.Duration(this.server.Int("sched_interval", 1)) * time.Second)
 	defer schedTicker.Stop()
