@@ -28,15 +28,6 @@ func (this *Actor) runInboundSession(conn net.Conn) {
 		bytesRead, err = conn.Read(buf)
 		if err != nil {
 			log.Error(err.Error())
-			continue
-		}
-
-		conn.Write([]byte(RESPONSE_OK))
-
-		err = json.Unmarshal(buf[:bytesRead], req)
-		if err != nil {
-			log.Error(err.Error())
-
 			if err == io.EOF {
 				ever = false
 			}
@@ -44,7 +35,20 @@ func (this *Actor) runInboundSession(conn net.Conn) {
 			continue
 		}
 
+		_, err = conn.Write([]byte(RESPONSE_OK))
+		if err == io.EOF {
+			ever = false
+		}
+
+		err = json.Unmarshal(buf[:bytesRead], &req)
+		if err != nil {
+			log.Error(err.Error())
+
+			continue
+		}
+
 		log.Debug("req: %#v", req)
+		atomic.AddInt64(&this.totalReqN, 1)
 		this.jobs.enque(req)
 
 		select {

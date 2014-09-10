@@ -37,12 +37,15 @@ func (this *Actor) ServeForever() {
 		time.Duration(this.server.Int("stats_interval", 5)) * time.Second)
 	defer statsTicker.Stop()
 
-	var now time.Time
 	for {
 		select {
 		case <-schedTicker.C:
-			now = time.Now()
-			for _, m := range this.jobs.pullInBatch(now) {
+			marches := this.jobs.pullInBatch(time.Now())
+			if len(marches) != 0 {
+				log.Debug("%d events waked up", len(marches))
+			}
+
+			for _, m := range marches {
 				go this.callback(m)
 			}
 
