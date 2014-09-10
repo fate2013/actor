@@ -9,7 +9,7 @@ import (
 type march struct {
 	Uid     int64  `json:"uid"`
 	MarchId int64  `json:"march_id"`
-	Optime  int    `json:"optime,omitempty"`
+	At      int    `json:"at,omitempty"`
 	Op      string `json:"op,omitempty"`
 	X       int    `json:"x"`
 	Y       int    `json:"y"`
@@ -34,7 +34,7 @@ func (this *marches) Len() int {
 }
 
 func (this *marches) Less(i, j int) bool {
-	return this.m[this.k[i]].Optime < this.m[this.k[j]].Optime
+	return this.m[this.k[i]].At < this.m[this.k[j]].At
 
 }
 
@@ -60,18 +60,18 @@ func (this *marches) set(march march) {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 
-	this.m[march.Optime] = march
+	this.m[march.At] = march
 }
 
 func (this *marches) del(march march) {
-	delete(this.m, march.Optime)
+	delete(this.m, march.At)
 }
 
 func (this *marches) pullInBatch(t time.Time) []march {
 	r := make([]march, 0)
 	for optime := range this.sortedKeys() {
 		march := this.m[this.k[optime]]
-		if t.Unix() >= int64(march.Optime) {
+		if t.Unix() >= int64(march.At) {
 			r = append(r, march)
 
 		}

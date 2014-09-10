@@ -11,7 +11,8 @@ import (
 func (this *Actor) ServeForever() {
 	this.waitForUpstreamRequests()
 
-	ticker := time.NewTicker(time.Duration(this.server.Int("upstream_tick", 1)) * time.Second)
+	ticker := time.NewTicker(
+		time.Duration(this.server.Int("upstream_tick", 1)) * time.Second)
 	defer ticker.Stop()
 
 	var now time.Time
@@ -30,7 +31,7 @@ func (this *Actor) ServeForever() {
 
 func (this *Actor) callback(m march) {
 	m.Op = "" // omitempty
-	m.Optime = 0
+	m.At = 0
 	buf, _ := json.Marshal(m)
 	fmt.Println(string(buf), m)
 	body := bytes.NewBuffer(buf)
