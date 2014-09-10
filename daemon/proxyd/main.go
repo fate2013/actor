@@ -17,12 +17,15 @@ func main() {
 	proxy.start(server)
 
 	statsTicker := time.NewTicker(time.Second * time.Duration(proxy.config.statsInterval))
+	defer statsTicker.Stop()
+
 	inChan := syslogng.Subscribe()
 	for {
 		select {
 		case req := <-inChan:
 			proxy.totalReqN++
 			log.Debug("got event: %s", req)
+
 			proxy.dispatch([]byte(req))
 
 		case <-statsTicker.C:
