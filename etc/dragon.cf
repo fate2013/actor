@@ -5,4 +5,5 @@
     tcp_io_timeout: 5
     sched_interval: 1
     stats_interval: 60
+    dump_interval: 900
 }

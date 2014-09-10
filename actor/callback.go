@@ -9,14 +9,16 @@ import (
 )
 
 func (this *Actor) callback(m march) {
-	buf, _ := json.Marshal(m)
+	jsonStr, _ := json.Marshal(m)
+	body := bytes.NewBuffer(jsonStr)
+	url := fmt.Sprintf(this.server.String("callback_url", ""), m.Evt, string(jsonStr))
+	log.Debug("callback: %s", url)
 
-	body := bytes.NewBuffer(buf)
-	url := fmt.Sprintf(this.server.String("callback_url", ""), m.Evt, string(buf))
-	log.Debug("%+v %s %s", m, string(buf), url)
+	res, err := http.Post(url, CONTENT_TYPE_JSON, body)
+	defer func() {
+		res.Body.Close()
+	}()
 
-	res, err := http.Post(url, "application/json", body)
-	defer res.Body.Close()
 	if err != nil {
 		log.Error("post error: %s", err.Error())
 	} else {

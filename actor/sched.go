@@ -22,7 +22,7 @@ func (this *Actor) runAcceptor(listener net.Listener) {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Error(err)
+			log.Error("accept error: %s", err.Error())
 			continue
 		}
 
@@ -43,6 +43,10 @@ func (this *Actor) runScheduler() {
 		time.Duration(this.server.Int("stats_interval", 5)) * time.Second)
 	defer statsTicker.Stop()
 
+	dumpTicker := time.NewTicker(
+		time.Duration(this.server.Int("dump_interval", 500)) * time.Second)
+	defer dumpTicker.Stop()
+
 	for {
 		select {
 		case <-schedTicker.C:
@@ -57,6 +61,9 @@ func (this *Actor) runScheduler() {
 
 		case <-statsTicker.C:
 			this.showStats()
+
+		case <-dumpTicker.C:
+			go this.dump()
 		}
 	}
 

@@ -75,7 +75,7 @@ func (this *proxy) runForwardSession() {
 		atomic.AddInt32(&this.spareServerN, -1)
 		leftN := atomic.LoadInt32(&this.spareServerN)
 		if leftN < int32(this.config.pm.minSpareServerN) {
-			go this.spawnSessions(this.config.pm.spawnBatchSize)
+			//go this.spawnSessions(this.config.pm.spawnBatchSize)
 		}
 
 		// proxy pass the req

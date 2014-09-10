@@ -16,7 +16,7 @@ func main() {
 		fmt.Fprintf(os.Stdout, `{"uid":1, "march_id":1, "at":%d, "evt":"arrive"}`,
 			time.Now().Add(time.Duration(rand.Intn(1000))*time.Second).Unix())
 		fmt.Fprintln(os.Stdout)
-		time.Sleep(1 * time.Second)
+		time.Sleep(10 * time.Microsecond)
 	}
 
 }
