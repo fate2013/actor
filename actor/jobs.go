@@ -50,22 +50,25 @@ func (this *jobs) sortedKeys() []int {
 
 func (this *jobs) enque(march march) {
 	this.lock.Lock()
-	defer this.lock.Unlock()
-
 	this.m[march.At] = march
+	this.lock.Unlock()
 }
 
 func (this *jobs) del(march march) {
+	this.lock.Lock()
 	delete(this.m, march.At)
+	this.lock.Unlock()
 }
 
-func (this *jobs) pullInBatch(t time.Time) []march {
-	r := make([]march, 0)
-	for optime := range this.sortedKeys() {
-		march := this.m[this.k[optime]]
-		if t.Unix() >= int64(march.At) {
-			r = append(r, march)
+func (this *jobs) pullInBatch(tillWhen time.Time) []march {
+	this.lock.Lock()
+	defer this.lock.Unlock()
 
+	r := make([]march, 0)
+	for at := range this.sortedKeys() {
+		march := this.m[this.k[at]]
+		if tillWhen.Unix() >= int64(march.At) {
+			r = append(r, march)
 		}
 	}
 

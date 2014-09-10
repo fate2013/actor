@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/funkygao/dragon/server"
 	log "github.com/funkygao/log4go"
+	"io"
 	"net"
 	"sync/atomic"
 	"time"
@@ -51,11 +52,11 @@ func (this *proxy) runForwardSession() {
 	if err != nil {
 		panic(err)
 	}
+	defer conn.Close()
 
 	if this.config.tcpNoDelay {
 		conn.SetNoDelay(true)
 	}
-	conn.SetDeadline(time.Now().Add(this.config.tcpIoTimeout))
 
 	var (
 		response         = make([]byte, 1024)
@@ -79,9 +80,20 @@ func (this *proxy) runForwardSession() {
 		}
 
 		// proxy pass the req
-		conn.Write(req)
+		conn.SetDeadline(time.Now().Add(this.config.tcpIoTimeout))
+		_, err = conn.Write(req)
+		if err == io.EOF {
+			log.Info("session[%+v] closed", conn)
+			return
+		}
+
 		bytesRead, err = conn.Read(response)
 		if err != nil {
+			if err == io.EOF {
+				log.Info("session[%+v] closed", conn)
+				return
+			}
+
 			log.Error(err.Error())
 		} else {
 			payload := string(response[:bytesRead])
