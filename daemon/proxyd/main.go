@@ -12,19 +12,19 @@ func main() {
 	server.LoadConfig("etc/proxyd.cf")
 	server.Launch()
 
-	pool := newDragonPool()
-	pool.loadConfig(server.Conf)
-	pool.start()
+	proxy := newProxy()
+	proxy.loadConfig(server.Conf)
+	proxy.start()
 
 	var reqN int64 = 0
-	tick := time.NewTicker(time.Second * time.Duration(pool.config.ticker))
+	tick := time.NewTicker(time.Second * time.Duration(proxy.config.ticker))
 	input := syslogng.Subscribe()
 	for {
 		select {
 		case req := <-input:
 			reqN++
 			log.Debug("got event: %s", req)
-			pool.dispatch([]byte(req))
+			proxy.dispatch([]byte(req))
 
 		case <-tick.C:
 			log.Info("req: %d", reqN)

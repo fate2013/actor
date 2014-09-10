@@ -19,7 +19,7 @@ type pmConfig struct {
 	spawnBatchSize         int
 }
 
-func (this *dragonPool) loadConfig(cf *conf.Conf) {
+func (this *proxy) loadConfig(cf *conf.Conf) {
 	this.config = proxyConfig{}
 	this.config.ticker = cf.Int("ticker", 5)
 	this.config.tcpNoDelay = cf.Bool("tcp_nodelay", true)
