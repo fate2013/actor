@@ -42,11 +42,11 @@ func (this *Actor) ServeForever() {
 		case <-schedTicker.C:
 			marches := this.jobs.pullInBatch(time.Now())
 			if len(marches) != 0 {
-				log.Debug("%d events waked up", len(marches))
+				log.Debug("%d events waked up: %+v", len(marches), marches)
 			}
 
-			for _, m := range marches {
-				go this.callback(m)
+			for _, march := range marches {
+				go this.callback(march)
 			}
 
 		case <-statsTicker.C:

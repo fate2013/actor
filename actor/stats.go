@@ -8,10 +8,11 @@ import (
 )
 
 func (this *Actor) showStats() {
-	log.Info("ver: %s, elapsed:%s, sess:%d, req:%d, goroutine:%d",
+	log.Info("ver: %s, elapsed:%s, sess:%d, req:%d, jobs:%d, goroutine:%d",
 		server.BuildID,
 		time.Since(this.server.StartedAt),
 		this.totalSessionN,
 		this.totalReqN,
+		this.jobs.Len(),
 		runtime.NumGoroutine())
 }
