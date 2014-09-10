@@ -54,12 +54,6 @@ func (this *jobs) submit(march march) {
 	this.lock.Unlock()
 }
 
-func (this *jobs) del(march march) {
-	this.lock.Lock()
-	delete(this.m, march.At)
-	this.lock.Unlock()
-}
-
 func (this *jobs) wakeup(tillWhen time.Time) []march {
 	this.lock.Lock()
 	defer this.lock.Unlock()
@@ -69,6 +63,8 @@ func (this *jobs) wakeup(tillWhen time.Time) []march {
 		march := this.m[this.k[at]]
 		if tillWhen.Unix() >= int64(march.At) {
 			r = append(r, march)
+
+			delete(this.m, march.At) // this job is done
 		}
 	}
 
