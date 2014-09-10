@@ -3,17 +3,20 @@ package main
 import (
 	conf "github.com/funkygao/jsconf"
 	log "github.com/funkygao/log4go"
+	"time"
 )
 
 type proxyConfig struct {
-	ticker       int
-	tcpNoDelay   bool
-	dragonServer string // host:port
-	pm           pmConfig
+	statsInterval int
+	tcpNoDelay    bool
+	tcpIoTimeout  time.Duration
+	proxyPass     string // host:port
+	pm            pmConfig
 }
 
+// process management, naming from php-fpm
 type pmConfig struct {
-	maxOutstandingSessionN int
+	maxOutstandingSessionN int // a session is a persistent conn with upstream
 	startServerN           int
 	minSpareServerN        int
 	spawnBatchSize         int
@@ -21,9 +24,10 @@ type pmConfig struct {
 
 func (this *proxy) loadConfig(cf *conf.Conf) {
 	this.config = proxyConfig{}
-	this.config.ticker = cf.Int("ticker", 5)
+	this.config.statsInterval = cf.Int("stats_interval", 5)
 	this.config.tcpNoDelay = cf.Bool("tcp_nodelay", true)
-	this.config.dragonServer = cf.StringList("dragons", nil)[0]
+	this.config.tcpIoTimeout = time.Duration(cf.Int("tcp_io_timeout", 5)) * time.Second
+	this.config.proxyPass = cf.StringList("proxy_pass", nil)[0] // TODO
 
 	// pm section
 	this.config.pm = pmConfig{}

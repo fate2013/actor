@@ -14,20 +14,19 @@ func main() {
 
 	proxy := newProxy()
 	proxy.loadConfig(server.Conf)
-	proxy.start()
+	proxy.start(server)
 
-	var reqN int64 = 0
-	tick := time.NewTicker(time.Second * time.Duration(proxy.config.ticker))
-	input := syslogng.Subscribe()
+	statsTicker := time.NewTicker(time.Second * time.Duration(proxy.config.statsInterval))
+	inChan := syslogng.Subscribe()
 	for {
 		select {
-		case req := <-input:
-			reqN++
+		case req := <-inChan:
+			proxy.totalReqN++
 			log.Debug("got event: %s", req)
 			proxy.dispatch([]byte(req))
 
-		case <-tick.C:
-			log.Info("req: %d", reqN)
+		case <-statsTicker.C:
+			proxy.showStats()
 		}
 	}
 

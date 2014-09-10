@@ -1,13 +1,19 @@
 package main
 
 import (
+	"github.com/funkygao/dragon/server"
+	log "github.com/funkygao/log4go"
 	"net"
 	"sync/atomic"
+	"time"
 )
 
 type proxy struct {
-	config       proxyConfig
-	spareServerN int32
+	config proxyConfig
+	server *server.Server
+
+	totalReqN    int64 // how many requests served since startup
+	spareServerN int32 // maintains persistent tcp conn pool with upstream
 
 	reqChan chan []byte // max outstanding session throttle
 }
@@ -17,14 +23,15 @@ func newProxy() *proxy {
 	return this
 }
 
-func (this *proxy) start() {
+func (this *proxy) start(server *server.Server) {
+	this.server = server
 	this.reqChan = make(chan []byte, this.config.pm.maxOutstandingSessionN)
-
+	this.spawnSessions(this.config.pm.startServerN)
 }
 
 func (this *proxy) spawnSessions(batchSize int) {
 	for i := 0; i < batchSize; i++ {
-		go this.foward()
+		go this.runForwardSession()
 		atomic.AddInt32(&this.spareServerN, 1)
 	}
 }
@@ -33,14 +40,22 @@ func (this *proxy) dispatch(req []byte) {
 	this.reqChan <- req
 }
 
-func (this *proxy) foward() {
-	conn, err := net.Dial("tcp", this.config.dragonServer)
+func (this *proxy) runForwardSession() {
+	// setup the tcp conn
+	tcpAddr, err := net.ResolveTCPAddr("tcp", this.config.proxyPass)
 	if err != nil {
 		panic(err)
 	}
-	if this.config.tcpNoDelay {
-		conn.(*net.TCPConn).SetNoDelay(true)
+
+	conn, err := net.DialTCP("tcp", nil, tcpAddr)
+	if err != nil {
+		panic(err)
 	}
+
+	if this.config.tcpNoDelay {
+		conn.SetNoDelay(true)
+	}
+	conn.SetDeadline(time.Now().Add(this.config.tcpIoTimeout))
 
 	var (
 		response         = make([]byte, 1024)
@@ -48,25 +63,35 @@ func (this *proxy) foward() {
 		expectedResponse = "ok"
 	)
 
+	// mainloop
 	for {
-		req := <-this.reqChan
+		req, ok := <-this.reqChan
+		if !ok {
+			log.Warn("reqChan closed")
+			break
+		}
 
+		// spawn session on demand
 		atomic.AddInt32(&this.spareServerN, -1)
 		leftN := atomic.LoadInt32(&this.spareServerN)
 		if leftN < int32(this.config.pm.minSpareServerN) {
 			go this.spawnSessions(this.config.pm.spawnBatchSize)
 		}
 
+		// proxy pass the req
 		conn.Write(req)
-
 		bytesRead, err = conn.Read(response)
-		if err != nil || string(response[:bytesRead]) != expectedResponse {
-			panic(err)
+		if err != nil {
+			log.Error(err.Error())
+		} else {
+			payload := string(response[:bytesRead])
+			if payload != expectedResponse {
+				log.Warn("invalid response: %s", payload)
+			}
 		}
 
 		// this req forwarded, I'm spare again, able to handle new req
 		atomic.AddInt32(&this.spareServerN, 1)
-
 	}
 
 }

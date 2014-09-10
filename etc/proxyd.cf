@@ -1,12 +1,16 @@
 {
     tcp_nodelay: true
+    tcp_io_timeout: 5
+    stats_interval: 5
     
-    dragons: [
+    proxy_pass: [
         "127.0.0.1:9002",
     ]
 
     pm: {
     	max_outstanding_sessions: 20
     	start_servers: 10
+        min_spare_servers: 5
+        spawn_batch_size: 5
     }
 }
