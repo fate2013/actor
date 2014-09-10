@@ -8,10 +8,12 @@ import (
 
 // sorted map
 type jobs struct {
+	sort.Interface // jobs is sortable
+
 	lock sync.Mutex
 
-	m map[int]march
-	k []int
+	m map[int]march // key is timestamp('at')
+	k []int         // array of timestamp('at')
 }
 
 func newJobs() *jobs {
@@ -26,7 +28,6 @@ func (this *jobs) Len() int {
 
 func (this *jobs) Less(i, j int) bool {
 	return this.m[this.k[i]].At < this.m[this.k[j]].At
-
 }
 
 func (this *jobs) Swap(i, j int) {
@@ -37,8 +38,8 @@ func (this *jobs) sortedKeys() []int {
 	this.k = make([]int, len(this.m))
 
 	i := 0
-	for k, _ := range this.m {
-		this.k[i] = k
+	for at, _ := range this.m {
+		this.k[i] = at
 		i++
 	}
 
@@ -47,7 +48,7 @@ func (this *jobs) sortedKeys() []int {
 
 }
 
-func (this *jobs) set(march march) {
+func (this *jobs) enque(march march) {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 

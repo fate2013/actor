@@ -37,7 +37,8 @@ type Actor struct {
 	stopChan chan bool
 	mutex    *sync.Mutex
 
-	totalReqN int64
+	totalReqN     int64
+	totalSessionN int
 
 	jobs *jobs
 }

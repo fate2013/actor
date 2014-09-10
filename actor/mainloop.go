@@ -23,6 +23,7 @@ func (this *Actor) ServeForever() {
 			defer conn.Close()
 
 			// each conn is persitent conn
+			this.totalSessionN++
 			go this.runInboundSession(conn)
 		}
 	}()

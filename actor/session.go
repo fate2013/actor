@@ -30,7 +30,8 @@ func (this *Actor) runInboundSession(conn net.Conn) {
 			continue
 		}
 
-		this.jobs.set(req)
+		log.Debug("req: %#v", req)
+		this.jobs.enque(req)
 
 		select {
 		case <-this.stopChan:
