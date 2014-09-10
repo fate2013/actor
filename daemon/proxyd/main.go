@@ -4,6 +4,7 @@ import (
 	"github.com/funkygao/dragon/server"
 	"github.com/funkygao/golib/syslogng"
 	log "github.com/funkygao/log4go"
+	"os"
 	"time"
 )
 
@@ -24,9 +25,17 @@ func main() {
 		select {
 		case req := <-inChan:
 			proxy.totalReqN++
-			log.Debug("got event: %s", req)
+			switch req.(type) {
+			case error:
+				log.Error("subscriber err: %v", req)
+				os.Exit(1)
 
-			proxy.dispatch([]byte(req))
+			case []byte:
+				reqBody := req.([]byte)
+				log.Debug("got event: %s", string(reqBody))
+
+				proxy.dispatch(reqBody)
+			}
 
 		case <-statsTicker.C:
 			proxy.showStats()

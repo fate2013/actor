@@ -32,6 +32,7 @@ func (this *proxy) start(server *server.Server) {
 func (this *proxy) spawnSessions(batchSize int) {
 	for i := 0; i < batchSize; i++ {
 		go this.runForwardSession()
+
 		atomic.AddInt32(&this.spareServerN, 1)
 	}
 }
@@ -81,9 +82,15 @@ func (this *proxy) runForwardSession() {
 		// proxy pass the req
 		//conn.SetDeadline(time.Now().Add(this.config.tcpIoTimeout))
 		_, err = conn.Write(req)
-		if err == io.EOF {
-			log.Info("session[%+v] closed", conn)
-			return
+		if err != nil {
+			log.Error("write error: %s", err.Error())
+
+			if err == io.EOF {
+				log.Info("session[%+v] closed", conn)
+				return
+			}
+
+			continue
 		}
 
 		bytesRead, err = conn.Read(response)

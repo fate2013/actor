@@ -11,8 +11,7 @@ import (
 )
 
 func main() {
-	N := 1000
-	for i := 0; i < N; i++ {
+	for {
 		fmt.Fprintf(os.Stdout, `{"uid":1, "march_id":1, "at":%d, "evt":"arrive"}`,
 			time.Now().Add(time.Duration(rand.Intn(1000))*time.Second).Unix())
 		fmt.Fprintln(os.Stdout)
