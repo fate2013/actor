@@ -9,6 +9,8 @@ import (
 )
 
 func main() {
+	server.SetupLogging("stdout", "info")
+
 	server := server.NewServer("proxyd")
 	server.LoadConfig("etc/proxyd.cf")
 	server.Launch()

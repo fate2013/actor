@@ -12,6 +12,7 @@ type proxy struct {
 	config proxyConfig
 	server *server.Server
 
+	sessionN     int32 // active sessions
 	totalReqN    int64 // how many requests served since startup
 	spareServerN int32 // maintains persistent tcp conn pool with upstream
 
@@ -33,7 +34,7 @@ func (this *proxy) spawnSessions(batchSize int) {
 	for i := 0; i < batchSize; i++ {
 		go this.runForwardSession()
 
-		atomic.AddInt32(&this.spareServerN, 1)
+		atomic.AddInt32(&this.spareServerN, 1) // why can't comment this line?
 	}
 }
 
@@ -43,6 +44,7 @@ func (this *proxy) dispatch(req []byte) {
 
 func (this *proxy) runForwardSession() {
 	// setup the tcp conn
+	atomic.AddInt32(&this.sessionN, 1)
 	tcpAddr, err := net.ResolveTCPAddr("tcp", this.config.proxyPass)
 	if err != nil {
 		panic(err)
@@ -52,7 +54,10 @@ func (this *proxy) runForwardSession() {
 	if err != nil {
 		panic(err)
 	}
-	defer conn.Close()
+	defer func() {
+		conn.Close()
+		atomic.AddInt32(&this.sessionN, -1)
+	}()
 
 	if this.config.tcpNoDelay {
 		conn.SetNoDelay(true)
@@ -76,7 +81,10 @@ func (this *proxy) runForwardSession() {
 		atomic.AddInt32(&this.spareServerN, -1)
 		leftN := atomic.LoadInt32(&this.spareServerN)
 		if leftN < int32(this.config.pm.minSpareServerN) {
-			//go this.spawnSessions(this.config.pm.spawnBatchSize)
+			log.Info("server busy, spare left:%d, spawn %d processes", leftN,
+				this.config.pm.spawnBatchSize)
+
+			go this.spawnSessions(this.config.pm.spawnBatchSize)
 		}
 
 		// proxy pass the req

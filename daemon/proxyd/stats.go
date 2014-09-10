@@ -4,13 +4,19 @@ import (
 	"github.com/funkygao/dragon/server"
 	log "github.com/funkygao/log4go"
 	"runtime"
+	"sync/atomic"
 	"time"
 )
 
 func (this *proxy) showStats() {
-	log.Info("ver: %s, elapsed:%s, req:%d, goroutine:%d",
+	spareServerN := atomic.LoadInt32(&this.spareServerN)
+	totalReqN := atomic.LoadInt64(&this.totalReqN)
+	sessionN := atomic.LoadInt32(&this.sessionN)
+	log.Info("ver: %s, elapsed:%s, sess:%d, spare:%d, req:%d, goroutine:%d",
 		server.BuildID,
 		time.Since(this.server.StartedAt),
-		this.totalReqN,
+		sessionN,
+		spareServerN,
+		totalReqN,
 		runtime.NumGoroutine())
 }

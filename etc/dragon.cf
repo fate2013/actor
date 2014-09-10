@@ -4,6 +4,6 @@
     tcp_nodelay: true
     tcp_io_timeout: 5
     sched_interval: 1
-    stats_interval: 60
+    stats_interval: 5
     dump_interval: 900
 }
