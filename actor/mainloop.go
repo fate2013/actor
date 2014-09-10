@@ -1,46 +1,52 @@
 package actor
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"net/http"
+	log "github.com/funkygao/log4go"
+	"net"
 	"time"
 )
 
 func (this *Actor) ServeForever() {
-	this.waitForUpstreamRequests()
+	listener, err := net.Listen("tcp4", this.server.String("listen_addr", ":9002"))
+	if err != nil {
+		panic(err)
+	}
 
-	ticker := time.NewTicker(
-		time.Duration(this.server.Int("upstream_tick", 1)) * time.Second)
-	defer ticker.Stop()
+	go func() {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+
+			defer conn.Close()
+
+			// each conn is persitent conn
+			go this.runInboundSession(conn)
+		}
+	}()
+
+	schedTicker := time.NewTicker(
+		time.Duration(this.server.Int("sched_interval", 1)) * time.Second)
+	defer schedTicker.Stop()
+
+	statsTicker := time.NewTicker(
+		time.Duration(this.server.Int("stats_interval", 5)) * time.Second)
+	defer statsTicker.Stop()
 
 	var now time.Time
 	for {
 		select {
-		case <-ticker.C:
+		case <-schedTicker.C:
 			now = time.Now()
-			for _, m := range this.marches.pullInBatch(now) {
+			for _, m := range this.jobs.pullInBatch(now) {
 				go this.callback(m)
 			}
 
+		case <-statsTicker.C:
+			this.showStats()
 		}
 	}
-
-}
-
-func (this *Actor) callback(m march) {
-	m.Op = "" // omitempty
-	m.At = 0
-	buf, _ := json.Marshal(m)
-	fmt.Println(string(buf), m)
-	body := bytes.NewBuffer(buf)
-	url := fmt.Sprintf("http://localhost/api/?class=r&method=%s", m.Op)
-	res, err := http.Post(url, "application/json", body)
-	if err != nil {
-
-	}
-
-	fmt.Println(res)
 
 }
