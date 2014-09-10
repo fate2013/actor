@@ -25,6 +25,8 @@ func (this *Actor) runInboundSession(conn net.Conn) {
 	)
 
 	for ever {
+		//conn.SetDeadline(time.Now().Add(
+		//		time.Duration(this.server.Int("tcp_io_timeout", 5)) * time.Second))
 		bytesRead, err = conn.Read(buf)
 		if err != nil {
 			log.Error(err.Error())
@@ -38,6 +40,8 @@ func (this *Actor) runInboundSession(conn net.Conn) {
 		_, err = conn.Write([]byte(RESPONSE_OK))
 		if err == io.EOF {
 			ever = false
+
+			continue
 		}
 
 		err = json.Unmarshal(buf[:bytesRead], &req)
@@ -49,7 +53,7 @@ func (this *Actor) runInboundSession(conn net.Conn) {
 
 		log.Debug("req: %#v", req)
 		atomic.AddInt64(&this.totalReqN, 1)
-		this.jobs.enque(req)
+		this.jobs.submit(req)
 
 		select {
 		case <-this.stopChan:

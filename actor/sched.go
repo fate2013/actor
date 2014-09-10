@@ -46,12 +46,12 @@ func (this *Actor) runScheduler() {
 	for {
 		select {
 		case <-schedTicker.C:
-			marches := this.jobs.pullInBatch(time.Now())
-			if len(marches) != 0 {
-				log.Debug("%d events waked up: %+v", len(marches), marches)
+			dueMarches := this.jobs.wakeup(time.Now())
+			if len(dueMarches) != 0 {
+				log.Debug("%d marches waked up: %+v", len(dueMarches), dueMarches)
 			}
 
-			for _, march := range marches {
+			for _, march := range dueMarches {
 				go this.callback(march)
 			}
 

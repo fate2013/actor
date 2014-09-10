@@ -4,21 +4,24 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	log "github.com/funkygao/log4go"
 	"net/http"
 )
 
 func (this *Actor) callback(m march) {
-	m.Evt = "" // omitempty
-	m.At = 0
 	buf, _ := json.Marshal(m)
-	fmt.Println(string(buf), m)
+
 	body := bytes.NewBuffer(buf)
-	url := fmt.Sprintf("http://localhost/api/?class=r&method=%s", m.Evt)
+	url := fmt.Sprintf(this.server.String("callback_url", ""), m.Evt)
+	log.Debug("%+v %s %s", m, string(buf), url)
+
 	res, err := http.Post(url, "application/json", body)
 	if err != nil {
-
+		log.Error(err)
+	} else {
+		if res.StatusCode != http.StatusOK {
+			log.Error("callback error: %+v", res)
+		}
 	}
-
-	fmt.Println(res)
 
 }

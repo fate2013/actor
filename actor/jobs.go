@@ -48,7 +48,7 @@ func (this *jobs) sortedKeys() []int {
 
 }
 
-func (this *jobs) enque(march march) {
+func (this *jobs) submit(march march) {
 	this.lock.Lock()
 	this.m[march.At] = march
 	this.lock.Unlock()
@@ -60,7 +60,7 @@ func (this *jobs) del(march march) {
 	this.lock.Unlock()
 }
 
-func (this *jobs) pullInBatch(tillWhen time.Time) []march {
+func (this *jobs) wakeup(tillWhen time.Time) []march {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 

@@ -6,7 +6,6 @@ import (
 	"io"
 	"net"
 	"sync/atomic"
-	"time"
 )
 
 type proxy struct {
@@ -80,7 +79,7 @@ func (this *proxy) runForwardSession() {
 		}
 
 		// proxy pass the req
-		conn.SetDeadline(time.Now().Add(this.config.tcpIoTimeout))
+		//conn.SetDeadline(time.Now().Add(this.config.tcpIoTimeout))
 		_, err = conn.Write(req)
 		if err == io.EOF {
 			log.Info("session[%+v] closed", conn)
