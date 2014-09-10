@@ -17,5 +17,5 @@ func (this *Server) Launch() {
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	log.Info("Server %s started", this.name)
+	log.Info("Server %s ready", this.name)
 }
