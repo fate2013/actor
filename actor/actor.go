@@ -38,7 +38,7 @@ type Actor struct {
 	mutex    *sync.Mutex
 
 	totalReqN     int64
-	totalSessionN int
+	totalSessionN int32
 
 	jobs *jobs
 }

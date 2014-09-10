@@ -3,6 +3,7 @@ package actor
 import (
 	log "github.com/funkygao/log4go"
 	"net"
+	"sync/atomic"
 	"time"
 )
 
@@ -23,7 +24,7 @@ func (this *Actor) ServeForever() {
 			defer conn.Close()
 
 			// each conn is persitent conn
-			this.totalSessionN++
+			atomic.AddInt32(&this.totalSessionN, 1)
 			go this.runInboundSession(conn)
 		}
 	}()

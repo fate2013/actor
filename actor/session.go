@@ -4,9 +4,14 @@ import (
 	"encoding/json"
 	log "github.com/funkygao/log4go"
 	"net"
+	"sync/atomic"
 )
 
 func (this *Actor) runInboundSession(conn net.Conn) {
+	defer func() {
+		atomic.AddInt32(&this.totalSessionN, -1)
+	}()
+
 	buf := make([]byte, 1024) // TODO reusable mem pool
 	var (
 		ever      = false
