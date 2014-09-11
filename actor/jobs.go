@@ -8,8 +8,6 @@ import (
 
 // sorted map
 type jobs struct {
-	sort.Interface // jobs is sortable
-
 	lock sync.Mutex
 
 	m map[int]*march        // key is timestamp('at')

@@ -11,7 +11,7 @@ import (
 func (this *proxy) showStats() {
 	spareServerN := atomic.LoadInt32(&this.spareServerN)
 	totalReqN := atomic.LoadInt64(&this.totalReqN)
-	sessionN := atomic.LoadInt32(&this.sessionN)
+	sessionN := atomic.LoadInt32(&this.activeSessionN)
 	log.Info("ver: %s, elapsed:%s, sess:%d, spare:%d, req:%d, goroutine:%d",
 		server.BuildID,
 		time.Since(this.server.StartedAt),

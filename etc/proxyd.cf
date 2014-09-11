@@ -8,9 +8,9 @@
     ]
 
     pm: {
-    	max_outstanding_sessions: 20
-    	start_servers: 10
-        min_spare_servers: 5
+    	max_outstanding_sessions: 10
+    	start_servers: 5
+        min_spare_servers: 2
         spawn_batch_size: 5
     }
 }

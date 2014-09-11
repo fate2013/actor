@@ -4,13 +4,10 @@ import (
 	"github.com/funkygao/dragon/server"
 	"github.com/funkygao/golib/syslogng"
 	log "github.com/funkygao/log4go"
-	"os"
 	"time"
 )
 
 func main() {
-	server.SetupLogging("stdout", "info")
-
 	server := server.NewServer("proxyd")
 	server.LoadConfig("etc/proxyd.cf")
 	server.Launch()
@@ -23,25 +20,26 @@ func main() {
 	defer statsTicker.Stop()
 
 	inChan := syslogng.Subscribe()
+L:
 	for {
 		select {
-		case req := <-inChan:
-			proxy.totalReqN++
-			switch req.(type) {
-			case error:
-				log.Error("subscriber err: %v", req)
-				os.Exit(1)
-
-			case []byte:
-				reqBody := req.([]byte)
-				log.Debug("got event: %s", string(reqBody))
-
-				proxy.dispatch(reqBody)
+		case req, ok := <-inChan:
+			if !ok {
+				// inChan closed
+				log.Info("inChan closed")
+				break L
 			}
+
+			proxy.totalReqN++ // no other goroutine will update it, so it's safe
+
+			log.Debug("got event: %s", string(req))
+			proxy.dispatch(req)
 
 		case <-statsTicker.C:
 			proxy.showStats()
 		}
 	}
 
+	proxy.stop()
+	proxy.wg.Wait()
 }

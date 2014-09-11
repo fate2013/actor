@@ -8,6 +8,7 @@ type march struct {
 	Evt     int   `json:"evt,omitempty"`
 	X       int   `json:"x"`
 	Y       int   `json:"y"`
+	T0      int64 `json:"t0"`
 }
 
 // given a hash, x=h>>10, y=h&((1<<10)-1)
@@ -17,7 +18,6 @@ func (this *march) geoHash() int {
 
 func (this *march) ident() marchIdent {
 	return marchIdent{this.Uid, this.MarchId}
-
 }
 
 type marchIdent struct {

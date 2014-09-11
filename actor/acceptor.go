@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"sync/atomic"
+	"time"
 )
 
 func (this *Actor) runAcceptor(listener net.Listener) {
@@ -45,11 +46,11 @@ func (this *Actor) runAcceptorSession(conn net.Conn) {
 		//		time.Duration(this.server.Int("tcp_io_timeout", 5)) * time.Second))
 		bytesRead, err = conn.Read(buf)
 		if err != nil {
-			log.Error(err.Error())
-			if err == io.EOF {
-				ever = false
+			if err != io.EOF {
+				log.Error("session[%+v] err:%s", conn, err.Error())
 			}
 
+			ever = false
 			continue
 		}
 
@@ -67,7 +68,7 @@ func (this *Actor) runAcceptorSession(conn net.Conn) {
 			continue
 		}
 
-		log.Debug("req: %#v", req)
+		log.Debug("elapsed:%dus, req: %#v", (time.Now().UnixNano()-req.T0)/1000, req)
 		atomic.AddInt64(&this.totalReqN, 1)
 		this.jobs.sched(req)
 
