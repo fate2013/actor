@@ -1,6 +1,6 @@
 {
     listen_addr: ":9002"
-    callback_url: "http://gaopeng.dw-test.com/api/?class=actor&method=%s&params=%s"
+    callback_url: "http://gaopeng.dw-test.com/api/?class=actor&method=play&params=%s"
     tcp_nodelay: true
     tcp_io_timeout: 5
     sched_interval: 1
