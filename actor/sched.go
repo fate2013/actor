@@ -50,7 +50,7 @@ func (this *Actor) runScheduler() {
 	for {
 		select {
 		case <-schedTicker.C:
-			dueMarches := this.jobs.wakeup(time.Now())
+			dueMarches := this.jobs.wakeup(time.Now().Unix())
 			if len(dueMarches) != 0 {
 				log.Debug("%d marches waked up: %+v", len(dueMarches), dueMarches)
 			}

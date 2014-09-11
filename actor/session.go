@@ -53,7 +53,7 @@ func (this *Actor) runInboundSession(conn net.Conn) {
 
 		log.Debug("req: %#v", req)
 		atomic.AddInt64(&this.totalReqN, 1)
-		this.jobs.submit(req)
+		this.jobs.sched(req)
 
 		select {
 		case <-this.stopChan:

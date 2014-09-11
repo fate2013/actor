@@ -9,9 +9,9 @@ import (
 )
 
 func (this *Actor) callback(m march) {
-	jsonStr, _ := json.Marshal(m)
-	body := bytes.NewBuffer(jsonStr)
-	url := fmt.Sprintf(this.server.String("callback_url", ""), m.Evt, string(jsonStr))
+	params, _ := json.Marshal(m)
+	body := bytes.NewBuffer(params)
+	url := fmt.Sprintf(this.server.String("callback_url", ""), string(params))
 	log.Debug("callback: %s", url)
 
 	res, err := http.Post(url, CONTENT_TYPE_JSON, body)

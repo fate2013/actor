@@ -9,4 +9,8 @@ const (
 	CONTENT_TYPE_JSON = "application/json"
 
 	RESPONSE_OK = "ok"
+
+	NON_CALLBACK_EVENT_THRESHOLD = 500
+
+	GEO_HASH_SHIFT = 10
 )

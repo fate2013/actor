@@ -1,9 +1,9 @@
 package actor
 
 import (
+	log "github.com/funkygao/log4go"
 	"sort"
 	"sync"
-	"time"
 )
 
 // sorted map
@@ -12,13 +12,15 @@ type jobs struct {
 
 	lock sync.Mutex
 
-	m map[int]march // key is timestamp('at')
-	k []int         // array of timestamp('at')
+	m map[int]*march        // key is timestamp('at')
+	n map[marchIdent]*march // key is hash(uid, march_id)
+	k []int                 // array of timestamp('at')
 }
 
 func newJobs() *jobs {
 	this := new(jobs)
-	this.m = make(map[int]march)
+	this.m = make(map[int]*march)
+	this.n = make(map[marchIdent]*march)
 	return this
 }
 
@@ -45,27 +47,48 @@ func (this *jobs) sortedKeys() []int {
 
 	sort.Sort(this)
 	return this.k
-
 }
 
-func (this *jobs) submit(march march) {
+func (this *jobs) sched(march march) {
 	this.lock.Lock()
-	this.m[march.At] = march
+
+	this.m[march.At] = &march
+	this.n[march.ident()] = &march
+	// first lookup this march
+	if march.Evt > NON_CALLBACK_EVENT_THRESHOLD {
+		m, present := this.n[march.ident()]
+		if present {
+			// modify existent march entry
+			delete(this.m, m.At)
+			delete(this.n, m.ident())
+		}
+	}
+
+	log.Debug("jobs: %+v", *this)
+
 	this.lock.Unlock()
 }
 
-func (this *jobs) wakeup(tillWhen time.Time) []march {
+func (this *jobs) wakeup(tillWhen int64) []march {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 
 	r := make([]march, 0)
 	for at := range this.sortedKeys() {
 		march := this.m[this.k[at]]
-		if tillWhen.Unix() >= int64(march.At) {
-			r = append(r, march)
+		dueTime := int64(march.At)
+		if tillWhen >= dueTime {
+			r = append(r, *march)
 
 			delete(this.m, march.At) // this job is done
+
+			if tillWhen > dueTime {
+				// scheduler is late to wake it up
+				log.Warn("late schedule march[%d > %d]: %+v", tillWhen, dueTime, *march)
+			}
+
 		}
+
 	}
 
 	return r
