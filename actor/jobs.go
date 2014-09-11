@@ -50,9 +50,7 @@ func (this *jobs) sortedKeys() []int {
 func (this *jobs) sched(march march) {
 	this.lock.Lock()
 
-	m, present := this.n[march.ident()]
-	if present {
-		// modify existent march entry
+	if m, present := this.n[march.ident()]; present {
 		delete(this.m, m.At)
 		delete(this.n, m.ident())
 	}
