@@ -20,11 +20,12 @@ func (this *Actor) runAcceptor(listener net.Listener) {
 		defer conn.Close()
 
 		// each conn is persitent conn
-		go this.runAcceptorSession(conn, atomic.AddInt32(&this.totalSessionN, 1))
+		go this.runReceiverSession(conn, atomic.AddInt32(&this.totalSessionN, 1))
 	}
 }
 
-func (this *Actor) runAcceptorSession(conn net.Conn, sessionNo int32) {
+// a single tcp conn that will recv march job, then put to central scheduler
+func (this *Actor) runReceiverSession(conn net.Conn, sessionNo int32) {
 	defer func() {
 		log.Info("session[%d] closed", sessionNo)
 
@@ -74,15 +75,6 @@ func (this *Actor) runAcceptorSession(conn net.Conn, sessionNo int32) {
 			req, (time.Now().UnixNano()-req.T0)/1000)
 		atomic.AddInt64(&this.totalReqN, 1)
 		this.jobs.sched(req)
-
-		select {
-		case <-this.stopChan:
-			ever = false
-
-		default:
-			break
-		}
-
 	}
 
 }

@@ -51,6 +51,7 @@ func (this *jobs) sched(march march) {
 	this.lock.Lock()
 
 	if m, present := this.n[march.ident()]; present {
+		// recall, speedup,
 		delete(this.m, m.At)
 		delete(this.n, m.ident())
 	}
