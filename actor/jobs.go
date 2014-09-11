@@ -55,13 +55,11 @@ func (this *jobs) sched(march march) {
 	this.m[march.At] = &march
 	this.n[march.ident()] = &march
 	// first lookup this march
-	if march.Evt > NON_CALLBACK_EVENT_THRESHOLD {
-		m, present := this.n[march.ident()]
-		if present {
-			// modify existent march entry
-			delete(this.m, m.At)
-			delete(this.n, m.ident())
-		}
+	m, present := this.n[march.ident()]
+	if present {
+		// modify existent march entry
+		delete(this.m, m.At)
+		delete(this.n, m.ident())
 	}
 
 	log.Debug("jobs: %+v", *this)
