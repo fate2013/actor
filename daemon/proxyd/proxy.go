@@ -17,6 +17,7 @@ type proxy struct {
 
 	wg *sync.WaitGroup
 
+	sessionNo      int64
 	activeSessionN int32 // active sessions
 	totalReqN      int64 // how many requests served since startup
 	spareServerN   int32 // maintains persistent tcp conn pool with upstream
@@ -44,7 +45,8 @@ func (this *proxy) stop() {
 func (this *proxy) spawnSessions(batchSize int) {
 	for i := 0; i < batchSize; i++ {
 		this.wg.Add(1)
-		go this.runForwardSession()
+		sessionNo := atomic.AddInt64(&this.sessionNo, 1)
+		go this.runForwardSession(sessionNo)
 
 		atomic.AddInt32(&this.spareServerN, 1) // why can't comment this line?
 	}
@@ -54,7 +56,7 @@ func (this *proxy) dispatch(req []byte) {
 	this.reqChan <- req
 }
 
-func (this *proxy) runForwardSession() {
+func (this *proxy) runForwardSession(sessionNo int64) {
 	// setup the tcp conn
 	tcpAddr, err := net.ResolveTCPAddr("tcp", this.config.proxyPass)
 	if err != nil {
@@ -67,6 +69,8 @@ func (this *proxy) runForwardSession() {
 	}
 
 	defer func() {
+		log.Info("session[%d] terminated", sessionNo)
+
 		conn.Close()
 		atomic.AddInt32(&this.activeSessionN, -1)
 		this.wg.Done()
@@ -77,7 +81,7 @@ func (this *proxy) runForwardSession() {
 	}
 
 	atomic.AddInt32(&this.activeSessionN, 1)
-	log.Info("new forward session, total:%d", this.activeSessionN)
+	log.Info("session[%d] started", sessionNo)
 
 	var (
 		response         = make([]byte, 1024)
@@ -93,11 +97,12 @@ L:
 		select {
 		case req, ok = <-this.reqChan:
 			if !ok {
-				log.Warn("reqChan closed")
+				log.Warn("session[%d] reqChan closed", sessionNo)
 				break L
 			}
 
 		case <-this.stopChan:
+			log.Info("session[%d] stopped", sessionNo)
 			break L
 		}
 
@@ -105,7 +110,9 @@ L:
 		atomic.AddInt32(&this.spareServerN, -1)
 		leftN := atomic.LoadInt32(&this.spareServerN)
 		if leftN < int32(this.config.pm.minSpareServerN) {
-			log.Info("server busy, spare left:%d, spawn %d processes", leftN,
+			log.Info("session[%d] server busy, spare left:%d, spawn %d processes",
+				sessionNo,
+				leftN,
 				this.config.pm.spawnBatchSize)
 
 			go this.spawnSessions(this.config.pm.spawnBatchSize)
@@ -113,12 +120,13 @@ L:
 
 		// proxy pass the req
 		//conn.SetDeadline(time.Now().Add(this.config.tcpIoTimeout))
+		log.Info("session[%d] writing %s", sessionNo, string(req))
 		_, err = conn.Write(req)
 		if err != nil {
-			log.Error("write error: %s", err.Error())
+			log.Error("session[%d] write error: %s", sessionNo, err.Error())
 
 			if err == io.EOF {
-				log.Info("session[%+v] closed", conn)
+				log.Info("session[%d] closed", sessionNo)
 				return
 			}
 
@@ -128,7 +136,7 @@ L:
 		bytesRead, err = conn.Read(response)
 		if err != nil {
 			if err == io.EOF {
-				log.Info("session[%+v] closed", conn)
+				log.Info("session[%d] closed", sessionNo)
 				return
 			}
 
@@ -136,20 +144,12 @@ L:
 		} else {
 			payload := string(response[:bytesRead])
 			if payload != expectedResponse {
-				log.Warn("invalid response: %s", payload)
+				log.Warn("session[%d] invalid response: %s", sessionNo, payload)
 			}
 		}
 
 		// this req forwarded, I'm spare again, able to handle new req
 		atomic.AddInt32(&this.spareServerN, 1)
-
-		select {
-		case <-this.stopChan:
-			return
-
-		default:
-			break
-		}
 	}
 
 }

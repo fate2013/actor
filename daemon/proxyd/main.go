@@ -40,6 +40,7 @@ L:
 		}
 	}
 
+	log.Info("stopping the world")
 	proxy.stop()
 	proxy.wg.Wait()
 }
