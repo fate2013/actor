@@ -11,6 +11,6 @@
     	max_outstanding_sessions: 10
     	start_servers: 5
         min_spare_servers: 2
-        spawn_batch_size: 5
+        spawn_batch_size: 2
     }
 }

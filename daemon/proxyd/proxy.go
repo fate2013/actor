@@ -19,8 +19,8 @@ type proxy struct {
 
 	sessionNo      int64
 	activeSessionN int32 // active sessions
+	spareSessionN  int32 // maintains persistent tcp conn pool with upstream
 	totalReqN      int64 // how many requests served since startup
-	spareServerN   int32 // maintains persistent tcp conn pool with upstream
 
 	reqChan chan []byte // max outstanding session throttle
 }
@@ -43,12 +43,13 @@ func (this *proxy) stop() {
 }
 
 func (this *proxy) spawnSessions(batchSize int) {
+	atomic.AddInt32(&this.spareSessionN, int32(batchSize))
+
 	for i := 0; i < batchSize; i++ {
 		this.wg.Add(1)
+
 		sessionNo := atomic.AddInt64(&this.sessionNo, 1)
 		go this.runForwardSession(sessionNo)
-
-		atomic.AddInt32(&this.spareServerN, 1) // why can't comment this line?
 	}
 }
 
@@ -69,10 +70,11 @@ func (this *proxy) runForwardSession(sessionNo int64) {
 	}
 
 	defer func() {
-		log.Info("session[%d] terminated", sessionNo)
+		log.Info("session[%d] died", sessionNo)
 
 		conn.Close()
 		atomic.AddInt32(&this.activeSessionN, -1)
+		atomic.AddInt32(&this.spareSessionN, -1)
 		this.wg.Done()
 	}()
 
@@ -94,6 +96,9 @@ func (this *proxy) runForwardSession(sessionNo int64) {
 	// mainloop
 L:
 	for {
+		// a spare session can wait for inbound request
+		atomic.AddInt32(&this.spareSessionN, 1)
+
 		select {
 		case req, ok = <-this.reqChan:
 			if !ok {
@@ -107,8 +112,8 @@ L:
 		}
 
 		// spawn session on demand
-		atomic.AddInt32(&this.spareServerN, -1)
-		leftN := atomic.LoadInt32(&this.spareServerN)
+		atomic.AddInt32(&this.spareSessionN, -1)
+		leftN := atomic.LoadInt32(&this.spareSessionN)
 		if leftN < int32(this.config.pm.minSpareServerN) {
 			log.Info("session[%d] server busy, spare left:%d, spawn %d processes",
 				sessionNo,
@@ -148,8 +153,6 @@ L:
 			}
 		}
 
-		// this req forwarded, I'm spare again, able to handle new req
-		atomic.AddInt32(&this.spareServerN, 1)
 	}
 
 }

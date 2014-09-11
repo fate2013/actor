@@ -23,10 +23,10 @@ func main() {
 L:
 	for {
 		select {
-		case req, ok := <-inChan:
+		case req, ok := <-inChan: // FIXME race condition with proxy.stop
 			if !ok {
 				// inChan closed
-				log.Info("inChan closed")
+				log.Info("syslog-ng closed")
 				break L
 			}
 
