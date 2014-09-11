@@ -50,9 +50,6 @@ func (this *jobs) sortedKeys() []int {
 func (this *jobs) sched(march march) {
 	this.lock.Lock()
 
-	this.m[march.At] = &march
-	this.n[march.ident()] = &march
-	// first lookup this march
 	m, present := this.n[march.ident()]
 	if present {
 		// modify existent march entry
@@ -60,7 +57,8 @@ func (this *jobs) sched(march march) {
 		delete(this.n, m.ident())
 	}
 
-	log.Debug("jobs: %+v", *this)
+	this.m[march.At] = &march
+	this.n[march.ident()] = &march
 
 	this.lock.Unlock()
 }
@@ -69,6 +67,7 @@ func (this *jobs) wakeup(tillWhen int64) []march {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 
+	log.Debug("jobs: %+v", *this)
 	r := make([]march, 0)
 	for at := range this.sortedKeys() {
 		march := this.m[this.k[at]]
@@ -76,7 +75,9 @@ func (this *jobs) wakeup(tillWhen int64) []march {
 		if tillWhen >= dueTime {
 			r = append(r, *march)
 
-			delete(this.m, march.At) // this job is done
+			// this job is done
+			delete(this.m, march.At)
+			delete(this.n, march.ident())
 
 			if tillWhen > dueTime {
 				// scheduler is late to wake it up

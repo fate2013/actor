@@ -20,18 +20,19 @@ func (this *Actor) runAcceptor(listener net.Listener) {
 		defer conn.Close()
 
 		// each conn is persitent conn
-		atomic.AddInt32(&this.totalSessionN, 1)
-		go this.runAcceptorSession(conn)
+		go this.runAcceptorSession(conn, atomic.AddInt32(&this.totalSessionN, 1))
 	}
 }
 
-func (this *Actor) runAcceptorSession(conn net.Conn) {
+func (this *Actor) runAcceptorSession(conn net.Conn, sessionNo int32) {
 	defer func() {
-		log.Info("session[%+v] closed", conn)
+		log.Info("session[%d] closed", sessionNo)
 
 		conn.Close()
 		atomic.AddInt32(&this.totalSessionN, -1)
 	}()
+
+	log.Info("session[%d] started", sessionNo)
 
 	buf := make([]byte, 1024) // TODO reusable mem pool
 	var (
@@ -47,7 +48,7 @@ func (this *Actor) runAcceptorSession(conn net.Conn) {
 		bytesRead, err = conn.Read(buf)
 		if err != nil {
 			if err != io.EOF {
-				log.Error("session[%+v] err:%s", conn, err.Error())
+				log.Error("session[%d] err:%s", sessionNo, err.Error())
 			}
 
 			ever = false
@@ -68,7 +69,9 @@ func (this *Actor) runAcceptorSession(conn net.Conn) {
 			continue
 		}
 
-		log.Debug("elapsed:%dus, req: %#v", (time.Now().UnixNano()-req.T0)/1000, req)
+		log.Debug("session[%d] req: %#v, elapsed:%dus",
+			sessionNo,
+			req, (time.Now().UnixNano()-req.T0)/1000)
 		atomic.AddInt64(&this.totalReqN, 1)
 		this.jobs.sched(req)
 

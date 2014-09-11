@@ -55,7 +55,7 @@ func runStandardMode() {
 
 func runRecall() {
 	sendRequest(1, 1, 12, time.Now().Add(5*time.Second))
-	sendRequest(1, 1, 20, time.Now().Add(5*time.Second))
+	sendRequest(1, 1, 20, time.Now().Add(8*time.Second))
 }
 
 func runSpeedup() {
