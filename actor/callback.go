@@ -27,3 +27,8 @@ func (this *Actor) callback(m march) {
 	}
 
 }
+
+// coordinate marches with same destination at the same time
+func (this *Actor) coordinate(chunk []march) {
+
+}

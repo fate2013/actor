@@ -34,12 +34,14 @@ func (this *Actor) runScheduler() {
 		select {
 		case <-schedTicker.C:
 			dueMarches := this.jobs.wakeup(time.Now().Unix())
-			if len(dueMarches) != 0 {
+			if len(dueMarches) > 0 {
 				log.Debug("%d marches waked up: %+v", len(dueMarches), dueMarches)
 
 				chunks := marches(dueMarches)
 				for _, chunk := range chunks.chunks() {
 					log.Debug("chunk: %#v", chunk)
+
+					this.coordinate(chunk)
 
 					//go this.callback(march)
 				}
