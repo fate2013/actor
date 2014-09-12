@@ -1,26 +1,28 @@
 /*
-	  (upstream)
-      php server -----------------+
-        |                         |
-        | request                 |
-        V                         |
-   +------------------------+     |
-   |        |         actor |     |
-   |        |               |     |
-   |        | inject        |     |
-   |        V               |     |
-   |      queue             |     |
-   |        ^               |     |
-   |        | tick          |     |
-   |        | peekOrPop     |     |
-   |        V               |     |
-   |      dispatcher        |     |
-   |        |               |     |
-   |        |               |     |
-   +------------------------+     |
-            |                     |
-            +-------->------------+
-            	downstream
+      php server -----------------------+
+        |                               |
+        | job{who, when, where, op}     |
+        V                               |
+      syslogng                          |
+        |                               |
+      proxyd                            |
+        |                               |
+        V                               |
+   +------------------------+           |
+   |        |         actor |           |
+   |        |               |           |
+   |        V               |           |
+   |      queue             |           |
+   |        ^               |           |
+   |        | tick          |           |
+   |        | peekOrPop     |           |
+   |        V               |           |
+   |      dispatcher        |           |
+   |        |               |           |
+   +------------------------+           |
+            |                           |
+            +-------->------------------+
+            	callback
 
 */
 package actor
@@ -41,7 +43,7 @@ type Actor struct {
 	jobs *jobs
 }
 
-func NewActor(server *server.Server) *Actor {
+func New(server *server.Server) *Actor {
 	this := new(Actor)
 	this.server = server
 	this.mutex = new(sync.Mutex)

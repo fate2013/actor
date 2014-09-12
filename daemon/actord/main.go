@@ -50,7 +50,7 @@ func main() {
 	server.LoadConfig(options.configFile)
 	server.Launch()
 
-	actor := actor.NewActor(server)
+	actor := actor.New(server)
 	actor.ServeForever()
 
 	shutdown()

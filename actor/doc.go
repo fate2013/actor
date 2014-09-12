@@ -10,5 +10,9 @@ critical sections:
 
 all the critical sections share the same attribute:
 same destination(geohash) at roughly the same time
+
+problems:
+1. callback to php combat while user consumes an item, 2 php instances race condition
+2.
 */
 package actor

@@ -13,14 +13,25 @@ type march struct {
 	T0 int64 `json:"t0,omitempty"` // sent timestamp from php-fpm
 }
 
-// given a hash, x=h>>10, y=h&((1<<10)-1)
 func (this *march) geoHash() int {
-	// TODO what if negative?
-	return (this.X << GEO_HASH_SHIFT) | this.Y
+	return this.where()
 }
 
 func (this *march) ident() marchIdent {
 	return marchIdent{this.Uid, this.MarchId}
+}
+
+// given a hash, x=h>>10, y=h&((1<<10)-1)
+func (this *march) where() int {
+	// TODO what if negative?
+	return (this.X << GEO_HASH_SHIFT) | this.Y
+}
+func (this *march) who() marchIdent {
+	return this.ident()
+}
+
+func (this *march) when() int {
+	return this.At
 }
 
 type marchIdent struct {
