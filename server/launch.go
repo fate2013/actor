@@ -15,7 +15,7 @@ func (this *Server) Launch() {
 	this.pid = os.Getpid()
 	signal.IgnoreSignal(syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGSTOP)
 
-	runtime.GOMAXPROCS(runtime.NumCPU())
+	runtime.GOMAXPROCS(this.Int("max_cpu", runtime.NumCPU()))
 
-	log.Info("Server %s ready", this.name)
+	log.Info("Server[%s.%s] ready", this.Name, BuildID)
 }

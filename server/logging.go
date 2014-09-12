@@ -15,6 +15,9 @@ func SetupLogging(logFile, logLevel string) {
 
 	case "error":
 		level = log.ERROR
+
+	case "debug":
+		level = log.DEBUG
 	}
 
 	for _, filter := range log.Global {
@@ -31,7 +34,6 @@ func SetupLogging(logFile, logLevel string) {
 		writer.SetRotateSize(0)
 		writer.SetRotateLines(0)
 		writer.SetRotateDaily(true)
-
 	}
 
 }

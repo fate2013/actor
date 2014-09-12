@@ -5,8 +5,10 @@ import (
 	log "github.com/funkygao/log4go"
 )
 
+// universal config keys:
+// max_cpu
 func (this *Server) LoadConfig(fn string) *Server {
-	log.Info("Server[%s] loading config file %s", BuildID, fn)
+	log.Info("Server[%s.%s] loading config file %s", this.Name, BuildID, fn)
 	this.configFile = fn
 
 	var err error

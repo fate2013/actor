@@ -8,7 +8,7 @@ import (
 type Server struct {
 	*conf.Conf
 
-	name       string
+	Name       string
 	configFile string
 	StartedAt  time.Time
 	pid        int
@@ -17,7 +17,7 @@ type Server struct {
 
 func NewServer(name string) (this *Server) {
 	this = new(Server)
-	this.name = name
+	this.Name = name
 
 	return
 }
