@@ -1,4 +1,4 @@
-package main
+package proxy
 
 import (
 	"github.com/funkygao/dragon/server"
@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func (this *proxy) showStats() {
+func (this *Proxy) showStats() {
 	spareSessionN := atomic.LoadInt32(&this.spareSessionN)
 	totalReqN := atomic.LoadInt64(&this.totalReqN)
 	sessionN := atomic.LoadInt32(&this.activeSessionN)

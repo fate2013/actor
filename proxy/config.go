@@ -1,4 +1,4 @@
-package main
+package proxy
 
 import (
 	conf "github.com/funkygao/jsconf"
@@ -16,13 +16,14 @@ type proxyConfig struct {
 
 // process management, naming after php-fpm
 type pmConfig struct {
-	maxOutstandingSessionN int // a session is a persistent conn with upstream
-	startServerN           int
-	minSpareServerN        int
-	spawnBatchSize         int
+	maxServerN      int
+	startServerN    int
+	minSpareServerN int
+	maxSpareServerN int
+	spawnBatchSize  int
 }
 
-func (this *proxy) loadConfig(cf *conf.Conf) {
+func (this *Proxy) loadConfig(cf *conf.Conf) {
 	this.config = proxyConfig{}
 	this.config.statsInterval = cf.Int("stats_interval", 5)
 	this.config.tcpNoDelay = cf.Bool("tcp_nodelay", true)
@@ -41,8 +42,15 @@ func (this *proxy) loadConfig(cf *conf.Conf) {
 }
 
 func (this *pmConfig) loadConfig(section *conf.Conf) {
-	this.maxOutstandingSessionN = section.Int("max_outstanding_sessions", 10)
+	this.maxServerN = section.Int("max_servers", 10)
 	this.startServerN = section.Int("start_servers", 5)
 	this.minSpareServerN = section.Int("min_spare_servers", 3)
+	this.maxSpareServerN = section.Int("max_spare_servers", this.minSpareServerN+2)
 	this.spawnBatchSize = section.Int("spawn_batch_size", 3)
+	if this.minSpareServerN > this.maxSpareServerN {
+		panic("error: min_spare_servers > max_spare_servers")
+	}
+	if this.startServerN > this.maxServerN {
+		panic("error: start_servers > max_servers")
+	}
 }

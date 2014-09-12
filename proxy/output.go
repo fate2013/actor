@@ -1,63 +1,25 @@
-package main
+package proxy
 
 import (
-	"github.com/funkygao/dragon/server"
 	log "github.com/funkygao/log4go"
 	"io"
 	"net"
-	"sync"
 	"sync/atomic"
 )
 
-type proxy struct {
-	config proxyConfig
-	server *server.Server
-
-	stopChan chan interface{}
-
-	wg *sync.WaitGroup
-
-	sessionNo      int64
-	activeSessionN int32 // active sessions
-	spareSessionN  int32 // maintains persistent tcp conn pool with upstream
-	totalReqN      int64 // how many requests served since startup
-
-	reqChan chan []byte // max outstanding session throttle
-}
-
-func newProxy() *proxy {
-	this := new(proxy)
-	this.wg = new(sync.WaitGroup)
-	this.stopChan = make(chan interface{})
-	return this
-}
-
-func (this *proxy) start(server *server.Server) {
-	this.server = server
-	this.reqChan = make(chan []byte, this.config.pm.maxOutstandingSessionN)
-	this.spawnSessions(this.config.pm.startServerN)
-}
-
-func (this *proxy) stop() {
-	close(this.stopChan)
-}
-
-func (this *proxy) spawnSessions(batchSize int) {
+func (this *Proxy) spawnOutputSessions(batchSize int) {
 	atomic.AddInt32(&this.spareSessionN, int32(batchSize))
 
 	for i := 0; i < batchSize; i++ {
 		this.wg.Add(1)
 
 		sessionNo := atomic.AddInt64(&this.sessionNo, 1)
-		go this.runForwardSession(sessionNo)
+		go this.runOutputSession(sessionNo)
 	}
 }
 
-func (this *proxy) dispatch(req []byte) {
-	this.reqChan <- req
-}
-
-func (this *proxy) runForwardSession(sessionNo int64) {
+// TODO session killed after N idle seconds
+func (this *Proxy) runOutputSession(sessionNo int64) {
 	// setup the tcp conn
 	tcpAddr, err := net.ResolveTCPAddr("tcp", this.config.proxyPass)
 	if err != nil {
@@ -120,7 +82,7 @@ L:
 				leftN,
 				this.config.pm.spawnBatchSize)
 
-			go this.spawnSessions(this.config.pm.spawnBatchSize)
+			go this.spawnOutputSessions(this.config.pm.spawnBatchSize)
 		}
 
 		// proxy pass the req
