@@ -34,6 +34,10 @@ func (this *march) when() int {
 	return this.At
 }
 
+func (this *march) what() int {
+	return this.Evt
+}
+
 type marchIdent struct {
 	Uid, MarchId int64
 }
