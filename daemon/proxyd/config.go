@@ -10,11 +10,11 @@ type proxyConfig struct {
 	statsInterval int
 	tcpNoDelay    bool
 	tcpIoTimeout  time.Duration
-	proxyPass     string // host:port
+	proxyPass     string // host:port, TODO support server farm
 	pm            pmConfig
 }
 
-// process management, naming from php-fpm
+// process management, naming after php-fpm
 type pmConfig struct {
 	maxOutstandingSessionN int // a session is a persistent conn with upstream
 	startServerN           int

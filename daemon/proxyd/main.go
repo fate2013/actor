@@ -7,9 +7,15 @@ import (
 	"time"
 )
 
+func init() {
+	parseFlags()
+
+	server.SetupLogging(options.logFile, options.logLevel)
+}
+
 func main() {
 	server := server.NewServer("proxyd")
-	server.LoadConfig("etc/proxyd.cf")
+	server.LoadConfig(options.configFile)
 	server.Launch()
 
 	proxy := newProxy()

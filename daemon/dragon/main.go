@@ -18,6 +18,8 @@ func init() {
 		server.ShowVersionAndExit()
 	}
 
+	server.SetupLogging(options.logFile, options.logLevel)
+
 	if options.lockFile != "" {
 		if locking.InstanceLocked(options.lockFile) {
 			fmt.Fprintf(os.Stderr, "Another dragon is running, exit...\n")
@@ -43,8 +45,6 @@ func main() {
 
 		}
 	}()
-
-	server.SetupLogging(options.logFile, options.logLevel)
 
 	server := server.NewServer("dragon")
 	server.LoadConfig(options.configFile)
