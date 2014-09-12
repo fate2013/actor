@@ -22,6 +22,6 @@ _testmain.go
 *.exe
 *.test
 
-daemon/dragon/dragon
+daemon/actord/actord
 daemon/proxyd/proxyd
 cmd/feed/feed
