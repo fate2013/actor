@@ -1,10 +1,45 @@
 package actor
 
 import (
+	//"github.com/davecgh/go-spew/spew"
 	log "github.com/funkygao/log4go"
 	"sort"
 	"sync"
 )
+
+type marches []march
+
+func (this marches) Len() int {
+	return len(this)
+}
+
+func (this marches) Swap(i, j int) {
+	this[i], this[j] = this[j], this[i]
+}
+
+func (this marches) Less(i, j int) bool {
+	return this[i].geoHash() < this[j].geoHash()
+}
+
+func (this *marches) chunks() [][]march {
+	sort.Sort(*this)
+
+	r := make([][]march, 0)
+	var r1 []march
+	lastGeoHash := -1
+	for _, m := range *this {
+		if lastGeoHash != -1 && lastGeoHash != m.geoHash() {
+			r = append(r, r1)
+
+			r1 = make([]march, 0)
+		}
+
+		lastGeoHash = m.geoHash()
+		r1 = append(r1, m)
+	}
+	r = append(r, r1)
+	return r
+}
 
 // sorted map
 type jobs struct {
@@ -62,11 +97,13 @@ func (this *jobs) sched(march march) {
 	this.lock.Unlock()
 }
 
+// FIXME what if arrive at 5, arrive at 3 in disorder?
 func (this *jobs) wakeup(tillWhen int64) []march {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 
-	log.Debug("jobs: %+v", *this)
+	//spew.Dump(*this)
+
 	r := make([]march, 0)
 	for at := range this.sortedKeys() {
 		march := this.m[this.k[at]]
@@ -82,7 +119,6 @@ func (this *jobs) wakeup(tillWhen int64) []march {
 				// scheduler is late to wake it up
 				log.Warn("late schedule march[%d > %d]: %+v", tillWhen, dueTime, *march)
 			}
-
 		}
 
 	}

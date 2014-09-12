@@ -36,10 +36,13 @@ func (this *Actor) runScheduler() {
 			dueMarches := this.jobs.wakeup(time.Now().Unix())
 			if len(dueMarches) != 0 {
 				log.Debug("%d marches waked up: %+v", len(dueMarches), dueMarches)
-			}
 
-			for _, march := range dueMarches {
-				go this.callback(march)
+				chunks := marches(dueMarches)
+				for _, chunk := range chunks.chunks() {
+					log.Debug("chunk: %#v", chunk)
+
+					//go this.callback(march)
+				}
 			}
 
 		case <-statsTicker.C:

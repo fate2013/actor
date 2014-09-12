@@ -28,6 +28,7 @@ type march struct {
 
 // given a hash, x=h>>10, y=h&((1<<10)-1)
 func (this *march) geoHash() int {
+	// TODO what if negative?
 	return (this.X << GEO_HASH_SHIFT) | this.Y
 }
 
