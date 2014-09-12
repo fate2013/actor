@@ -38,7 +38,7 @@ func (this *Proxy) loadConfig(cf *conf.Conf) {
 	}
 	this.config.pm.loadConfig(section)
 
-	log.Debug("config loaded: %#v", this.config)
+	log.Debug("config: %+v", this.config)
 }
 
 func (this *pmConfig) loadConfig(section *conf.Conf) {

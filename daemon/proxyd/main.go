@@ -18,5 +18,4 @@ func main() {
 
 	proxy := proxy.New()
 	proxy.Start(server).ServeForever()
-
 }

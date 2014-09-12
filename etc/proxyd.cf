@@ -1,4 +1,6 @@
 {
+    max_cpu: 4
+
     tcp_nodelay: true
     tcp_io_timeout: 5
     stats_interval: 5
