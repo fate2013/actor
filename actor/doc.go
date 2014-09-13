@@ -14,5 +14,24 @@ same destination(geohash) at roughly the same time
 problems:
 1. callback to php combat while user consumes an item, 2 php instances race condition
 2.
+
+
+           client                client
+             |                     |
+          +-----+               +-----+
+          |     |               |     |
+       IM ^     V http       IM |     | http
+          |     |               |     |
+    500ms |     | 800ms         |     |
+          +-----+               +-----+
+             |                     |
+             |---------------------+           sched
+             |                                +-----+
+             |  10us          10us       5ms  |     | 1ms
+            php ---- syslogng ---- proxy --- actor -+
+             |                                |
+             |                                |
+             +-------------<------------------+
+             50-800ms
 */
 package actor
