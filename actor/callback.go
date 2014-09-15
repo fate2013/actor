@@ -13,6 +13,8 @@ func (this *Actor) callback(m march) {
 	url := fmt.Sprintf(this.server.String("callback_url", ""), string(params))
 	log.Debug("callback: %s", url)
 
+	// may fail, because php will throw LockException
+	// in that case, will reschedule the job after 1s
 	res, err := http.Post(url, CONTENT_TYPE_JSON, bytes.NewBuffer(params))
 	defer func() {
 		res.Body.Close()
