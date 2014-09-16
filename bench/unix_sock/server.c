@@ -45,9 +45,11 @@ main (int argc, char **argv)
     {
         long long t1, t2;
 
-        t1 = msg.tv_sec * 1000000;
+        // client ts
+        t1 = msg.tv_sec * 1000000; 
         t1 += msg.tv_usec;
 
+        // server ts for this msg
         gettimeofday (&now, NULL);
         t2 = now.tv_sec * 1000000;
         t2 += now.tv_usec;
@@ -56,7 +58,8 @@ main (int argc, char **argv)
         cnt++;
         if ((cnt % atoi (argv[1])) == 0)
         {
-            fprintf (stderr, "%fus\n", (double) diff / (double) atoi (argv[1]));
+            float latency = (double) diff / (double) atoi (argv[1]);
+            fprintf (stderr, "latency: %.3fus, throughput: %.1f\n", latency, 1000*1000.0/latency);
             diff = 0LL;
         }
     }

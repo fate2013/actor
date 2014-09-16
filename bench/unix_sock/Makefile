@@ -8,7 +8,7 @@ server:server.c
 
 bench:all
 	@pkill server
-	./server 100&
+	./server 1000&
 	@sleep 1
 	./client
 
