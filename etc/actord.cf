@@ -1,5 +1,7 @@
 {
     listen_addr: ":9002"
+    rest_listen_addr: ":9010"
+    prof_listen_addr: ":9011"
     callback_url: "http://gaopeng.dw-test.com/api/?class=actor&method=play&params=%s"
     tcp_nodelay: true
     tcp_io_timeout: 5

@@ -2,6 +2,7 @@ package actor
 
 import (
 	rest "github.com/funkygao/dragon/http"
+	"github.com/funkygao/dragon/server"
 	"github.com/gorilla/mux"
 	"net/http"
 )
@@ -33,6 +34,9 @@ func (this *Actor) handleHttpQuery(w http.ResponseWriter, req *http.Request,
 	)
 
 	switch cmd {
+	case "ver":
+		output["ver"] = server.BuildID
+
 	case "stat":
 		output["job_size"] = this.jobs.Len()
 
