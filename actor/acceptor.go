@@ -9,7 +9,12 @@ import (
 	"time"
 )
 
-func (this *Actor) runAcceptor(listener net.Listener) {
+func (this *Actor) runAcceptor() {
+	listener, err := net.Listen("tcp4", this.server.String("listen_addr", ":9002"))
+	if err != nil {
+		panic(err)
+	}
+
 	for {
 		conn, err := listener.Accept()
 		if err != nil {

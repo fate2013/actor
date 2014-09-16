@@ -2,20 +2,8 @@ package actor
 
 import (
 	log "github.com/funkygao/log4go"
-	"net"
 	"time"
 )
-
-func (this *Actor) ServeForever() {
-	listener, err := net.Listen("tcp4", this.server.String("listen_addr", ":9002"))
-	if err != nil {
-		panic(err)
-	}
-
-	go this.runAcceptor(listener)
-
-	this.runScheduler()
-}
 
 func (this *Actor) runScheduler() {
 	schedTicker := time.NewTicker(
