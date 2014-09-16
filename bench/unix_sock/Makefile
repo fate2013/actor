@@ -6,8 +6,10 @@ client:client.c
 server:server.c
 	cc -o server server.c
 
-run:all
+bench:all
+	@pkill server
 	./server 100&
+	@sleep 1
 	./client
 
 clean:
