@@ -36,7 +36,7 @@ func (this *Actor) runScheduler() {
 			}
 
 		case <-statsTicker.C:
-			this.showStats()
+			this.showConsoleStats()
 
 		case <-dumpTicker.C:
 			go this.dump()
