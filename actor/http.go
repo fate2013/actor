@@ -48,6 +48,10 @@ func (this *Actor) handleHttpQuery(w http.ResponseWriter, req *http.Request,
 			"/s/stat",
 			"/s/conf",
 		}
+		pprofAddr := this.server.String("prof_listen_addr", "")
+		if pprofAddr != "" {
+			output["pprof"] = "http://" + pprofAddr + "/debug/pprof/"
+		}
 
 	default:
 		return nil, rest.ErrHttp404
