@@ -1,5 +1,55 @@
 /*
 
+RTS: synchronization is king
+
+Synchronous execution
+
+lock step
+
+surrogate
+
+serial scheduler
+soft real time system
+local latency and remote latency
+
+
+predictable vs unpredictable events
+predictable events are generated independently at each node, since each
+node has the full game state
+
+recoverable abort
+
+
+A@B
+
+
+request db token(permission) for each db operation
+
+* delay req
+* refuse req
+
+concurrent issues: atomic, consistency, isolation, durability
+
+hero points:
+    deduct hero points
+    (another req might arrive -- being attacked)  external actions
+    add hero skill, which have effect in combat
+
+build a farm:
+    deduct resource
+    (another req might arrive -- defeated and pillaged by attacker)
+
+consume:
+    deduct consumable
+    (another req might arrive)
+    add player resource
+
+bank transfer:
+    deduct A's account X
+    (another req might arrive)
+    add to B's account X
+
+
 combat as a single request, it must be atomic and isolated, but its duration is 0ms-30s
     begin combat
     get troops and hero in both sides   --
@@ -21,8 +71,14 @@ critical sections(collision):
             fire combat
         }
 
+        or by actord, but what if 1s between A@C and B@C?
+        ring buffer? actored need track slide window for each critical sections
+        a, b attack m at t, c attack m at t+1?
+
+
     2. parties taking part in combat(a,b,c attack d)        - between marches
         who combat first, seond?
+
     3. pillage of attackee                                  - between march and attackee behavior
         3.1 resource
         3.2 hero capture
@@ -37,7 +93,7 @@ critical sections(collision):
         }
 
         try {
-            c = combat.create
+            c = combat.create // this must be the first write of db in this request
         } catch PDOException {
             // another combat for this attackee is happening
             return false
@@ -49,9 +105,38 @@ critical sections(collision):
     4. a gathering, b,c arrives at roughly the same time(actor need serialize b, c combat?)
        b arrives at t, c arrives at t+1
 
+       try {
+           g = gathering.create
+       } catch PDOException {
+           // another player is within gathering request, but that request is not finished
+           return false
+       }
+
        at t, actor callback php to let (a, b) combat
        at t+1, active callback php to let (a, c) combat
        but the 2 callback might interleave, need better way to serialize this
+
+    5. user consumes items/build construction/research/etc
+       1. user.gold -= x
+       2. city.resource -= y
+       3. cityTile.save
+       If combat begins right before 2, will lead to NotEnoughResourceException while user lost gold
+
+       how to lock?
+       if combat.exists(uid) {
+           return false
+       }
+
+       combat.lock(uid)
+
+
+
+lockings
+========
+
+lockUser(uid)  resource
+lockTile(k, x, y)  encamp/gather
+
 
 principle:
     php can't sleep and wait
