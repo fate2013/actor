@@ -8,4 +8,9 @@
     sched_interval: 1
     stats_interval: 5
     dump_interval: 900
+    replicator: {
+        addr: "127.0.0.1:9005"
+        tcp_nodelay: true
+        binlog: "bin.log"
+    }
 }
