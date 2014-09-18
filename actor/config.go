@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type Config struct {
+type ActorConfig struct {
 	RestListenAddr       string
 	ProfListenAddr       string
 	CallbackUrl          string
@@ -18,7 +18,7 @@ type Config struct {
 	MysqlConfig          *ConfigMysql
 }
 
-func (this *Config) LoadConfig(cf *conf.Conf) (err error) {
+func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
 	this.RestListenAddr = cf.String("rest_listen_addr", "")
 	this.ProfListenAddr = cf.String("prof_listen_addr", "")
 	this.CallbackUrl = cf.String("callback_url", "")
