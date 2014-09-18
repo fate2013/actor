@@ -54,7 +54,7 @@ func (this *Actor) handleHttpQuery(w http.ResponseWriter, req *http.Request,
 
 	case "guide", "help", "h":
 		output["uris"] = []string{
-			"/s/stat",
+			"/s/ver",
 			"/s/conf",
 		}
 		pprofAddr := this.server.String("prof_listen_addr", "")
