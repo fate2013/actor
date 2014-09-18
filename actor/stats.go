@@ -1,7 +1,6 @@
 package actor
 
 import (
-	rest "github.com/funkygao/dragon/http"
 	"github.com/funkygao/dragon/server"
 	log "github.com/funkygao/log4go"
 	"github.com/gorilla/mux"
