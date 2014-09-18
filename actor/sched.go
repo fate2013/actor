@@ -6,6 +6,8 @@ import (
 )
 
 func (this *Actor) runScheduler() {
+	log.Info("scheduler start")
+
 	schedTicker := time.NewTicker(
 		time.Duration(this.server.Int("sched_interval", 1)) * time.Second)
 	defer schedTicker.Stop()
@@ -17,10 +19,6 @@ func (this *Actor) runScheduler() {
 	for {
 		select {
 		case <-schedTicker.C:
-			dueTasks := this.queue.Wakeup(time.Now().Unix())
-			if len(dueTasks) > 0 {
-				log.Debug("%d marches waked up: %+v", len(dueTasks), dueTasks)
-			}
 
 		case <-statsTicker.C:
 			this.showConsoleStats()

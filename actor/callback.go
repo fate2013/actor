@@ -3,14 +3,13 @@ package actor
 import (
 	"bytes"
 	"fmt"
-	"github.com/funkygao/dragon/queue"
 	log "github.com/funkygao/log4go"
 	"io/ioutil"
 	"net/http"
 )
 
-func (this *Actor) callback(task queue.Task) {
-	params := task.Marshal()
+func (this *Actor) callback() {
+	params := []byte("")
 	url := fmt.Sprintf(this.server.String("callback_url", ""), string(params))
 	log.Debug("callback: %s", url)
 

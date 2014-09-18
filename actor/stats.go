@@ -10,13 +10,12 @@ import (
 )
 
 func (this *Actor) showConsoleStats() {
-	log.Info("ver: %s, elapsed:%s, sess:%d/%d, req:%d, jobs:%d, goroutine:%d",
+	log.Info("ver: %s, elapsed:%s, sess:%d/%d, req:%d, goroutine:%d",
 		server.BuildID,
 		time.Since(this.server.StartedAt),
 		this.activeSessionN,
 		this.totalSessionN,
 		this.totalReqN,
-		this.queue.Len(),
 		runtime.NumGoroutine())
 }
 
@@ -26,8 +25,8 @@ func (this *Actor) launchHttpServ() {
 		return
 	}
 
-	rest.LaunchHttpServ(restListenAddr, this.server.String("prof_listen_addr", ""))
-	rest.RegisterHttpApi("/s/{cmd}",
+	server.LaunchHttpServ(restListenAddr, this.server.String("prof_listen_addr", ""))
+	server.RegisterHttpApi("/s/{cmd}",
 		func(w http.ResponseWriter, req *http.Request,
 			params map[string]interface{}) (interface{}, error) {
 			return this.handleHttpQuery(w, req, params)
@@ -35,7 +34,7 @@ func (this *Actor) launchHttpServ() {
 }
 
 func (this *Actor) stopHttpServ() {
-	rest.StopHttpServ()
+	server.StopHttpServ()
 }
 
 func (this *Actor) handleHttpQuery(w http.ResponseWriter, req *http.Request,
@@ -49,9 +48,6 @@ func (this *Actor) handleHttpQuery(w http.ResponseWriter, req *http.Request,
 	switch cmd {
 	case "ver":
 		output["ver"] = server.BuildID
-
-	case "stat":
-		output["job_size"] = this.queue.Len()
 
 	case "conf":
 		output["conf"] = *this.server.Conf
@@ -67,7 +63,7 @@ func (this *Actor) handleHttpQuery(w http.ResponseWriter, req *http.Request,
 		}
 
 	default:
-		return nil, rest.ErrHttp404
+		return nil, server.ErrHttp404
 	}
 
 	return output, nil
