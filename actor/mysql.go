@@ -2,7 +2,6 @@ package actor
 
 import (
 	"database/sql"
-	"github.com/funkygao/fae/config"
 	"github.com/funkygao/golib/breaker"
 	log "github.com/funkygao/log4go"
 	_ "github.com/go-sql-driver/mysql"
@@ -16,7 +15,7 @@ type mysql struct {
 	breaker *breaker.Consecutive
 }
 
-func newMysql(dsn string, bc *config.ConfigBreaker) *mysql {
+func newMysql(dsn string, bc *ConfigBreaker) *mysql {
 	this := new(mysql)
 	this.dsn = dsn
 	this.breaker = &breaker.Consecutive{

@@ -46,8 +46,10 @@ type ConfigMysql struct {
 	ConnectTimeout time.Duration
 	IoTimeout      time.Duration
 	SlowThreshold  time.Duration
-	Breaker        ConfigBreaker
-	Servers        map[string]*ConfigMysqlInstance // key is pool
+
+	Breaker ConfigBreaker
+
+	Servers map[string]*ConfigMysqlInstance // key is pool
 }
 
 func (this *ConfigMysql) Pools() (pools []string) {
