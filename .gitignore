@@ -21,6 +21,7 @@ _testmain.go
 
 *.exe
 *.test
+*.swp
 
 daemon/actord/actord
 daemon/proxyd/proxyd
