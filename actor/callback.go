@@ -8,9 +8,9 @@ import (
 	"net/http"
 )
 
-func (this *Actor) callback() {
+func (this *scheduler) callback() {
 	params := []byte("")
-	url := fmt.Sprintf(this.config.CallbackUrl, string(params))
+	url := fmt.Sprintf(this.actor.config.CallbackUrl, string(params))
 	log.Debug("callback: %s", url)
 
 	// may fail, because php will throw LockException

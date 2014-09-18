@@ -37,7 +37,7 @@ func New(server *server.Server) (this *Actor) {
 	this.stats = newStatsRunner(this)
 	this.stats.init()
 
-	this.scheduler = newScheduler(this.config.MysqlConfig)
+	this.scheduler = newScheduler(this, this.config.MysqlConfig)
 
 	return
 }

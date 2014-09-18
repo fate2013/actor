@@ -5,13 +5,15 @@ import (
 )
 
 type scheduler struct {
+	actor      *Actor
 	conf       *ConfigMysql
 	callbackCh chan string
 	pollers    map[string]*poller
 }
 
-func newScheduler(conf *ConfigMysql) *scheduler {
+func newScheduler(actor *Actor, conf *ConfigMysql) *scheduler {
 	this := new(scheduler)
+	this.actor = actor
 	this.conf = conf
 	this.pollers = make(map[string]*poller)
 	this.callbackCh = make(chan string, 1000)
@@ -23,8 +25,8 @@ func (this *scheduler) run() {
 
 	for pool, my := range this.conf.Servers {
 		mysql := newMysql(my.DSN(), &this.conf.Breaker)
-		this.pollers[pool] = newPoller(mysql)
-		this.pollers[pool].start(this.callbackCh)
+		this.pollers[pool] = newPoller(this.actor, mysql)
+		go this.pollers[pool].run(this.callbackCh)
 	}
 
 	log.Info("scheduler started")
