@@ -11,13 +11,18 @@ type replicator struct {
 	tcpNoDelay bool
 }
 
-func (this *replicator) loadConfig(cf *conf.Conf) *replicator {
+func NewReplicator() *replicator {
+	this := new(replicator)
+	return this
+}
+
+func (this *replicator) LoadConfig(cf *conf.Conf) *replicator {
 	this.addr = cf.String("addr", "")
 	this.tcpNoDelay = cf.Bool("tcp_nodelay", true)
 	return this
 }
 
-func (this *replicator) replay() {
+func (this *replicator) Replay() {
 
 }
 
@@ -25,7 +30,7 @@ func (this *replicator) enabled() bool {
 	return this.addr != ""
 }
 
-func (this *replicator) start() {
+func (this *replicator) Start() {
 	if !this.enabled() {
 		log.Info("replication disabled")
 		return

@@ -10,6 +10,7 @@ fi
 cd daemon/actord
 ID=$(git rev-parse HEAD | cut -c1-7)
 go build -ldflags "-X github.com/funkygao/dragon/server.BuildID $ID -w"
+#go build -race -v -ldflags "-X github.com/funkygao/dragon/server.BuildID $ID -w"
 
 cd ../proxyd
 go build -ldflags "-X github.com/funkygao/dragon/server.BuildID $ID -w"

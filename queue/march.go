@@ -1,4 +1,4 @@
-package actor
+package queue
 
 type march struct {
 	Uid     int64 `json:"uid"`

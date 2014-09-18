@@ -64,7 +64,8 @@ func runSpeedup() {
 }
 
 func sendRequest(uid, marchId, event int, at time.Time) {
-	fmt.Fprintf(os.Stdout, `{"uid":%d, "march_id":%d, "at":%d, "evt":%d, "t0":%d}`,
-		uid, marchId, at.Unix(), event, time.Now().UnixNano())
+	fmt.Fprintf(os.Stdout, "%d,%d,%d,%d,1,%d,%d,xxx", 1,
+		at.Unix(), event, uid, marchId, time.Now().UnixNano())
+
 	fmt.Fprintln(os.Stdout)
 }

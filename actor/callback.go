@@ -2,14 +2,15 @@ package actor
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
+	"github.com/funkygao/dragon/queue"
 	log "github.com/funkygao/log4go"
+	"io/ioutil"
 	"net/http"
 )
 
-func (this *Actor) callback(m march) {
-	params, _ := json.Marshal(m)
+func (this *Actor) callback(task queue.Task) {
+	params := task.Marshal()
 	url := fmt.Sprintf(this.server.String("callback_url", ""), string(params))
 	log.Debug("callback: %s", url)
 
@@ -20,6 +21,8 @@ func (this *Actor) callback(m march) {
 		res.Body.Close()
 	}()
 
+	ioutil.ReadAll(res.Body)
+
 	if err != nil {
 		log.Error("post error: %s", err.Error())
 	} else {
@@ -27,10 +30,5 @@ func (this *Actor) callback(m march) {
 			log.Error("callback error: %+v", res)
 		}
 	}
-
-}
-
-// coordinate marches with same destination at the same time
-func (this *Actor) coordinate(chunk []march) {
 
 }

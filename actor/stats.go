@@ -11,12 +11,13 @@ import (
 )
 
 func (this *Actor) showConsoleStats() {
-	log.Info("ver: %s, elapsed:%s, sess:%d, req:%d, jobs:%d, goroutine:%d",
+	log.Info("ver: %s, elapsed:%s, sess:%d/%d, req:%d, jobs:%d, goroutine:%d",
 		server.BuildID,
 		time.Since(this.server.StartedAt),
+		this.activeSessionN,
 		this.totalSessionN,
 		this.totalReqN,
-		this.jobs.Len(),
+		this.queue.Len(),
 		runtime.NumGoroutine())
 }
 
@@ -51,7 +52,7 @@ func (this *Actor) handleHttpQuery(w http.ResponseWriter, req *http.Request,
 		output["ver"] = server.BuildID
 
 	case "stat":
-		output["job_size"] = this.jobs.Len()
+		output["job_size"] = this.queue.Len()
 
 	case "conf":
 		output["conf"] = *this.server.Conf
