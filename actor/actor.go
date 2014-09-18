@@ -21,7 +21,7 @@ type Actor struct {
 	server *server.Server
 	config *ActorConfig
 
-	stats     *actorStats
+	stats     *statsRunner
 	scheduler *scheduler
 }
 
@@ -34,7 +34,7 @@ func New(server *server.Server) (this *Actor) {
 		panic(err)
 	}
 
-	this.stats = newActorStats(this)
+	this.stats = newStatsRunner(this)
 	this.stats.init()
 
 	this.scheduler = newScheduler(this.config.MysqlConfig)

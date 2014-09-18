@@ -10,14 +10,15 @@ import (
 	"time"
 )
 
-type actorStats struct {
-	actor             *Actor
+type statsRunner struct {
+	actor *Actor
+
 	dbLatencies       metrics.Histogram
 	callbackLatencies metrics.Histogram
 }
 
-func newActorStats(actor *Actor) *actorStats {
-	this := new(actorStats)
+func newStatsRunner(actor *Actor) *statsRunner {
+	this := new(statsRunner)
 	this.actor = actor
 	this.dbLatencies = metrics.NewHistogram(
 		metrics.NewExpDecaySample(1028, 0.015))
@@ -28,12 +29,12 @@ func newActorStats(actor *Actor) *actorStats {
 	return this
 }
 
-func (this *actorStats) init() {
+func (this *statsRunner) init() {
 	metrics.Register("latency.db", this.dbLatencies)
 	metrics.Register("latency.callback", this.callbackLatencies)
 }
 
-func (this *actorStats) run() {
+func (this *statsRunner) run() {
 	this.launchHttpServ()
 	defer this.stopHttpServ()
 
@@ -45,14 +46,14 @@ func (this *actorStats) run() {
 	}
 }
 
-func (this *actorStats) showConsoleStats() {
+func (this *statsRunner) showConsoleStats() {
 	log.Info("ver: %s, elapsed:%s, goroutine:%d",
 		server.BuildID,
 		time.Since(this.actor.server.StartedAt),
 		runtime.NumGoroutine())
 }
 
-func (this *actorStats) launchHttpServ() {
+func (this *statsRunner) launchHttpServ() {
 	if this.actor.config.RestListenAddr == "" {
 		return
 	}
@@ -65,11 +66,11 @@ func (this *actorStats) launchHttpServ() {
 		}).Methods("GET")
 }
 
-func (this *actorStats) stopHttpServ() {
+func (this *statsRunner) stopHttpServ() {
 	server.StopHttpServ()
 }
 
-func (this *actorStats) handleHttpQuery(w http.ResponseWriter, req *http.Request,
+func (this *statsRunner) handleHttpQuery(w http.ResponseWriter, req *http.Request,
 	params map[string]interface{}) (interface{}, error) {
 	var (
 		vars   = mux.Vars(req)
