@@ -33,6 +33,18 @@ func (this *actorStats) init() {
 	metrics.Register("latency.callback", this.callbackLatencies)
 }
 
+func (this *actorStats) run() {
+	this.launchHttpServ()
+	defer this.stopHttpServ()
+
+	statsTicker := time.NewTicker(this.actor.config.ConsoleStatsInterval)
+	defer statsTicker.Stop()
+
+	for _ = range statsTicker.C {
+		this.showConsoleStats()
+	}
+}
+
 func (this *actorStats) showConsoleStats() {
 	log.Info("ver: %s, elapsed:%s, goroutine:%d",
 		server.BuildID,

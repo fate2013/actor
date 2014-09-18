@@ -10,7 +10,7 @@ import (
 
 func (this *Actor) callback() {
 	params := []byte("")
-	url := fmt.Sprintf(this.server.String("callback_url", ""), string(params))
+	url := fmt.Sprintf(this.config.CallbackUrl, string(params))
 	log.Debug("callback: %s", url)
 
 	// may fail, because php will throw LockException

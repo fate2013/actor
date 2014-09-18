@@ -13,8 +13,8 @@ type ActorConfig struct {
 	ProfListenAddr       string
 	CallbackUrl          string
 	CallbackTimeout      int
-	ScheduleInterval     int
-	ConsoleStatsInterval int
+	ScheduleInterval     time.Duration
+	ConsoleStatsInterval time.Duration
 	MysqlConfig          *ConfigMysql
 }
 
@@ -27,8 +27,8 @@ func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
 		return
 	}
 	this.CallbackTimeout = cf.Int("callback_timeout", 4)
-	this.ScheduleInterval = cf.Int("sched_interval", 1)
-	this.ConsoleStatsInterval = cf.Int("stats_interval", 60*10)
+	this.ScheduleInterval = time.Duration(cf.Int("sched_interval", 1)) * time.Second
+	this.ConsoleStatsInterval = time.Duration(cf.Int("stats_interval", 60*10)) * time.Second
 
 	this.MysqlConfig = new(ConfigMysql)
 	var section *conf.Conf

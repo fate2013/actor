@@ -1,8 +1,7 @@
 package actor
 
 func (this *Actor) ServeForever() {
-	this.stats.launchHttpServ()
-	defer this.stats.stopHttpServ()
+	go this.scheduler.run()
 
-	this.runScheduler()
+	this.stats.run()
 }

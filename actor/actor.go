@@ -20,18 +20,24 @@ import (
 type Actor struct {
 	server *server.Server
 	config *ActorConfig
-	stats  *actorStats
+
+	stats     *actorStats
+	scheduler *scheduler
 }
 
 func New(server *server.Server) (this *Actor) {
 	this = new(Actor)
 	this.server = server
-	this.stats = newActorStats(this)
-	this.stats.init()
+
 	this.config = new(ActorConfig)
 	if err := this.config.LoadConfig(server.Conf); err != nil {
 		panic(err)
 	}
+
+	this.stats = newActorStats(this)
+	this.stats.init()
+
+	this.scheduler = newScheduler(this.config.MysqlConfig)
 
 	return
 }
