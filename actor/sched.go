@@ -21,7 +21,7 @@ func (this *Actor) runScheduler() {
 		case <-schedTicker.C:
 
 		case <-statsTicker.C:
-			this.showConsoleStats()
+			this.stats.showConsoleStats()
 
 		}
 	}

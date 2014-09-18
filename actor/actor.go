@@ -1,29 +1,15 @@
 /*
-      php server -----------------------+
-        |                               |
-        | job{who, when, where, op}     |
-        V                               |
-      syslogng                          |
-        |                               |
-      proxyd                            |
-        |                               |
-        V                               |
-   +------------------------+           |
-   |        |         actor |           |
-   |        |               |           |
-   |        V               |           |
-   |      queue             |           |
-   |        ^               |           |
-   |        | tick          |           |
-   |        | peekOrPop     |           |
-   |        V               |           |
-   |      dispatcher        |           |
-   |        |               |           |
-   +------------------------+           |
-            |                           |
-            +-------->------------------+
-            	callback
-
+                           +-- mysql
+                           |
+          persistent conn  |-- mysql
+   actord -----------------|
+     |           job poll  |-- mysql
+     | http                |
+     | callback            +-- mysql
+     |
+    php ---+
+     |     | lock
+     +-----+
 */
 package actor
 
@@ -34,15 +20,14 @@ import (
 type Actor struct {
 	server *server.Server
 	config *ActorConfig
-
-	totalReqN      int64
-	totalSessionN  int64
-	activeSessionN int32
+	stats  *actorStats
 }
 
 func New(server *server.Server) (this *Actor) {
 	this = new(Actor)
 	this.server = server
+	this.stats = newActorStats(this)
+	this.stats.init()
 	this.config = new(ActorConfig)
 	if err := this.config.LoadConfig(server.Conf); err != nil {
 		panic(err)

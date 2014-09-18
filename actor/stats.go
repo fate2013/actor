@@ -3,29 +3,49 @@ package actor
 import (
 	"github.com/funkygao/dragon/server"
 	log "github.com/funkygao/log4go"
+	"github.com/funkygao/metrics"
 	"github.com/gorilla/mux"
 	"net/http"
 	"runtime"
 	"time"
 )
 
-func (this *Actor) showConsoleStats() {
-	log.Info("ver: %s, elapsed:%s, sess:%d/%d, req:%d, goroutine:%d",
+type actorStats struct {
+	actor             *Actor
+	dbLatencies       metrics.Histogram
+	callbackLatencies metrics.Histogram
+}
+
+func newActorStats(actor *Actor) *actorStats {
+	this := new(actorStats)
+	this.actor = actor
+	this.dbLatencies = metrics.NewHistogram(
+		metrics.NewExpDecaySample(1028, 0.015))
+
+	this.callbackLatencies = metrics.NewHistogram(
+		metrics.NewExpDecaySample(1028, 0.015))
+
+	return this
+}
+
+func (this *actorStats) init() {
+	metrics.Register("latency.db", this.dbLatencies)
+	metrics.Register("latency.callback", this.callbackLatencies)
+}
+
+func (this *actorStats) showConsoleStats() {
+	log.Info("ver: %s, elapsed:%s, goroutine:%d",
 		server.BuildID,
-		time.Since(this.server.StartedAt),
-		this.activeSessionN,
-		this.totalSessionN,
-		this.totalReqN,
+		time.Since(this.actor.server.StartedAt),
 		runtime.NumGoroutine())
 }
 
-func (this *Actor) launchHttpServ() {
-	var restListenAddr string = this.server.String("rest_listen_addr", "")
-	if restListenAddr == "" {
+func (this *actorStats) launchHttpServ() {
+	if this.actor.config.RestListenAddr == "" {
 		return
 	}
 
-	server.LaunchHttpServ(restListenAddr, this.server.String("prof_listen_addr", ""))
+	server.LaunchHttpServ(this.actor.config.RestListenAddr, this.actor.config.ProfListenAddr)
 	server.RegisterHttpApi("/s/{cmd}",
 		func(w http.ResponseWriter, req *http.Request,
 			params map[string]interface{}) (interface{}, error) {
@@ -33,11 +53,11 @@ func (this *Actor) launchHttpServ() {
 		}).Methods("GET")
 }
 
-func (this *Actor) stopHttpServ() {
+func (this *actorStats) stopHttpServ() {
 	server.StopHttpServ()
 }
 
-func (this *Actor) handleHttpQuery(w http.ResponseWriter, req *http.Request,
+func (this *actorStats) handleHttpQuery(w http.ResponseWriter, req *http.Request,
 	params map[string]interface{}) (interface{}, error) {
 	var (
 		vars   = mux.Vars(req)
@@ -50,16 +70,15 @@ func (this *Actor) handleHttpQuery(w http.ResponseWriter, req *http.Request,
 		output["ver"] = server.BuildID
 
 	case "conf":
-		output["conf"] = *this.server.Conf
+		output["conf"] = *this.actor.server.Conf
 
 	case "guide", "help", "h":
 		output["uris"] = []string{
 			"/s/ver",
 			"/s/conf",
 		}
-		pprofAddr := this.server.String("prof_listen_addr", "")
-		if pprofAddr != "" {
-			output["pprof"] = "http://" + pprofAddr + "/debug/pprof/"
+		if this.actor.config.ProfListenAddr != "" {
+			output["pprof"] = "http://" + this.actor.config.ProfListenAddr + "/debug/pprof/"
 		}
 
 	default:

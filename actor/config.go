@@ -45,6 +45,7 @@ func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
 type ConfigMysql struct {
 	ConnectTimeout time.Duration
 	IoTimeout      time.Duration
+	SlowThreshold  time.Duration
 	Breaker        ConfigBreaker
 	Servers        map[string]*ConfigMysqlInstance // key is pool
 }
@@ -63,6 +64,7 @@ func (this *ConfigMysql) Pools() (pools []string) {
 func (this *ConfigMysql) loadConfig(cf *conf.Conf) {
 	this.ConnectTimeout = time.Duration(cf.Int("connect_timeout", 4)) * time.Second
 	this.IoTimeout = time.Duration(cf.Int("io_timeout", 30)) * time.Second
+	this.SlowThreshold = time.Duration(cf.Int("slow_threshold", 5)) * time.Second
 	section, err := cf.Section("breaker")
 	if err == nil {
 		this.Breaker.loadConfig(section)

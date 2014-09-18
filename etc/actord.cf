@@ -8,6 +8,7 @@
     mysql: {
         connect_timeout: 4
         io_timeout: 30
+        slow_threshold: 1
 
         breaker: {
             failure_allowance: 5
