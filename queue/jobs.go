@@ -1,4 +1,4 @@
-package actor
+package queue
 
 import (
 	//"github.com/davecgh/go-spew/spew"

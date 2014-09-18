@@ -1,51 +1,59 @@
 /*
-	  (upstream)
-      php server -----------------+
-        |                         |
-        | request                 |
-        V                         |
-   +------------------------+     |
-   |        |         actor |     |
-   |        |               |     |
-   |        | inject        |     |
-   |        V               |     |
-   |      queue             |     |
-   |        ^               |     |
-   |        | tick          |     |
-   |        | peekOrPop     |     |
-   |        V               |     |
-   |      dispatcher        |     |
-   |        |               |     |
-   |        |               |     |
-   +------------------------+     |
-            |                     |
-            +-------->------------+
-            	downstream
+      php server -----------------------+
+        |                               |
+        | job{who, when, where, op}     |
+        V                               |
+      syslogng                          |
+        |                               |
+      proxyd                            |
+        |                               |
+        V                               |
+   +------------------------+           |
+   |        |         actor |           |
+   |        |               |           |
+   |        V               |           |
+   |      queue             |           |
+   |        ^               |           |
+   |        | tick          |           |
+   |        | peekOrPop     |           |
+   |        V               |           |
+   |      dispatcher        |           |
+   |        |               |           |
+   +------------------------+           |
+            |                           |
+            +-------->------------------+
+            	callback
 
 */
 package actor
 
 import (
+	"github.com/funkygao/dragon/queue"
 	"github.com/funkygao/dragon/server"
-	"sync"
 )
 
 type Actor struct {
 	server *server.Server
 
-	mutex *sync.Mutex
+	replicator *replicator
 
-	totalReqN     int64
-	totalSessionN int32
+	totalReqN      int64
+	totalSessionN  int64
+	activeSessionN int32
 
-	jobs *jobs
+	queue *queue.Queue
 }
 
-func NewActor(server *server.Server) *Actor {
-	this := new(Actor)
+func New(server *server.Server) (this *Actor) {
+	this = new(Actor)
 	this.server = server
-	this.mutex = new(sync.Mutex)
-	this.jobs = newJobs()
+	this.replicator = NewReplicator()
+	replicatorConf, err := server.Section("replicator")
+	if err != nil {
+		panic(err)
+	}
+	this.replicator.LoadConfig(replicatorConf)
+	this.queue = queue.New()
 
-	return this
+	return
 }

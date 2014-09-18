@@ -1,15 +1,18 @@
 package actor
 
 import (
-	"encoding/json"
 	log "github.com/funkygao/log4go"
 	"io"
 	"net"
 	"sync/atomic"
-	"time"
 )
 
-func (this *Actor) runAcceptor(listener net.Listener) {
+func (this *Actor) runAcceptor() {
+	listener, err := net.Listen("tcp4", this.server.String("listen_addr", ":9002"))
+	if err != nil {
+		panic(err)
+	}
+
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -20,17 +23,18 @@ func (this *Actor) runAcceptor(listener net.Listener) {
 		defer conn.Close()
 
 		// each conn is persitent conn
-		go this.runReceiverSession(conn, atomic.AddInt32(&this.totalSessionN, 1))
+		atomic.AddInt32(&this.activeSessionN, 1)
+		go this.runReceiverSession(conn, atomic.AddInt64(&this.totalSessionN, 1))
 	}
 }
 
 // a single tcp conn that will recv march job, then put to central scheduler
-func (this *Actor) runReceiverSession(conn net.Conn, sessionNo int32) {
+func (this *Actor) runReceiverSession(conn net.Conn, sessionNo int64) {
 	defer func() {
 		log.Info("session[%d] closed", sessionNo)
 
 		conn.Close()
-		atomic.AddInt32(&this.totalSessionN, -1)
+		atomic.AddInt32(&this.activeSessionN, -1)
 	}()
 
 	log.Info("session[%d] started", sessionNo)
@@ -40,7 +44,6 @@ func (this *Actor) runReceiverSession(conn net.Conn, sessionNo int32) {
 		ever      = true
 		err       error
 		bytesRead int
-		req       march
 	)
 
 	for ever {
@@ -63,18 +66,14 @@ func (this *Actor) runReceiverSession(conn net.Conn, sessionNo int32) {
 			continue
 		}
 
-		err = json.Unmarshal(buf[:bytesRead], &req)
-		if err != nil {
-			log.Error(err.Error())
-
-			continue
-		}
-
-		log.Debug("session[%d] req: %#v, elapsed:%dus",
-			sessionNo,
-			req, (time.Now().UnixNano()-req.T0)/1000)
 		atomic.AddInt64(&this.totalReqN, 1)
-		this.jobs.sched(req)
+
+		log.Debug("session[%d] got req: %s", sessionNo, string(buf[:bytesRead]))
+
+		err = this.queue.Enque(buf)
+		if err != nil {
+			log.Error(err)
+		}
 	}
 
 }

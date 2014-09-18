@@ -1,4 +1,4 @@
-package actor
+package queue
 
 import (
 	"github.com/funkygao/assert"
