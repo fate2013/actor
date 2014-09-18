@@ -38,15 +38,15 @@ func (this *statsRunner) run() {
 	this.launchHttpServ()
 	defer this.stopHttpServ()
 
-	statsTicker := time.NewTicker(this.actor.config.ConsoleStatsInterval)
-	defer statsTicker.Stop()
+	ticker := time.NewTicker(this.actor.config.ConsoleStatsInterval)
+	defer ticker.Stop()
 
-	for _ = range statsTicker.C {
-		this.showConsoleStats()
+	for _ = range ticker.C {
+		this.exportConsole()
 	}
 }
 
-func (this *statsRunner) showConsoleStats() {
+func (this *statsRunner) exportConsole() {
 	log.Info("ver: %s, elapsed:%s, goroutine:%d",
 		server.BuildID,
 		time.Since(this.actor.server.StartedAt),
