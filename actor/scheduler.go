@@ -24,6 +24,10 @@ func NewScheduler(interval time.Duration, callbackUrl string,
 	return this
 }
 
+func (this *Scheduler) Len() int {
+	return len(this.jobChan)
+}
+
 func (this *Scheduler) Run(myconf *ConfigMysql) {
 	go this.runCallback()
 
