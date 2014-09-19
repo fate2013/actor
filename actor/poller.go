@@ -6,17 +6,28 @@ import (
 	"time"
 )
 
-type poller struct {
+type Poller interface {
+	Run(ch chan<- Job)
+	Stop()
+}
+
+type MysqlPoller struct {
 	interval time.Duration
 	mysql    *mysql
 	jobStmt  *sql.Stmt
 }
 
-func newPoller(interval time.Duration, mysql *mysql) *poller {
-	this := new(poller)
+func newMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
+	breaker *ConfigBreaker) *MysqlPoller {
+	this := new(MysqlPoller)
 	this.interval = interval
-	this.mysql = mysql
-	var err error
+	this.mysql = newMysql(my.DSN(), breaker)
+	err := this.mysql.Open()
+	if err != nil {
+		log.Critical("open mysql[%+v] failed: %s", *my, err)
+		return nil
+	}
+
 	this.jobStmt, err = this.mysql.db.Prepare("SELECT uid,job_id,time_end FROM Job WHERE time_end>=?")
 	if err != nil {
 		log.Critical("db prepare err: %s", err.Error())
@@ -26,11 +37,11 @@ func newPoller(interval time.Duration, mysql *mysql) *poller {
 	return this
 }
 
-func (this *poller) run(jobCh chan<- job) {
+func (this *MysqlPoller) Run(jobCh chan<- Job) {
 	ticker := time.NewTicker(this.interval)
 	defer ticker.Stop()
 
-	var job job
+	var job Job
 	for now := range ticker.C {
 		rows, err := this.jobStmt.Query(now.Unix())
 		if err != nil {
@@ -53,6 +64,6 @@ func (this *poller) run(jobCh chan<- job) {
 
 }
 
-func (this *poller) stop() {
+func (this *MysqlPoller) Stop() {
 	this.jobStmt.Close()
 }

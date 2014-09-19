@@ -21,7 +21,7 @@ type Actor struct {
 	config *ActorConfig
 
 	statsRunner *statsRunner
-	scheduler   *scheduler
+	scheduler   *Scheduler
 }
 
 func New(server *server.Server) (this *Actor) {
@@ -43,7 +43,7 @@ func New(server *server.Server) (this *Actor) {
 }
 
 func (this *Actor) ServeForever() {
-	go this.scheduler.run()
+	go this.scheduler.Run(this.config.MysqlConfig)
 
 	this.statsRunner.run()
 }
