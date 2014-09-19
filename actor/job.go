@@ -1,6 +1,7 @@
 package actor
 
 import (
+	"encoding/json"
 	"sync"
 	"time"
 )
@@ -9,6 +10,11 @@ type job struct {
 	Uid     int64 `json:"uid"`
 	JobId   int64 `json:"job_id"`
 	dueTime time.Time
+}
+
+func (this *job) marshal() []byte {
+	b, _ := json.Marshal(*this)
+	return b
 }
 
 type outstandingJobs struct {
@@ -28,7 +34,7 @@ func (this *outstandingJobs) enter(j job) {
 	this.mutex.Unlock()
 }
 
-func (this *outstandingJobs) exit(j job) {
+func (this *outstandingJobs) leave(j job) {
 	this.mutex.Lock()
 	delete(this.jobs, j)
 	this.mutex.Unlock()

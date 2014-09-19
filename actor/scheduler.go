@@ -28,7 +28,7 @@ func newScheduler(interval time.Duration, callbackUrl string,
 	this.conf = conf
 	this.pollers = make(map[string]*poller)
 	this.outstandings = newOutstandingJobs()
-	this.jobChan = make(chan job, 1000)
+	this.jobChan = make(chan job, 1000) // TODO
 	return this
 }
 
@@ -69,7 +69,7 @@ func (this *scheduler) runCallback() {
 }
 
 func (this *scheduler) callback(j job) {
-	params := []byte("")
+	params := j.marshal()
 	url := fmt.Sprintf(this.callbackUrl, string(params))
 	log.Debug("callback: %s", url)
 
@@ -78,7 +78,7 @@ func (this *scheduler) callback(j job) {
 	res, err := http.Post(url, CONTENT_TYPE_JSON, bytes.NewBuffer(params))
 	defer func() {
 		res.Body.Close()
-		this.outstandings.exit(j)
+		this.outstandings.leave(j)
 	}()
 
 	payload, err := ioutil.ReadAll(res.Body)
