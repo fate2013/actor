@@ -28,13 +28,17 @@ func newOutstandingJobs() *outstandingJobs {
 	return this
 }
 
-func (this *outstandingJobs) enter(j Job) {
+func (this *outstandingJobs) lock(j Job) bool {
 	this.mutex.Lock()
-	this.jobs[j] = true
+	_, present := this.jobs[j]
+	if !present {
+		this.jobs[j] = true
+	}
 	this.mutex.Unlock()
+	return !present
 }
 
-func (this *outstandingJobs) leave(j Job) {
+func (this *outstandingJobs) unlock(j Job) {
 	this.mutex.Lock()
 	delete(this.jobs, j)
 	this.mutex.Unlock()

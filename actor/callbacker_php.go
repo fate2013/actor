@@ -21,7 +21,10 @@ func NewPhpCallbacker(url string) *PhpCallbacker {
 }
 
 func (this *PhpCallbacker) Call(j Job) {
-	this.outstandings.enter(j)
+	if !this.outstandings.lock(j) { // lock failed
+		log.Debug("locked %+v", j)
+		return
+	}
 
 	params := j.marshal()
 	url := fmt.Sprintf(this.url, string(params))
@@ -32,7 +35,7 @@ func (this *PhpCallbacker) Call(j Job) {
 	res, err := http.Post(url, CONTENT_TYPE_JSON, bytes.NewBuffer(params))
 	defer func() {
 		res.Body.Close()
-		this.outstandings.leave(j)
+		this.outstandings.unlock(j)
 	}()
 
 	payload, err := ioutil.ReadAll(res.Body)
