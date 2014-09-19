@@ -41,7 +41,7 @@ func (this *PhpCallbacker) Call(j Job) {
 	t0 := time.Now()
 	res, err := http.Post(url, CONTENT_TYPE_JSON, bytes.NewBuffer(params))
 	if err != nil {
-		log.Error("post[%s] err: %s", url, err.Error())
+		log.Error("http post err: %s", err.Error())
 		this.outstandings.unlock(j)
 		return
 	}
