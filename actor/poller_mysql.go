@@ -29,7 +29,7 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 		return nil
 	}
 
-	this.jobStmt, err = this.mysql.db.Prepare("SELECT uid,job_id,time_end FROM Job WHERE time_end>=?")
+	this.jobStmt, err = this.mysql.db.Prepare(JOB_QUERY)
 	if err != nil {
 		log.Critical("db prepare err: %s", err.Error())
 		return nil
