@@ -14,13 +14,14 @@ import (
 )
 
 type StatsRunner struct {
-	actor *Actor
+	actor   *Actor
+	jobChan chan Job
 }
 
-func NewStatsRunner(actor *Actor) *StatsRunner {
+func NewStatsRunner(actor *Actor, jobChan chan Job) *StatsRunner {
 	this := new(StatsRunner)
 	this.actor = actor
-
+	this.jobChan = jobChan
 	return this
 }
 
@@ -54,9 +55,10 @@ func (this *StatsRunner) Run() {
 }
 
 func (this *StatsRunner) showStats() {
-	log.Info("ver: %s, elapsed:%s, goroutine:%d",
+	log.Info("ver: %s, elapsed:%s, jobs:%d, goroutine:%d",
 		server.BuildID,
 		time.Since(this.actor.server.StartedAt),
+		len(this.jobChan),
 		runtime.NumGoroutine())
 }
 
