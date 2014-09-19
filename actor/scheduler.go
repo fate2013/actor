@@ -52,7 +52,7 @@ func (this *Scheduler) scheduleCallback() {
 				return
 			}
 
-			go this.callbacker.Call(job)
+			go this.callback(job)
 		}
 	}
 }

@@ -54,34 +54,36 @@ func (this *PhpCallbacker) Call(j Job) (retry bool) {
 	log.Debug("payload: %s", string(payload))
 
 	if err != nil {
-		log.Error("payload error: %s", err.Error())
-	} else {
-		if res.StatusCode != http.StatusOK {
-			log.Error("callback err: %+v", res)
-			return
-		}
+		log.Error("payload: %s", err.Error())
+		return
+	}
 
-		// parse php payload to check if to retry
-		var (
-			objmap map[string]*json.RawMessage
-			ok     int
-		)
-		err = json.Unmarshal(payload, &objmap)
-		if err != nil {
-			log.Error("payload err: %s", err.Error())
-			return
-		}
-		json.Unmarshal(*objmap["ok"], &ok)
-		log.Debug("ok=%d", ok)
+	if res.StatusCode != http.StatusOK {
+		log.Error("callback err: %+v", res)
+		return
+	}
 
-		switch ok {
-		case RESPONSE_OK:
-			break
+	// parse php payload to check if to retry
+	var (
+		objmap map[string]*json.RawMessage
+		ok     int
+	)
+	err = json.Unmarshal(payload, &objmap)
+	if err != nil {
+		log.Error("payload err: %s", err.Error())
+		return
+	}
 
-		case RESPONSE_RETRY:
-			retry = true
-		}
+	json.Unmarshal(*objmap["ok"], &ok)
+	log.Debug("payload ok: %d", ok)
 
+	switch ok {
+	case RESPONSE_OK:
+		break
+
+	case RESPONSE_RETRY:
+		// php tells me to retry
+		retry = true
 	}
 
 	return
