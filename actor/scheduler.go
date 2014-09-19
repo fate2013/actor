@@ -13,7 +13,7 @@ type scheduler struct {
 	interval    time.Duration
 	callbackUrl string
 	conf        *ConfigMysql
-	callbackCh  chan string
+	jobChan     chan job
 	pollers     map[string]*poller
 }
 
@@ -24,17 +24,26 @@ func newScheduler(interval time.Duration, callbackUrl string,
 	this.callbackUrl = callbackUrl
 	this.conf = conf
 	this.pollers = make(map[string]*poller)
-	this.callbackCh = make(chan string, 1000)
+	this.jobChan = make(chan job, 1000)
 	return this
 }
 
 func (this *scheduler) run() {
 	go this.runCallback()
 
+	var err error
 	for pool, my := range this.conf.Servers {
 		mysql := newMysql(my.DSN(), &this.conf.Breaker)
+		err = mysql.Open()
+		if err != nil {
+			log.Critical("open mysql[%+v] failed: %s", *my, err)
+			continue
+		}
+
 		this.pollers[pool] = newPoller(this.interval, mysql)
-		go this.pollers[pool].run(this.callbackCh)
+		if this.pollers[pool] != nil {
+			go this.pollers[pool].run(this.jobChan)
+		}
 	}
 
 	log.Info("scheduler started")
@@ -43,8 +52,13 @@ func (this *scheduler) run() {
 func (this *scheduler) runCallback() {
 	for {
 		select {
-		case params := <-this.callbackCh:
-			log.Debug("got callback: %s", params)
+		case job, ok := <-this.jobChan:
+			if !ok {
+				log.Critical("job chan closed")
+				return
+			}
+
+			log.Debug("got callback: %+v", job)
 		}
 	}
 }

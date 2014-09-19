@@ -1,6 +1,7 @@
 package actor
 
 import (
+	"database/sql"
 	log "github.com/funkygao/log4go"
 	"time"
 )
@@ -8,42 +9,50 @@ import (
 type poller struct {
 	interval time.Duration
 	mysql    *mysql
+	jobStmt  *sql.Stmt
 }
 
 func newPoller(interval time.Duration, mysql *mysql) *poller {
 	this := new(poller)
 	this.interval = interval
 	this.mysql = mysql
-	return this
+	var err error
+	this.jobStmt, err = this.mysql.db.Prepare("SELECT uid,job_id,time_end FROM Job WHERE time_end>=?")
+	if err != nil {
+		log.Critical("db prepare err: %s", err.Error())
+		return nil
+	}
 
+	return this
 }
 
-func (this *poller) run(jobCh chan<- string) {
+func (this *poller) run(jobCh chan<- job) {
 	ticker := time.NewTicker(this.interval)
 	defer ticker.Stop()
 
+	var job job
 	for now := range ticker.C {
-		rows, err := this.mysql.Query("SELECT uid FROM Job WHERE time_end>=", now.Unix())
+		rows, err := this.jobStmt.Query(now.Unix())
 		if err != nil {
-			log.Error("db error: %s", err.Error())
+			log.Error("db query error: %s", err.Error())
 			continue
 		}
 
-		cols, _ := rows.Columns()
-		colsN := len(cols)
-		values := make([]interface{}, colsN)
-		valuePtrs := make([]interface{}, colsN)
 		for rows.Next() {
-			for i, _ := range cols {
-				valuePtrs[i] = &values[i]
-				rows.Scan(valuePtrs...)
-				//uid := values[0].(int64)
+			err = rows.Scan(&job.uid, &job.jobId, &job.dueTime)
+			if err != nil {
+				log.Error("db scan error: %s", err.Error())
+				continue
 			}
+
+			log.Debug("due %+v", job)
+			jobCh <- job
 		}
+
 	}
 
 }
 
-func (this *poller) lock() {
-	// use memcache.add for distributed atomic lock
+func (this *poller) stop() {
+	this.jobStmt.Close()
 }

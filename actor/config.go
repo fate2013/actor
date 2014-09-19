@@ -134,6 +134,7 @@ func (this *ConfigMysqlInstance) loadConfig(section *conf.Conf) {
 	if this.Charset != "" {
 		this.dsn += "charset=" + this.Charset
 	}
+	this.dsn += "&parseTime=true" // parse db timestamp automatically
 
 	log.Debug("mysql instance: %s", this.dsn)
 }

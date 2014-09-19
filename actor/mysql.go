@@ -10,14 +10,16 @@ import (
 // A mysql conn to a single mysql instance
 // Conn pool is natively supported by golang
 type mysql struct {
-	dsn     string
-	db      *sql.DB
-	breaker *breaker.Consecutive
+	dsn       string
+	db        *sql.DB
+	breaker   *breaker.Consecutive
+	connected bool
 }
 
 func newMysql(dsn string, bc *ConfigBreaker) *mysql {
 	this := new(mysql)
 	this.dsn = dsn
+	this.connected = false
 	this.breaker = &breaker.Consecutive{
 		FailureAllowance: bc.FailureAllowance,
 		RetryTimeout:     bc.RetryTimeout}
@@ -26,7 +28,11 @@ func newMysql(dsn string, bc *ConfigBreaker) *mysql {
 }
 
 func (this *mysql) Open() (err error) {
+	// Open doesn't open a connection. Validate DSN data
 	this.db, err = sql.Open("mysql", this.dsn)
+	if err == nil {
+		this.connected = true
+	}
 	return
 }
 
@@ -44,7 +50,7 @@ func (this mysql) String() string {
 
 func (this *mysql) Query(query string, args ...interface{}) (rows *sql.Rows,
 	err error) {
-	log.Debug("%s, args=%+v", query, args)
+	log.Debug("db query=%s, args=%+v", query, args)
 
 	if this.breaker.Open() {
 		return nil, ErrCircuitOpen
