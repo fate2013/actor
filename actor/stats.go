@@ -5,6 +5,7 @@ import (
 	log "github.com/funkygao/log4go"
 	"github.com/funkygao/metrics"
 	"github.com/gorilla/mux"
+	"io"
 	logger "log"
 	"net/http"
 	"os"
@@ -27,8 +28,22 @@ func (this *StatsRunner) Run() {
 	this.launchHttpServ()
 	defer this.stopHttpServ()
 
+	var (
+		metricsWriter io.Writer
+		err           error
+	)
+	if this.actor.config.MetricsLogfile == "" ||
+		this.actor.config.MetricsLogfile == "stdout" {
+		metricsWriter = os.Stdout
+	} else {
+		metricsWriter, err = os.OpenFile(this.actor.config.MetricsLogfile,
+			os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+		if err != nil {
+			panic(err)
+		}
+	}
 	go metrics.Log(metrics.DefaultRegistry, this.actor.config.ConsoleStatsInterval,
-		logger.New(os.Stderr, "", logger.LstdFlags))
+		logger.New(metricsWriter, "", logger.LstdFlags))
 
 	ticker := time.NewTicker(this.actor.config.ConsoleStatsInterval)
 	defer ticker.Stop()

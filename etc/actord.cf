@@ -5,6 +5,7 @@
     callback_timeout: 5
     sched_interval: 1
     stats_interval: 5
+    metrics_logfile: "metrics.log"
     mysql: {
         connect_timeout: 4
         io_timeout: 30

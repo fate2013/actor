@@ -13,6 +13,7 @@ type ActorConfig struct {
 	ProfListenAddr       string
 	CallbackUrl          string
 	CallbackTimeout      int
+	MetricsLogfile       string
 	ScheduleInterval     time.Duration
 	ConsoleStatsInterval time.Duration
 	MysqlConfig          *ConfigMysql
@@ -21,6 +22,7 @@ type ActorConfig struct {
 func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
 	this.RestListenAddr = cf.String("rest_listen_addr", "")
 	this.ProfListenAddr = cf.String("prof_listen_addr", "")
+	this.MetricsLogfile = cf.String("metrics_logfile", "")
 	this.CallbackUrl = cf.String("callback_url", "")
 	if this.CallbackUrl == "" {
 		err = errors.New("empty callback_url")
