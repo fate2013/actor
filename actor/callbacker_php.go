@@ -40,6 +40,12 @@ func (this *PhpCallbacker) Call(j Job) {
 	// in that case, will reschedule the job after 1s
 	t0 := time.Now()
 	res, err := http.Post(url, CONTENT_TYPE_JSON, bytes.NewBuffer(params))
+	if err != nil {
+		log.Error("post[%s] err: %s", url, err.Error())
+		this.outstandings.unlock(j)
+		return
+	}
+
 	defer func() {
 		res.Body.Close()
 		this.outstandings.unlock(j)
