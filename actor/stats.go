@@ -5,38 +5,30 @@ import (
 	log "github.com/funkygao/log4go"
 	"github.com/funkygao/metrics"
 	"github.com/gorilla/mux"
+	logger "log"
 	"net/http"
+	"os"
 	"runtime"
 	"time"
 )
 
 type StatsRunner struct {
 	actor *Actor
-
-	dbLatencies       metrics.Histogram
-	callbackLatencies metrics.Histogram
 }
 
 func NewStatsRunner(actor *Actor) *StatsRunner {
 	this := new(StatsRunner)
 	this.actor = actor
-	this.dbLatencies = metrics.NewHistogram(
-		metrics.NewExpDecaySample(1028, 0.015))
-
-	this.callbackLatencies = metrics.NewHistogram(
-		metrics.NewExpDecaySample(1028, 0.015))
 
 	return this
-}
-
-func (this *StatsRunner) Init() {
-	metrics.Register("latency.db", this.dbLatencies)
-	metrics.Register("latency.callback", this.callbackLatencies)
 }
 
 func (this *StatsRunner) Run() {
 	this.launchHttpServ()
 	defer this.stopHttpServ()
+
+	go metrics.Log(metrics.DefaultRegistry, this.actor.config.ConsoleStatsInterval,
+		logger.New(os.Stderr, "", logger.LstdFlags))
 
 	ticker := time.NewTicker(this.actor.config.ConsoleStatsInterval)
 	defer ticker.Stop()
