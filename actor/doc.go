@@ -1,4 +1,17 @@
 /*
+
+                           +-- mysql
+                           |
+          persistent conn  |-- mysql
+   actord -----------------|
+     |           job poll  |-- mysql
+     | http                |
+     | callback            +-- mysql
+     |
+    php ---+
+     |     | lock
+     +-----+
+
 actor schedules march event: arrive(speedup), recall(homeBack)
 
 

@@ -1,15 +1,14 @@
 /*
-                           +-- mysql
-                           |
-          persistent conn  |-- mysql
-   actord -----------------|
-     |           job poll  |-- mysql
-     | http                |
-     | callback            +-- mysql
+   statsRunner
      |
-    php ---+
-     |     | lock
-     +-----+
+   actor --- schduler --- pollers --- mysql farm
+               |            |
+               |            | callbackCh
+             callback ------+
+               |
+               |
+              php
+
 */
 package actor
 
@@ -21,8 +20,8 @@ type Actor struct {
 	server *server.Server
 	config *ActorConfig
 
-	stats     *statsRunner
-	scheduler *scheduler
+	statsRunner *statsRunner
+	scheduler   *scheduler
 }
 
 func New(server *server.Server) (this *Actor) {
@@ -34,10 +33,17 @@ func New(server *server.Server) (this *Actor) {
 		panic(err)
 	}
 
-	this.stats = newStatsRunner(this)
-	this.stats.init()
+	this.statsRunner = newStatsRunner(this)
+	this.statsRunner.init()
 
-	this.scheduler = newScheduler(this, this.config.MysqlConfig)
+	this.scheduler = newScheduler(this.config.ScheduleInterval,
+		this.config.CallbackUrl, this.config.MysqlConfig)
 
 	return
+}
+
+func (this *Actor) ServeForever() {
+	go this.scheduler.run()
+
+	this.statsRunner.run()
 }

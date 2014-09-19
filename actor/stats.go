@@ -42,11 +42,11 @@ func (this *statsRunner) run() {
 	defer ticker.Stop()
 
 	for _ = range ticker.C {
-		this.exportConsole()
+		this.showStats()
 	}
 }
 
-func (this *statsRunner) exportConsole() {
+func (this *statsRunner) showStats() {
 	log.Info("ver: %s, elapsed:%s, goroutine:%d",
 		server.BuildID,
 		time.Since(this.actor.server.StartedAt),

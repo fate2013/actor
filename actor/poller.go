@@ -6,20 +6,20 @@ import (
 )
 
 type poller struct {
-	actor *Actor
-	mysql *mysql
+	interval time.Duration
+	mysql    *mysql
 }
 
-func newPoller(actor *Actor, mysql *mysql) *poller {
+func newPoller(interval time.Duration, mysql *mysql) *poller {
 	this := new(poller)
-	this.actor = actor
+	this.interval = interval
 	this.mysql = mysql
 	return this
 
 }
 
 func (this *poller) run(jobCh chan<- string) {
-	ticker := time.NewTicker(this.actor.config.ScheduleInterval)
+	ticker := time.NewTicker(this.interval)
 	defer ticker.Stop()
 
 	for now := range ticker.C {
@@ -37,7 +37,7 @@ func (this *poller) run(jobCh chan<- string) {
 			for i, _ := range cols {
 				valuePtrs[i] = &values[i]
 				rows.Scan(valuePtrs...)
-				uid := values[0].(int64)
+				//uid := values[0].(int64)
 			}
 		}
 	}
