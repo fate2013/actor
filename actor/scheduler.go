@@ -20,7 +20,7 @@ func newScheduler(interval time.Duration, callbackUrl string,
 	this.interval = interval
 	this.jobChan = make(chan Job, 1000) // TODO
 	this.pollers = make(map[string]Poller)
-	this.callbacker = newPhpCallbacker(callbackUrl)
+	this.callbacker = NewPhpCallbacker(callbackUrl)
 	return this
 }
 
@@ -28,7 +28,7 @@ func (this *Scheduler) Run(myconf *ConfigMysql) {
 	go this.runCallback()
 
 	for pool, my := range myconf.Servers {
-		this.pollers[pool] = newMysqlPoller(this.interval, my, &myconf.Breaker)
+		this.pollers[pool] = NewMysqlPoller(this.interval, my, &myconf.Breaker)
 		if this.pollers[pool] != nil {
 			log.Debug("started %s poller", pool)
 
