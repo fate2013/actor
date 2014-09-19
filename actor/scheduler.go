@@ -6,7 +6,6 @@ import (
 	log "github.com/funkygao/log4go"
 	"io/ioutil"
 	"net/http"
-	"sync"
 	"time"
 )
 
@@ -15,10 +14,8 @@ type scheduler struct {
 	callbackUrl string
 	conf        *ConfigMysql
 
-	mutex sync.Mutex
-
-	jobChan         chan job
-	outstandingJobs map[job]bool
+	jobChan      chan job
+	outstandings *outstandingJobs
 
 	pollers map[string]*poller
 }
@@ -30,7 +27,7 @@ func newScheduler(interval time.Duration, callbackUrl string,
 	this.callbackUrl = callbackUrl
 	this.conf = conf
 	this.pollers = make(map[string]*poller)
-	this.outstandingJobs = make(map[job]bool)
+	this.outstandings = newOutstandingJobs()
 	this.jobChan = make(chan job, 1000)
 	return this
 }
@@ -65,6 +62,7 @@ func (this *scheduler) runCallback() {
 				return
 			}
 
+			this.outstandings.enter(job)
 			go this.callback(job)
 		}
 	}
@@ -80,6 +78,7 @@ func (this *scheduler) callback(j job) {
 	res, err := http.Post(url, CONTENT_TYPE_JSON, bytes.NewBuffer(params))
 	defer func() {
 		res.Body.Close()
+		this.outstandings.exit(j)
 	}()
 
 	payload, err := ioutil.ReadAll(res.Body)
