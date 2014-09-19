@@ -33,10 +33,10 @@ func New(server *server.Server) (this *Actor) {
 		panic(err)
 	}
 
-	this.statsRunner = newStatsRunner(this)
+	this.statsRunner = NewStatsRunner(this)
 	this.statsRunner.Init()
 
-	this.scheduler = newScheduler(this.config.ScheduleInterval,
+	this.scheduler = NewScheduler(this.config.ScheduleInterval,
 		this.config.CallbackUrl, this.config.MysqlConfig)
 
 	return

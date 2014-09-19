@@ -14,7 +14,7 @@ type Scheduler struct {
 	callbacker Callbacker
 }
 
-func newScheduler(interval time.Duration, callbackUrl string,
+func NewScheduler(interval time.Duration, callbackUrl string,
 	conf *ConfigMysql) *Scheduler {
 	this := new(Scheduler)
 	this.interval = interval

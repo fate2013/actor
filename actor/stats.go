@@ -17,7 +17,7 @@ type StatsRunner struct {
 	callbackLatencies metrics.Histogram
 }
 
-func newStatsRunner(actor *Actor) *StatsRunner {
+func NewStatsRunner(actor *Actor) *StatsRunner {
 	this := new(StatsRunner)
 	this.actor = actor
 	this.dbLatencies = metrics.NewHistogram(

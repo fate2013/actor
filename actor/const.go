@@ -5,6 +5,4 @@ const (
 
 	RESPONSE_OK    = "ok"
 	RESPONSE_RETRY = "retry"
-
-	TABLE_JOB = "Job"
 )
