@@ -8,7 +8,7 @@ import (
 type Scheduler struct {
 	interval time.Duration
 
-	// poller -> job -> callback
+	// Poller -> jobChan -> Callbacker
 	jobChan    chan Job
 	pollers    map[string]Poller
 	callbacker Callbacker
