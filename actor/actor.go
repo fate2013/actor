@@ -3,7 +3,7 @@
      |
    actor --- schduler --- pollers --- mysql farm
                |            |
-               |            | callbackCh
+               |            | scheduler.jobChan
              callback ------+
                |
                |
@@ -20,7 +20,7 @@ type Actor struct {
 	server *server.Server
 	config *ActorConfig
 
-	statsRunner *statsRunner
+	statsRunner *StatsRunner
 	scheduler   *Scheduler
 }
 
@@ -34,7 +34,7 @@ func New(server *server.Server) (this *Actor) {
 	}
 
 	this.statsRunner = newStatsRunner(this)
-	this.statsRunner.init()
+	this.statsRunner.Init()
 
 	this.scheduler = newScheduler(this.config.ScheduleInterval,
 		this.config.CallbackUrl, this.config.MysqlConfig)
@@ -45,5 +45,5 @@ func New(server *server.Server) (this *Actor) {
 func (this *Actor) ServeForever() {
 	go this.scheduler.Run(this.config.MysqlConfig)
 
-	this.statsRunner.run()
+	this.statsRunner.Run()
 }
