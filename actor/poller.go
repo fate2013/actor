@@ -39,7 +39,7 @@ func (this *poller) run(jobCh chan<- job) {
 		}
 
 		for rows.Next() {
-			err = rows.Scan(&job.uid, &job.jobId, &job.dueTime)
+			err = rows.Scan(&job.Uid, &job.JobId, &job.dueTime)
 			if err != nil {
 				log.Error("db scan error: %s", err.Error())
 				continue
