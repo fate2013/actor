@@ -29,7 +29,7 @@ func (this *Scheduler) Len() int {
 }
 
 func (this *Scheduler) Run(myconf *ConfigMysql) {
-	go this.runCallback()
+	go this.scheduleCallback()
 
 	for pool, my := range myconf.Servers {
 		this.pollers[pool] = NewMysqlPoller(this.interval, my, &myconf.Breaker)
@@ -43,7 +43,7 @@ func (this *Scheduler) Run(myconf *ConfigMysql) {
 	log.Info("scheduler started")
 }
 
-func (this *Scheduler) runCallback() {
+func (this *Scheduler) scheduleCallback() {
 	for {
 		select {
 		case job, ok := <-this.jobChan:
@@ -54,5 +54,15 @@ func (this *Scheduler) runCallback() {
 
 			go this.callbacker.Call(job)
 		}
+	}
+}
+
+func (this *Scheduler) callback(j Job) {
+	for i := 0; i < 5; i++ {
+		if retry := this.callbacker.Call(j); !retry {
+			return
+		}
+
+		time.Sleep(time.Second)
 	}
 }

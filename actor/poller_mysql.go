@@ -62,7 +62,7 @@ func (this *MysqlPoller) Run(jobCh chan<- Job) {
 				continue
 			}
 
-			log.Debug("due %+v", job)
+			log.Debug("waking up %+v", job)
 			jobCh <- job
 		}
 	}

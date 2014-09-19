@@ -1,7 +1,7 @@
 package actor
 
 import (
-	"bytes"
+	"encoding/json"
 	"fmt"
 	log "github.com/funkygao/log4go"
 	"github.com/funkygao/metrics"
@@ -26,9 +26,9 @@ func NewPhpCallbacker(url string) *PhpCallbacker {
 	return this
 }
 
-func (this *PhpCallbacker) Call(j Job) {
+func (this *PhpCallbacker) Call(j Job) (retry bool) {
 	if !this.outstandings.lock(j) { // lock failed
-		log.Debug("locked %+v", j)
+		log.Warn("locked %+v", j)
 		return
 	}
 
@@ -36,12 +36,11 @@ func (this *PhpCallbacker) Call(j Job) {
 	url := fmt.Sprintf(this.url, string(params))
 	log.Debug("callback: %s", url)
 
-	// may fail, because php will throw LockException
-	// in that case, will reschedule the job after 1s
 	t0 := time.Now()
-	res, err := http.Post(url, CONTENT_TYPE_JSON, bytes.NewBuffer(params))
+	res, err := http.Get(url)
+	this.latency.Update(time.Since(t0).Nanoseconds() / 1e6)
 	if err != nil {
-		log.Error("http post err: %s", err.Error())
+		log.Error("http err: %s", err.Error())
 		this.outstandings.unlock(j)
 		return
 	}
@@ -52,14 +51,38 @@ func (this *PhpCallbacker) Call(j Job) {
 	}()
 
 	payload, err := ioutil.ReadAll(res.Body)
-	this.latency.Update(time.Since(t0).Nanoseconds() / 1e6)
 	log.Debug("payload: %s", string(payload))
 
 	if err != nil {
-		log.Error("post error: %s", err.Error())
+		log.Error("payload error: %s", err.Error())
 	} else {
 		if res.StatusCode != http.StatusOK {
-			log.Error("callback error: %+v", res)
+			log.Error("callback err: %+v", res)
+			return
 		}
+
+		// parse php payload to check if to retry
+		var (
+			objmap map[string]*json.RawMessage
+			ok     int
+		)
+		err = json.Unmarshal(payload, &objmap)
+		if err != nil {
+			log.Error("payload err: %s", err.Error())
+			return
+		}
+		json.Unmarshal(*objmap["ok"], &ok)
+		log.Debug("ok=%d", ok)
+
+		switch ok {
+		case RESPONSE_OK:
+			break
+
+		case RESPONSE_RETRY:
+			retry = true
+		}
+
 	}
+
+	return
 }

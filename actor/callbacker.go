@@ -1,5 +1,5 @@
 package actor
 
 type Callbacker interface {
-	Call(j Job)
+	Call(j Job) (retry bool)
 }
