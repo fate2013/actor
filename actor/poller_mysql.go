@@ -89,6 +89,11 @@ func (this *MysqlPoller) Run(jobCh chan<- Job) {
 }
 
 // TODO disable autocommit
+// Job rows: time_end with 1, 5, 9
+// select * from Job where time_end<=8
+// php(player) speedup 9 to 4
+// delete from Job where time_end<=8 will miss job(4)
+// contention exists between actord and php(because job can pause/speedup/cancel)
 func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) (jobs []Job) {
 	jobs = make([]Job, 0, 100)
 	var job Job
