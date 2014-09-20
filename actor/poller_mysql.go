@@ -8,19 +8,24 @@ import (
 )
 
 type MysqlPoller struct {
-	interval time.Duration
-	mysql    *mysql
-	jobStmt  *sql.Stmt
-	latency  metrics.Histogram
+	interval     time.Duration
+	mysql        *mysql
+	queryStmt    *sql.Stmt
+	killStmt     *sql.Stmt
+	queryLatency metrics.Histogram
+	killLatency  metrics.Histogram
 }
 
 func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 	breaker *ConfigBreaker) *MysqlPoller {
 	this := new(MysqlPoller)
-	this.latency = metrics.NewHistogram(
-		metrics.NewExpDecaySample(1028, 0.015))
-	metrics.Register("latency.db", this.latency)
 	this.interval = interval
+	this.queryLatency = metrics.NewHistogram(
+		metrics.NewExpDecaySample(1028, 0.015))
+	metrics.Register("latency.db.query", this.queryLatency)
+	this.killLatency = metrics.NewHistogram(
+		metrics.NewExpDecaySample(1028, 0.015))
+	metrics.Register("latency.db.kill", this.killLatency)
 
 	this.mysql = newMysql(my.DSN(), breaker)
 	err := this.mysql.Open()
@@ -34,7 +39,12 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 		return nil
 	}
 
-	this.jobStmt, err = this.mysql.db.Prepare(JOB_QUERY)
+	this.queryStmt, err = this.mysql.db.Prepare(JOB_QUERY)
+	if err != nil {
+		log.Critical("db prepare err: %s", err.Error())
+		return nil
+	}
+	this.killStmt, err = this.mysql.db.Prepare(JOB_KILL)
 	if err != nil {
 		log.Critical("db prepare err: %s", err.Error())
 		return nil
@@ -47,20 +57,19 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 // in case of multiple actord, check delete afftectedRows==rowsCount, then dispatch job
 func (this *MysqlPoller) Run(jobCh chan<- Job) {
 	ticker := time.NewTicker(this.interval)
-	defer ticker.Stop()
+	defer func() {
+		ticker.Stop()
+		this.Stop()
+	}()
 
-	var (
-		job Job
-		t0  time.Time
-	)
+	var job Job
 	for now := range ticker.C {
-		t0 = time.Now()
-		rows, err := this.jobStmt.Query(now.Unix())
+		rows, err := this.queryStmt.Query(now.Unix())
 		if err != nil {
 			log.Error("db query error: %s", err.Error())
 			continue
 		}
-		this.latency.Update(time.Since(t0).Nanoseconds() / 1e6)
+		this.queryLatency.Update(time.Since(now).Nanoseconds() / 1e6)
 
 		for rows.Next() {
 			err = rows.Scan(&job.Uid, &job.JobId, &job.dueTime)
@@ -76,6 +85,12 @@ func (this *MysqlPoller) Run(jobCh chan<- Job) {
 
 }
 
+func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) {
+	//t0 := time.Now()
+
+}
+
 func (this *MysqlPoller) Stop() {
-	this.jobStmt.Close()
+	this.queryStmt.Close()
+	this.killStmt.Close()
 }
