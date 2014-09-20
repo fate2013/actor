@@ -28,6 +28,11 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 		log.Critical("open mysql[%+v] failed: %s", *my, err)
 		return nil
 	}
+	err = this.mysql.Ping()
+	if err != nil {
+		log.Critical("ping mysql[%+v]: %s", *my, err)
+		return nil
+	}
 
 	this.jobStmt, err = this.mysql.db.Prepare(JOB_QUERY)
 	if err != nil {
