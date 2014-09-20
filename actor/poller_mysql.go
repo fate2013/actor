@@ -43,6 +43,8 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 	return this
 }
 
+// TODO select timeout jobs, then delete them
+// in case of multiple actord, check delete afftectedRows==rowsCount, then dispatch job
 func (this *MysqlPoller) Run(jobCh chan<- Job) {
 	ticker := time.NewTicker(this.interval)
 	defer ticker.Stop()
