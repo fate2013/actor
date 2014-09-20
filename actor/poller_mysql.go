@@ -20,6 +20,7 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 	breaker *ConfigBreaker) *MysqlPoller {
 	this := new(MysqlPoller)
 	this.interval = interval
+
 	this.queryLatency = metrics.NewHistogram(
 		metrics.NewExpDecaySample(1028, 0.015))
 	metrics.Register("latency.db.query", this.queryLatency)
@@ -81,13 +82,55 @@ func (this *MysqlPoller) Run(jobCh chan<- Job) {
 			log.Debug("waking up %+v", job)
 			jobCh <- job
 		}
+
+		rows.Close() // Failing to use rows.Close() or stmt.Close() can cause exhaustion of resources
 	}
 
 }
 
-func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) {
-	//t0 := time.Now()
+// TODO disable autocommit
+func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) (jobs []Job) {
+	jobs = make([]Job, 0, 100)
+	var job Job
 
+	tx, err := this.mysql.db.Begin()
+	if err != nil {
+		log.Critical("tx: %s", err.Error())
+		return
+	}
+	txQueryStmt := tx.Stmt(this.queryStmt)
+	txKillStmt := tx.Stmt(this.killStmt)
+	defer func() {
+		tx.Commit()
+		txQueryStmt.Close()
+		txKillStmt.Close()
+	}()
+
+	rows, err := txQueryStmt.Query(dueTime.Unix())
+	if err != nil {
+		log.Critical("query: %s", err.Error())
+		return
+	}
+
+	t1 := time.Now() // query done
+	this.queryLatency.Update(t1.Sub(dueTime).Nanoseconds() / 1e6)
+
+	// marshal db rows to Job
+	for rows.Next() {
+		rows.Scan(&job.Uid, &job.JobId, &job.dueTime)
+
+		jobs = append(jobs, job)
+	}
+
+	// kill the job to avoid being waken up in next round
+	result, err := txKillStmt.Exec(dueTime.Unix())
+	this.killLatency.Update(time.Since(t1).Nanoseconds() / 1e6)
+
+	if n, _ := result.RowsAffected(); n > 0 {
+		log.Debug("%d jobs killed", n)
+	}
+
+	return
 }
 
 func (this *MysqlPoller) Stop() {
