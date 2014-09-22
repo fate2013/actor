@@ -3,6 +3,7 @@
     prof_listen_addr: ":9011"
     callback_url: "http://dw-dev.socialgamenet.com/api/?class=actor&method=wakeup&params=%s"
     callback_timeout: 5
+    //callback_mq_addr: "127.0.0.1:11300"
     sched_interval: 1
     stats_interval: 5
     metrics_logfile: "metrics.log"
