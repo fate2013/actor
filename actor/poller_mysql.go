@@ -100,43 +100,38 @@ func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) (jobs []Job) {
 	jobs = make([]Job, 0, 100)
 	var job Job
 
-	tx, err := this.mysql.db.Begin()
+	rows, err := this.queryStmt.Query()
 	if err != nil {
-		log.Critical("tx: %s", err.Error())
-		return
-	}
-	txQueryStmt := tx.Stmt(this.queryStmt)
-	txKillStmt := tx.Stmt(this.killStmt)
-	defer func() {
-		tx.Commit()
-		txQueryStmt.Close()
-		txKillStmt.Close()
-	}()
-
-	rows, err := txQueryStmt.Query(dueTime.Unix())
-	if err != nil {
-		log.Critical("query: %s", err.Error())
+		log.Error("db query error: %s", err.Error())
 		return
 	}
 
-	t1 := time.Now() // query done
-	this.queryLatency.Update(t1.Sub(dueTime).Nanoseconds() / 1e6)
+	this.queryLatency.Update(time.Since(dueTime).Nanoseconds() / 1e6)
 
-	// marshal db rows to Job
 	for rows.Next() {
-		rows.Scan(&job.Uid, &job.JobId, &job.CityId,
+		err = rows.Scan(&job.Uid, &job.JobId, &job.CityId,
 			&job.Type, &job.TimeStart, &job.TimeEnd, &job.Trace)
+		if err != nil {
+			log.Error("db scan error: %s", err.Error())
+			continue
+		}
 
+		res, err := this.killStmt.Exec(job.Uid, job.JobId)
+		if err != nil {
+			log.Error("kill job[%+v]: %s", job, err)
+			continue
+		}
+		if n, _ := res.RowsAffected(); n != 1 {
+			// another process has killed this job since I query
+			log.Warn("job killed by another instance: %+v", job)
+			continue
+		}
+
+		log.Debug("job[%+v] killed", job)
 		jobs = append(jobs, job)
 	}
 
-	// kill the job to avoid being waken up in next round
-	result, err := txKillStmt.Exec(dueTime.Unix())
-	this.killLatency.Update(time.Since(t1).Nanoseconds() / 1e6)
-
-	if n, _ := result.RowsAffected(); n > 0 {
-		log.Debug("%d jobs killed", n)
-	}
+	log.Debug("due jobs: %+v", jobs)
 
 	return
 }
