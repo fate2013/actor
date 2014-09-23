@@ -10,7 +10,7 @@ type Scheduler struct {
 
 	// Poller -> jobChan -> Callbacker
 	jobChan    chan Job
-	pollers    map[string]Poller
+	pollers    map[string]Poller // key is db pool name
 	callbacker Callbacker
 }
 

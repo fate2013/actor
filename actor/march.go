@@ -17,3 +17,5 @@ type March struct {
 	StartTime time.Time
 	EndTime   time.Time
 }
+
+type MarchGroup []March

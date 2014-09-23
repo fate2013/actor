@@ -10,8 +10,8 @@ import (
 type MysqlPoller struct {
 	interval     time.Duration
 	mysql        *mysql
-	queryStmt    *sql.Stmt
-	killStmt     *sql.Stmt
+	jobQueryStmt *sql.Stmt
+	jobKillStmt  *sql.Stmt
 	queryLatency metrics.Histogram
 	killLatency  metrics.Histogram
 }
@@ -41,12 +41,12 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 	}
 	log.Debug("mysql connected: %s", my.DSN())
 
-	this.queryStmt, err = this.mysql.db.Prepare(JOB_QUERY)
+	this.jobQueryStmt, err = this.mysql.db.Prepare(JOB_QUERY)
 	if err != nil {
 		log.Critical("db prepare err: %s", err.Error())
 		return nil
 	}
-	this.killStmt, err = this.mysql.db.Prepare(JOB_KILL)
+	this.jobKillStmt, err = this.mysql.db.Prepare(JOB_KILL)
 	if err != nil {
 		log.Critical("db prepare err: %s", err.Error())
 		return nil
@@ -91,7 +91,7 @@ func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) (jobs []Job) {
 	jobs = make([]Job, 0, 100)
 	var job Job
 
-	rows, err := this.queryStmt.Query(dueTime.Unix())
+	rows, err := this.jobQueryStmt.Query(dueTime.Unix())
 	if err != nil {
 		log.Error("db query: %s", err.Error())
 		return
@@ -116,6 +116,6 @@ func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) (jobs []Job) {
 }
 
 func (this *MysqlPoller) Stop() {
-	this.queryStmt.Close()
-	this.killStmt.Close()
+	this.jobQueryStmt.Close()
+	this.jobKillStmt.Close()
 }
