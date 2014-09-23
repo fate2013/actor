@@ -36,9 +36,10 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 	}
 	err = this.mysql.Ping()
 	if err != nil {
-		log.Critical("ping mysql[%+v]: %s", *my, err)
+		log.Critical("ping mysql[%s]: %s", my.DSN(), err)
 		return nil
 	}
+	log.Debug("mysql connected: %s", my.DSN())
 
 	this.queryStmt, err = this.mysql.db.Prepare(JOB_QUERY)
 	if err != nil {
@@ -65,7 +66,7 @@ func (this *MysqlPoller) Run(jobCh chan<- Job) {
 
 	var job Job
 	for now := range ticker.C {
-		rows, err := this.queryStmt.Query(now.Unix())
+		rows, err := this.queryStmt.Query()
 		if err != nil {
 			log.Error("db query error: %s", err.Error())
 			continue
@@ -73,13 +74,14 @@ func (this *MysqlPoller) Run(jobCh chan<- Job) {
 		this.queryLatency.Update(time.Since(now).Nanoseconds() / 1e6)
 
 		for rows.Next() {
-			err = rows.Scan(&job.Uid, &job.JobId, &job.dueTime)
+			err = rows.Scan(&job.Uid, &job.JobId, &job.CityId,
+				&job.Type, &job.TimeStart, &job.TimeEnd, &job.Trace)
 			if err != nil {
 				log.Error("db scan error: %s", err.Error())
 				continue
 			}
 
-			log.Debug("waking up %+v", job)
+			log.Debug("waking up %s", job)
 			jobCh <- job
 		}
 
@@ -122,7 +124,8 @@ func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) (jobs []Job) {
 
 	// marshal db rows to Job
 	for rows.Next() {
-		rows.Scan(&job.Uid, &job.JobId, &job.dueTime)
+		rows.Scan(&job.Uid, &job.JobId, &job.CityId,
+			&job.Type, &job.TimeStart, &job.TimeEnd, &job.Trace)
 
 		jobs = append(jobs, job)
 	}

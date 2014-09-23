@@ -63,6 +63,8 @@ func (this *PhpCallbacker) Call(j Job) (retry bool) {
 		return
 	}
 
+	return
+
 	// parse php payload to check if to retry
 	var (
 		objmap map[string]*json.RawMessage
