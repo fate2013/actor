@@ -93,7 +93,7 @@ func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) (jobs []Job) {
 
 	rows, err := this.queryStmt.Query(dueTime.Unix())
 	if err != nil {
-		log.Error("db query error: %s", err.Error())
+		log.Error("db query: %s", err.Error())
 		return
 	}
 
@@ -103,22 +103,10 @@ func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) (jobs []Job) {
 		err = rows.Scan(&job.Uid, &job.JobId, &job.CityId,
 			&job.Type, &job.TimeStart, &job.TimeEnd, &job.Trace)
 		if err != nil {
-			log.Error("db scan error: %s", err.Error())
+			log.Error("db scan: %s", err.Error())
 			continue
 		}
 
-		res, err := this.killStmt.Exec(job.Uid, job.JobId)
-		if err != nil {
-			log.Error("kill job[%+v]: %s", job, err)
-			continue
-		}
-		if n, _ := res.RowsAffected(); n != 1 {
-			// another process has killed this job since I query
-			log.Warn("job killed by another instance: %+v", job)
-			continue
-		}
-
-		log.Debug("job[%+v] killed", job)
 		jobs = append(jobs, job)
 	}
 
