@@ -43,6 +43,7 @@ func (this *Scheduler) Run(myconf *ConfigMysql) {
 	log.Info("scheduler started")
 }
 
+// TODO do we need finish t jobs callback before callback t+1?
 func (this *Scheduler) scheduleCallback() {
 	for {
 		select {
