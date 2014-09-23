@@ -64,28 +64,19 @@ func (this *MysqlPoller) Run(jobCh chan<- Job) {
 		this.Stop()
 	}()
 
-	var job Job
+	var jobs []Job
 	for now := range ticker.C {
-		rows, err := this.queryStmt.Query()
-		if err != nil {
-			log.Error("db query error: %s", err.Error())
+		jobs = this.fetchReadyJobs(now)
+		if len(jobs) == 0 {
 			continue
 		}
-		this.queryLatency.Update(time.Since(now).Nanoseconds() / 1e6)
 
-		for rows.Next() {
-			err = rows.Scan(&job.Uid, &job.JobId, &job.CityId,
-				&job.Type, &job.TimeStart, &job.TimeEnd, &job.Trace)
-			if err != nil {
-				log.Error("db scan error: %s", err.Error())
-				continue
-			}
+		log.Debug("waking up %+v", jobs)
 
-			log.Debug("waking up %s", job)
+		for _, job := range jobs {
 			jobCh <- job
 		}
 
-		rows.Close() // Failing to use rows.Close() or stmt.Close() can cause exhaustion of resources
 	}
 
 }
@@ -100,7 +91,7 @@ func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) (jobs []Job) {
 	jobs = make([]Job, 0, 100)
 	var job Job
 
-	rows, err := this.queryStmt.Query()
+	rows, err := this.queryStmt.Query(dueTime.Unix())
 	if err != nil {
 		log.Error("db query error: %s", err.Error())
 		return
@@ -131,7 +122,7 @@ func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) (jobs []Job) {
 		jobs = append(jobs, job)
 	}
 
-	log.Debug("due jobs: %+v", jobs)
+	rows.Close() // Failing to use rows.Close() or stmt.Close() can cause exhaustion of resources
 
 	return
 }
