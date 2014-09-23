@@ -23,7 +23,8 @@ func (this *Job) marshal() []byte {
 }
 
 func (this Job) String() string {
-	return fmt.Sprintf("Job{uid:%d, job_id:%d}", this.Uid, this.JobId)
+	return fmt.Sprintf("Job{uid:%d, job_id:%d, due:%s}", this.Uid,
+		this.JobId, this.TimeEnd)
 }
 
 type outstandingJobs struct {

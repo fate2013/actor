@@ -52,7 +52,6 @@ func (this *PhpCallbacker) Call(j Job) (retry bool) {
 
 	payload, err := ioutil.ReadAll(res.Body)
 	log.Debug("payload: %s, elapsed: %v", string(payload), time.Since(t0))
-
 	if err != nil {
 		log.Error("payload: %s", err.Error())
 		return

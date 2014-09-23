@@ -58,11 +58,13 @@ func (this *Scheduler) scheduleCallback() {
 }
 
 func (this *Scheduler) callback(j Job) {
+	rtos := []time.Duration{1, 2, 3, 4, 5}
 	for i := 0; i < 5; i++ {
 		if retry := this.callbacker.Call(j); !retry {
 			return
 		}
 
-		time.Sleep(time.Second)
+		time.Sleep(time.Second * rtos[i])
+		log.Warn("recallback %v", j)
 	}
 }
