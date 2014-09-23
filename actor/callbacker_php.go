@@ -13,7 +13,7 @@ import (
 type PhpCallbacker struct {
 	url          string
 	latency      metrics.Histogram
-	outstandings *outstandingJobs // FIXME
+	outstandings *Outstandings
 }
 
 func NewPhpCallbacker(url string) *PhpCallbacker {
@@ -22,12 +22,12 @@ func NewPhpCallbacker(url string) *PhpCallbacker {
 	this.latency = metrics.NewHistogram(
 		metrics.NewExpDecaySample(1028, 0.015))
 	metrics.Register("latency.php", this.latency)
-	this.outstandings = newOutstandingJobs()
+	this.outstandings = NewOutstandings(10000) // FIXME
 	return this
 }
 
 func (this *PhpCallbacker) Call(j Job) (retry bool) {
-	if !this.outstandings.lock(j) { // lock failed
+	if !this.outstandings.Lock(j) { // lock failed
 		log.Warn("locked %+v", j)
 		return
 	}
@@ -41,13 +41,13 @@ func (this *PhpCallbacker) Call(j Job) (retry bool) {
 	this.latency.Update(time.Since(t0).Nanoseconds() / 1e6)
 	if err != nil {
 		log.Error("http err: %s", err.Error())
-		this.outstandings.unlock(j)
+		this.outstandings.Unlock(j)
 		return
 	}
 
 	defer func() {
 		res.Body.Close()
-		this.outstandings.unlock(j)
+		this.outstandings.Unlock(j)
 	}()
 
 	payload, err := ioutil.ReadAll(res.Body)

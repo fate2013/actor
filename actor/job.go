@@ -3,7 +3,6 @@ package actor
 import (
 	"encoding/json"
 	"fmt"
-	"sync"
 	"time"
 )
 
@@ -25,31 +24,4 @@ func (this *Job) marshal() []byte {
 func (this Job) String() string {
 	return fmt.Sprintf("Job{uid:%d, job_id:%d, due:%s}", this.Uid,
 		this.JobId, this.TimeEnd)
-}
-
-type outstandingJobs struct {
-	mutex sync.Mutex
-	jobs  map[Job]bool
-}
-
-func newOutstandingJobs() *outstandingJobs {
-	this := new(outstandingJobs)
-	this.jobs = make(map[Job]bool)
-	return this
-}
-
-func (this *outstandingJobs) lock(j Job) bool {
-	this.mutex.Lock()
-	_, present := this.jobs[j]
-	if !present {
-		this.jobs[j] = true
-	}
-	this.mutex.Unlock()
-	return !present
-}
-
-func (this *outstandingJobs) unlock(j Job) {
-	this.mutex.Lock()
-	delete(this.jobs, j)
-	this.mutex.Unlock()
 }
