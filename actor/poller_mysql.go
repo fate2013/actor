@@ -61,9 +61,9 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 func (this *MysqlPoller) Run(jobCh chan<- Job, marchChan chan<- March) {
 	defer this.Stop()
 
-	go this.pollMarch(marchChan)
+	this.pollMarch(marchChan)
 
-	this.pollJob(jobCh)
+	//this.pollJob(jobCh)
 }
 
 func (this *MysqlPoller) pollJob(jobCh chan<- Job) {
@@ -90,7 +90,7 @@ func (this *MysqlPoller) pollMarch(marchCh chan<- March) {
 	ticker := time.NewTicker(this.interval)
 	defer ticker.Stop()
 
-	var marches []March
+	var marches MarchGroup
 	for now := range ticker.C {
 		marches = this.fetchReadyMarches(now)
 		if len(marches) > 0 {
@@ -104,7 +104,7 @@ func (this *MysqlPoller) pollMarch(marchCh chan<- March) {
 
 }
 
-func (this *MysqlPoller) fetchReadyMarches(dueTime time.Time) (marches []March) {
+func (this *MysqlPoller) fetchReadyMarches(dueTime time.Time) (marches MarchGroup) {
 	rows, err := this.marchQueryStmt.Query(dueTime.Unix())
 	if err != nil {
 		log.Error("db query: %s", err.Error())
@@ -121,14 +121,13 @@ func (this *MysqlPoller) fetchReadyMarches(dueTime time.Time) (marches []March) 
 			continue
 		}
 
-		log.Debug("%+v", march)
-
 		marches = append(marches, march)
 	}
 
+	//marches.sortByDestination()
+
 	rows.Close()
 	return
-
 }
 
 // TODO disable autocommit
@@ -138,7 +137,7 @@ func (this *MysqlPoller) fetchReadyMarches(dueTime time.Time) (marches []March) 
 // delete from Job where time_end<=8 will miss job(4)
 // contention exists between actord and php(because job can pause/speedup/cancel)
 func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) (jobs []Job) {
-	jobs = make([]Job, 0, 100)
+	//jobs = make([]Job, 0, 100)
 
 	rows, err := this.jobQueryStmt.Query(dueTime.Unix())
 	if err != nil {

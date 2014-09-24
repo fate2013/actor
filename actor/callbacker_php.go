@@ -11,16 +11,18 @@ import (
 )
 
 type PhpCallbacker struct {
-	url     string
-	config  *ConfigCallback
-	latency metrics.Histogram
-	flight  *Flight
+	url         string
+	config      *ConfigCallback
+	latency     metrics.Histogram
+	jobFlight   *Flight
+	marchFlight *Flight
 }
 
 func NewPhpCallbacker(config *ConfigCallback) *PhpCallbacker {
 	this := new(PhpCallbacker)
 	this.config = config
-	this.flight = NewFlight(10000) // FIXME
+	this.jobFlight = NewFlight(10000) // FIXME
+	this.marchFlight = NewFlight(10000)
 	this.latency = metrics.NewHistogram(
 		metrics.NewExpDecaySample(1028, 0.015))
 	metrics.Register("latency.php", this.latency)
@@ -28,32 +30,76 @@ func NewPhpCallbacker(config *ConfigCallback) *PhpCallbacker {
 }
 
 func (this *PhpCallbacker) Play(m March) (retry bool) {
-	log.Debug("callback %+v", m)
-	return
-}
-
-func (this *PhpCallbacker) Call(j Job) (retry bool) {
-	if !this.flight.Takeoff(j) { // lock failed
-		log.Warn("locked %+v", j)
+	if this.config.March == "" {
+		// disabled
 		return
 	}
 
-	params := j.marshal()
-	url := fmt.Sprintf(this.config.Job, string(params))
-	log.Debug("callback: %s", url)
+	if !this.marchFlight.Takeoff(m.GeoHash()) { // lock failed
+		log.Warn("locked %+v", m)
+		return true
+	}
+
+	params := m.Marshal()
+	url := fmt.Sprintf(this.config.March, string(params))
+	log.Debug("march callback: %s", url)
 
 	t0 := time.Now()
 	res, err := http.Get(url)
 	this.latency.Update(time.Since(t0).Nanoseconds() / 1e6)
 	if err != nil {
 		log.Error("http err: %s", err.Error())
-		this.flight.Land(j)
+		this.marchFlight.Land(m)
 		return
 	}
 
 	defer func() {
 		res.Body.Close()
-		this.flight.Land(j)
+		this.marchFlight.Land(m)
+	}()
+
+	payload, err := ioutil.ReadAll(res.Body)
+	log.Debug("payload: %s, elapsed: %v", string(payload), time.Since(t0))
+	if err != nil {
+		log.Error("payload: %s", err.Error())
+		return
+	}
+
+	if res.StatusCode != http.StatusOK {
+		log.Error("callback err: %+v", res)
+		return
+	}
+
+	return
+}
+
+func (this *PhpCallbacker) Call(j Job) (retry bool) {
+	if this.config.Job == "" {
+		// disabled
+		return
+	}
+
+	if !this.jobFlight.Takeoff(j) { // lock failed
+		log.Warn("locked %+v", j)
+		return true
+	}
+
+	params := j.Marshal()
+	url := fmt.Sprintf(this.config.Job, string(params))
+	log.Debug("job callback: %s", url)
+
+	t0 := time.Now()
+	res, err := http.Get(url)
+	this.latency.Update(time.Since(t0).Nanoseconds() / 1e6)
+	if err != nil {
+		log.Error("http err: %s", err.Error())
+		this.jobFlight.Land(j)
+		return
+	}
+
+	defer func() {
+		res.Body.Close()
+		this.jobFlight.Land(j)
 	}()
 
 	payload, err := ioutil.ReadAll(res.Body)

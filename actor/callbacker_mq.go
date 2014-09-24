@@ -22,7 +22,7 @@ func NewMqCallbacker(addr string) (this *MqCallbacker) {
 }
 
 func (this *MqCallbacker) Call(j Job) (retry bool) {
-	jobId, err := this.beanstalkd.Put(0, 0, 60, j.marshal())
+	jobId, err := this.beanstalkd.Put(0, 0, 60, j.Marshal())
 	if err != nil {
 		log.Error("mq put: %s", err.Error())
 

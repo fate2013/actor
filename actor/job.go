@@ -16,7 +16,7 @@ type Job struct {
 	Trace     string    `json:"trace"`
 }
 
-func (this *Job) marshal() []byte {
+func (this *Job) Marshal() []byte {
 	b, _ := json.Marshal(*this)
 	return b
 }

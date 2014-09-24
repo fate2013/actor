@@ -56,7 +56,7 @@ func (this *Scheduler) scheduleCallback() {
 				return
 			}
 
-			go this.callback(job)
+			go this.callbackJob(job)
 
 		case march, ok := <-this.marchChan:
 			if !ok {
@@ -64,20 +64,34 @@ func (this *Scheduler) scheduleCallback() {
 				return
 			}
 
-			go this.callbacker.Play(march)
+			go this.callbackMarch(march)
 		}
 
 	}
 }
 
-func (this *Scheduler) callback(j Job) {
+func (this *Scheduler) callbackMarch(m March) {
 	rtos := []time.Duration{1, 2, 3, 4, 5}
 	for i := 0; i < 5; i++ {
-		if retry := this.callbacker.Call(j); !retry {
+		if retry := this.callbacker.Play(m); !retry {
+			log.Debug("ok march callback: %+v", m)
 			return
 		}
 
 		time.Sleep(time.Second * rtos[i])
-		log.Warn("recallback %v", j)
+		log.Warn("recallback %+v", m)
+	}
+}
+
+func (this *Scheduler) callbackJob(j Job) {
+	rtos := []time.Duration{1, 2, 3, 4, 5}
+	for i := 0; i < 5; i++ {
+		if retry := this.callbacker.Call(j); !retry {
+			log.Debug("ok job callback: %+v", j)
+			return
+		}
+
+		time.Sleep(time.Second * rtos[i])
+		log.Warn("recallback %+v", j)
 	}
 }
