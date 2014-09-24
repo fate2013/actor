@@ -93,13 +93,34 @@ func (this *MysqlPoller) pollMarch() {
 	var marches []March
 	for now := range ticker.C {
 		marches = this.fetchReadyMarches(now)
-		log.Debug("due %+v", marches)
+		if len(marches) > 0 {
+			log.Debug("due %+v", marches)
+		}
 	}
 
 }
 
 func (this *MysqlPoller) fetchReadyMarches(dueTime time.Time) (marches []March) {
-	this.marchQueryStmt.Query(dueTime.Unix())
+	rows, err := this.marchQueryStmt.Query(dueTime.Unix())
+	if err != nil {
+		log.Error("db query: %s", err.Error())
+		return
+	}
+
+	this.marchQueryLatency.Update(time.Since(dueTime).Nanoseconds() / 1e6)
+
+	var march March
+	for rows.Next() {
+		err = rows.Scan(&march.Uid, &march.MarchId, &march.X1, &march.Y1)
+		if err != nil {
+			log.Error("db scan: %s", err.Error())
+			continue
+		}
+
+		log.Debug("%+v", march)
+	}
+
+	rows.Close()
 	return
 
 }
@@ -112,7 +133,6 @@ func (this *MysqlPoller) fetchReadyMarches(dueTime time.Time) (marches []March) 
 // contention exists between actord and php(because job can pause/speedup/cancel)
 func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) (jobs []Job) {
 	jobs = make([]Job, 0, 100)
-	var job Job
 
 	rows, err := this.jobQueryStmt.Query(dueTime.Unix())
 	if err != nil {
@@ -122,6 +142,7 @@ func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) (jobs []Job) {
 
 	this.jobQueryLatency.Update(time.Since(dueTime).Nanoseconds() / 1e6)
 
+	var job Job
 	for rows.Next() {
 		err = rows.Scan(&job.Uid, &job.JobId, &job.CityId,
 			&job.Type, &job.TimeStart, &job.TimeEnd, &job.Trace)
