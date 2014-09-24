@@ -12,13 +12,14 @@ import (
 
 type PhpCallbacker struct {
 	url     string
+	config  *ConfigCallback
 	latency metrics.Histogram
 	flight  *Flight
 }
 
-func NewPhpCallbacker(url string) *PhpCallbacker {
+func NewPhpCallbacker(config *ConfigCallback) *PhpCallbacker {
 	this := new(PhpCallbacker)
-	this.url = url
+	this.config = config
 	this.flight = NewFlight(10000) // FIXME
 	this.latency = metrics.NewHistogram(
 		metrics.NewExpDecaySample(1028, 0.015))
@@ -33,7 +34,7 @@ func (this *PhpCallbacker) Call(j Job) (retry bool) {
 	}
 
 	params := j.marshal()
-	url := fmt.Sprintf(this.url, string(params))
+	url := fmt.Sprintf(this.config.Job, string(params))
 	log.Debug("callback: %s", url)
 
 	t0 := time.Now()

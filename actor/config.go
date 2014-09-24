@@ -1,7 +1,6 @@
 package actor
 
 import (
-	"errors"
 	"fmt"
 	conf "github.com/funkygao/jsconf"
 	log "github.com/funkygao/log4go"
@@ -11,26 +10,18 @@ import (
 type ActorConfig struct {
 	RestListenAddr       string
 	ProfListenAddr       string
-	CallbackUrl          string
-	CallbackTimeout      int
-	CallbackMqAddr       string
 	MetricsLogfile       string
 	ScheduleInterval     time.Duration
 	ConsoleStatsInterval time.Duration
-	MysqlConfig          *ConfigMysql
+
+	MysqlConfig    *ConfigMysql
+	CallbackConfig *ConfigCallback
 }
 
 func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
 	this.RestListenAddr = cf.String("rest_listen_addr", "")
 	this.ProfListenAddr = cf.String("prof_listen_addr", "")
 	this.MetricsLogfile = cf.String("metrics_logfile", "")
-	this.CallbackUrl = cf.String("callback_url", "")
-	this.CallbackMqAddr = cf.String("callback_mq_addr", "")
-	if this.CallbackUrl == "" && this.CallbackMqAddr == "" {
-		err = errors.New("empty callback")
-		return
-	}
-	this.CallbackTimeout = cf.Int("callback_timeout", 4)
 	this.ScheduleInterval = time.Duration(cf.Int("sched_interval", 1)) * time.Second
 	this.ConsoleStatsInterval = time.Duration(cf.Int("stats_interval", 60*10)) * time.Second
 
@@ -42,8 +33,31 @@ func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
 	}
 	this.MysqlConfig.loadConfig(section)
 
+	this.CallbackConfig = new(ConfigCallback)
+	section, err = cf.Section("callback")
+	if err != nil {
+		return
+	}
+	this.CallbackConfig.loadConfig(section)
+
 	log.Debug("actor config %+v", *this)
 	return
+}
+
+type ConfigCallback struct {
+	Timeout time.Duration
+	Job     string
+	March   string
+	MqAddr  string
+}
+
+func (this *ConfigCallback) loadConfig(cf *conf.Conf) {
+	this.Timeout = time.Duration(cf.Int("timeout", 5)) * time.Second
+	this.Job = cf.String("job", "")
+	this.March = cf.String("march", "")
+	this.MqAddr = cf.String("mq_addr", "")
+
+	log.Debug("callback config: %+v", *this)
 }
 
 type ConfigMysql struct {

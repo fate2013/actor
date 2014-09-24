@@ -14,13 +14,13 @@ type Scheduler struct {
 	callbacker Callbacker
 }
 
-func NewScheduler(interval time.Duration, callbackUrl string,
+func NewScheduler(interval time.Duration, callbackConf *ConfigCallback,
 	conf *ConfigMysql) *Scheduler {
 	this := new(Scheduler)
 	this.interval = interval
 	this.jobChan = make(chan Job, 1000) // TODO
 	this.pollers = make(map[string]Poller)
-	this.callbacker = NewPhpCallbacker(callbackUrl)
+	this.callbacker = NewPhpCallbacker(callbackConf)
 	return this
 }
 
