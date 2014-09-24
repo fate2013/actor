@@ -1,6 +1,6 @@
 package actor
 
 type Poller interface {
-	Run(ch chan<- Job)
+	Run(jCh chan<- Job, mCh chan<- March)
 	Stop()
 }

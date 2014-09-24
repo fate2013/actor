@@ -27,6 +27,11 @@ func NewPhpCallbacker(config *ConfigCallback) *PhpCallbacker {
 	return this
 }
 
+func (this *PhpCallbacker) Play(m March) (retry bool) {
+	log.Debug("callback %+v", m)
+	return
+}
+
 func (this *PhpCallbacker) Call(j Job) (retry bool) {
 	if !this.flight.Takeoff(j) { // lock failed
 		log.Warn("locked %+v", j)

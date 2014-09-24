@@ -58,10 +58,10 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 
 // TODO select timeout jobs, then delete them
 // in case of multiple actord, check delete afftectedRows==rowsCount, then dispatch job
-func (this *MysqlPoller) Run(jobCh chan<- Job) {
+func (this *MysqlPoller) Run(jobCh chan<- Job, marchChan chan<- March) {
 	defer this.Stop()
 
-	go this.pollMarch()
+	go this.pollMarch(marchChan)
 
 	this.pollJob(jobCh)
 }
@@ -86,7 +86,7 @@ func (this *MysqlPoller) pollJob(jobCh chan<- Job) {
 	}
 }
 
-func (this *MysqlPoller) pollMarch() {
+func (this *MysqlPoller) pollMarch(marchCh chan<- March) {
 	ticker := time.NewTicker(this.interval)
 	defer ticker.Stop()
 
@@ -95,6 +95,10 @@ func (this *MysqlPoller) pollMarch() {
 		marches = this.fetchReadyMarches(now)
 		if len(marches) > 0 {
 			log.Debug("due %+v", marches)
+		}
+
+		for _, march := range marches {
+			marchCh <- march
 		}
 	}
 
@@ -118,6 +122,8 @@ func (this *MysqlPoller) fetchReadyMarches(dueTime time.Time) (marches []March) 
 		}
 
 		log.Debug("%+v", march)
+
+		marches = append(marches, march)
 	}
 
 	rows.Close()

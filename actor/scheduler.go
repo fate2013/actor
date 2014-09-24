@@ -9,7 +9,9 @@ type Scheduler struct {
 	interval time.Duration
 
 	// Poller -> jobChan -> Callbacker
-	jobChan    chan Job
+	jobChan   chan Job
+	marchChan chan March
+
 	pollers    map[string]Poller // key is db pool name
 	callbacker Callbacker
 }
@@ -18,7 +20,8 @@ func NewScheduler(interval time.Duration, callbackConf *ConfigCallback,
 	conf *ConfigMysql) *Scheduler {
 	this := new(Scheduler)
 	this.interval = interval
-	this.jobChan = make(chan Job, 1000) // TODO
+	this.jobChan = make(chan Job, 1000)     // TODO
+	this.marchChan = make(chan March, 1000) // TODO
 	this.pollers = make(map[string]Poller)
 	this.callbacker = NewPhpCallbacker(callbackConf)
 	return this
@@ -36,7 +39,7 @@ func (this *Scheduler) Run(myconf *ConfigMysql) {
 		if this.pollers[pool] != nil {
 			log.Debug("started %s poller", pool)
 
-			go this.pollers[pool].Run(this.jobChan)
+			go this.pollers[pool].Run(this.jobChan, this.marchChan)
 		}
 	}
 
@@ -54,7 +57,16 @@ func (this *Scheduler) scheduleCallback() {
 			}
 
 			go this.callback(job)
+
+		case march, ok := <-this.marchChan:
+			if !ok {
+				log.Critical("march chan closed")
+				return
+			}
+
+			go this.callbacker.Play(march)
 		}
+
 	}
 }
 
