@@ -15,7 +15,7 @@ func NewFlight(maxEntries int) *Flight {
 }
 
 // return true if accquired the lock
-func (this *Flight) Go(key cache.Key) bool {
+func (this *Flight) Takeoff(key cache.Key) bool {
 	// FIXME Get and Set is not atomic
 	if _, present := this.entries.Get(key); !present {
 		this.entries.Set(key, true)
@@ -25,6 +25,6 @@ func (this *Flight) Go(key cache.Key) bool {
 	return false
 }
 
-func (this *Flight) Return(key cache.Key) {
+func (this *Flight) Land(key cache.Key) {
 	this.entries.Del(key)
 }

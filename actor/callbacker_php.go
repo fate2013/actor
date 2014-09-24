@@ -28,7 +28,7 @@ func NewPhpCallbacker(config *ConfigCallback) *PhpCallbacker {
 }
 
 func (this *PhpCallbacker) Call(j Job) (retry bool) {
-	if !this.flight.Go(j) { // lock failed
+	if !this.flight.Takeoff(j) { // lock failed
 		log.Warn("locked %+v", j)
 		return
 	}
@@ -42,13 +42,13 @@ func (this *PhpCallbacker) Call(j Job) (retry bool) {
 	this.latency.Update(time.Since(t0).Nanoseconds() / 1e6)
 	if err != nil {
 		log.Error("http err: %s", err.Error())
-		this.flight.Return(j)
+		this.flight.Land(j)
 		return
 	}
 
 	defer func() {
 		res.Body.Close()
-		this.flight.Return(j)
+		this.flight.Land(j)
 	}()
 
 	payload, err := ioutil.ReadAll(res.Body)
