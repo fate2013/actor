@@ -28,6 +28,10 @@ func (this *Scheduler) Outstandings() int {
 	return len(this.ch)
 }
 
+func (this *Scheduler) InFlight() int {
+	return this.worker.InFlight()
+}
+
 func (this *Scheduler) Run(myconf *ConfigMysql) {
 	go this.runWorker()
 

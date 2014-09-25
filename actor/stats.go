@@ -74,16 +74,15 @@ func (this *StatsRunner) Run() {
 		lastUserTime = userTime
 		lastSysTime = sysTime
 
-		// TODO worker outstandings
-		log.Info("ver:%s, elapsed:%s, jobs:%d, goroutine:%d, mem:%s, cpu:%3.2f%%us,%3.2f%%sy, rss:%s",
+		log.Info("ver:%s, elapsed:%s, jobs:%d, flight:%d, goroutine:%d, mem:%s, cpu:%3.2f%%us,%3.2f%%sy",
 			server.BuildID,
 			time.Since(this.actor.server.StartedAt),
 			this.scheduler.Outstandings(),
+			this.scheduler.InFlight(),
 			runtime.NumGoroutine(),
 			gofmt.ByteSize(ms.Alloc),
 			userCpuUtil,
-			sysCpuUtil,
-			gofmt.ByteSize(float64(rusage.Maxrss*1024)))
+			sysCpuUtil)
 	}
 }
 

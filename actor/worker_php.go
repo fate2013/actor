@@ -31,8 +31,8 @@ func NewPhpWorker(config *ConfigWorker) *PhpWorker {
 	return this
 }
 
-func (this *PhpWorker) Outstandings() int {
-	return this.jobFlight.Len()
+func (this *PhpWorker) InFlight() int {
+	return this.jobFlight.Len() + this.marchFlight.Len() + this.pveFlight.Len()
 }
 
 // FIXME retry is not used now
