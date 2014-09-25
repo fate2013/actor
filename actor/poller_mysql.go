@@ -70,7 +70,7 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 	return this
 }
 
-func (this *MysqlPoller) Run(ch chan<- Wakeable) {
+func (this *MysqlPoller) Poll(ch chan<- Wakeable) {
 	go this.poll("job", ch)
 	go this.poll("march", ch)
 	go this.poll("pve", ch)

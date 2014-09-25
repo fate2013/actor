@@ -10,9 +10,8 @@ type Pve struct {
 	Uid     int64 `json:"uid"`
 	MarchId int64 `json:"march_id"`
 
-	State string `json:"state"`
-
-	EndTime time.Time
+	State   string    `json:"-"`
+	EndTime time.Time `json:"-"`
 }
 
 func (this *Pve) Marshal() []byte {

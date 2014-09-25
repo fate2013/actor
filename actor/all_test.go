@@ -119,3 +119,8 @@ func TestJobEncode(t *testing.T) {
 	body, _ := json.Marshal(job)
 	assert.Equal(t, `{"uid":534343,"job_id":5677}`, string(body))
 }
+
+func TestMarchGeoHash(t *testing.T) {
+	march := March{Uid: 22323, MarchId: 34343434343, X1: 2323, Y1: 343}
+	assert.Equal(t, 12, march.GeoHash())
+}

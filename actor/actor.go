@@ -3,10 +3,13 @@
      |
    actor --- schduler --- pollers --- mysql farm
                |            |
-               |            | scheduler.ch
+               |            V channel of Wakeable's
+               |            |
              worker --------+
                |
-    --------------------------------------------------------
+               | Wakeable
+               V
+    -------------------------------------------------------- http | mq | ?
                |        |       |
               php      php     php
 

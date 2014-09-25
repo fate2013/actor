@@ -8,7 +8,7 @@ import (
 type Scheduler struct {
 	interval time.Duration
 
-	// Poller -> ch -> Worker
+	// Poller -> WakeableChannel -> Worker
 	ch chan Wakeable
 
 	pollers map[string]Poller // key is db pool name
@@ -40,7 +40,7 @@ func (this *Scheduler) Run(myconf *ConfigMysql) {
 		if this.pollers[pool] != nil {
 			log.Debug("started poller[%s]", pool)
 
-			go this.pollers[pool].Run(this.ch)
+			go this.pollers[pool].Poll(this.ch)
 		}
 	}
 

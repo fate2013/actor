@@ -4,6 +4,7 @@ import (
 	"github.com/funkygao/golib/cache"
 )
 
+// used as locking Wakeable's
 type Flight struct {
 	entries *cache.LruCache
 }

@@ -7,8 +7,9 @@ import (
 )
 
 type Job struct {
-	Uid       int64     `json:"uid"`
-	JobId     int64     `json:"job_id"`
+	Uid   int64 `json:"uid"`
+	JobId int64 `json:"job_id"`
+
 	CityId    int64     `json:"-"` // ignored json field, json:"myname,omitempty"
 	Type      uint16    `json:"-"`
 	TimeStart time.Time `json:"-"`

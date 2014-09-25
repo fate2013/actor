@@ -5,6 +5,7 @@ import (
 )
 
 type Wakeable interface {
+	String() string
 	DueTime() time.Time
 	Marshal() []byte
 	FlightKey() interface{}

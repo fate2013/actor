@@ -8,9 +8,10 @@ import (
 )
 
 type ActorConfig struct {
-	RestListenAddr       string
-	ProfListenAddr       string
-	MetricsLogfile       string
+	RestListenAddr string
+	ProfListenAddr string
+	MetricsLogfile string
+
 	ScheduleInterval     time.Duration
 	ConsoleStatsInterval time.Duration
 
@@ -22,6 +23,7 @@ func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
 	this.RestListenAddr = cf.String("rest_listen_addr", "")
 	this.ProfListenAddr = cf.String("prof_listen_addr", "")
 	this.MetricsLogfile = cf.String("metrics_logfile", "")
+
 	this.ScheduleInterval = time.Duration(cf.Int("sched_interval", 1)) * time.Second
 	this.ConsoleStatsInterval = time.Duration(cf.Int("stats_interval", 60*10)) * time.Second
 
@@ -45,19 +47,28 @@ func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
 }
 
 type ConfigWorker struct {
-	Timeout time.Duration
-	Job     string
-	March   string
-	Pve     string
-	MqAddr  string
+	Timeout          time.Duration
+	MaxFlightEntries int
+
+	// if use php as worker
+	Job   string
+	March string
+	Pve   string
+
+	// if use MQ as worker
+	MqAddr string
 }
 
 func (this *ConfigWorker) loadConfig(cf *conf.Conf) {
 	this.Timeout = time.Duration(cf.Int("timeout", 5)) * time.Second
+	this.MaxFlightEntries = cf.Int("max_flight_entries", 100000)
 	this.Job = cf.String("job", "")
 	this.March = cf.String("march", "")
 	this.Pve = cf.String("pve", "")
 	this.MqAddr = cf.String("mq_addr", "")
+	if this.MqAddr == "" && this.Job == "" {
+		panic("empty worker addr")
+	}
 
 	log.Debug("worker config: %+v", *this)
 }
@@ -65,22 +76,11 @@ func (this *ConfigWorker) loadConfig(cf *conf.Conf) {
 type ConfigMysql struct {
 	ConnectTimeout time.Duration
 	IoTimeout      time.Duration
-	SlowThreshold  time.Duration
+	SlowThreshold  time.Duration // TODO not used yet
 
 	Breaker ConfigBreaker
 
 	Servers map[string]*ConfigMysqlInstance // key is pool
-}
-
-func (this *ConfigMysql) Pools() (pools []string) {
-	poolsMap := make(map[string]bool)
-	for _, server := range this.Servers {
-		poolsMap[server.Pool] = true
-	}
-	for poolName, _ := range poolsMap {
-		pools = append(pools, poolName)
-	}
-	return
 }
 
 func (this *ConfigMysql) loadConfig(cf *conf.Conf) {
@@ -99,6 +99,8 @@ func (this *ConfigMysql) loadConfig(cf *conf.Conf) {
 		}
 
 		server := new(ConfigMysqlInstance)
+		server.ConnectTimeout = this.ConnectTimeout
+		server.IoTimeout = this.IoTimeout
 		server.loadConfig(section)
 		this.Servers[server.Pool] = server
 	}
@@ -117,6 +119,9 @@ func (this *ConfigBreaker) loadConfig(cf *conf.Conf) {
 }
 
 type ConfigMysqlInstance struct {
+	ConnectTimeout time.Duration // TODO not used yet, should be part of DSN
+	IoTimeout      time.Duration // TODO not used yet
+
 	Pool    string
 	Host    string
 	Port    string
