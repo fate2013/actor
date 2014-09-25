@@ -74,13 +74,12 @@ func (this *StatsRunner) Run() {
 		lastUserTime = userTime
 		lastSysTime = sysTime
 
-		log.Info("ver: %s, elapsed:%s, jobs:%d, goroutine:%d, mem:%s",
+		log.Info("ver:%s, elapsed:%s, jobs:%d, goroutine:%d, mem:%s, cpu:%3.2f%%us,%3.2f%%sy, rss:%s",
 			server.BuildID,
 			time.Since(this.actor.server.StartedAt),
 			this.scheduler.Len(),
 			runtime.NumGoroutine(),
-			gofmt.ByteSize(ms.Alloc))
-		log.Info("cpu: %3.2f%% us, %3.2f%% sy, rss:%s",
+			gofmt.ByteSize(ms.Alloc),
 			userCpuUtil,
 			sysCpuUtil,
 			gofmt.ByteSize(float64(rusage.Maxrss*1024)))
