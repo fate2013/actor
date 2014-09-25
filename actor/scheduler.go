@@ -52,7 +52,7 @@ func (this *Scheduler) Run(myconf *ConfigMysql) {
 func (this *Scheduler) scheduleCallback() {
 	var now time.Time
 	for {
-		now = time.Now()
+		now = time.Now().UTC()
 
 		select {
 		case job, ok := <-this.jobChan:

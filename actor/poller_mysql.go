@@ -120,7 +120,7 @@ func (this *MysqlPoller) pollPve(pve chan<- Pve) {
 	for now := range ticker.C {
 		marches = this.fetchReadyPves(now)
 		if len(marches) > 0 {
-			log.Debug("due %+v", marches)
+			log.Debug("pve %+v", marches)
 		}
 
 		for _, march := range marches {
