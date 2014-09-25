@@ -9,6 +9,7 @@ import (
 
 type MysqlPoller struct {
 	interval          time.Duration
+	stopChan          chan bool
 	mysql             *mysql
 	jobQueryStmt      *sql.Stmt
 	marchQueryStmt    *sql.Stmt
@@ -21,6 +22,7 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 	breaker *ConfigBreaker) *MysqlPoller {
 	this := new(MysqlPoller)
 	this.interval = interval
+	this.stopChan = make(chan bool)
 
 	this.jobQueryLatency = metrics.NewHistogram(
 		metrics.NewExpDecaySample(1028, 0.015))
@@ -65,20 +67,23 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 
 // TODO select timeout jobs, then delete them
 // in case of multiple actord, check delete afftectedRows==rowsCount, then dispatch job
-func (this *MysqlPoller) Run(jobCh chan<- Job, marchChan chan<- March, pveChan chan<- Pve) {
-	defer this.Stop()
+func (this *MysqlPoller) Run(ch chan<- Schedulable) {
+	go this.pollMarch(ch)
+	go this.pollPve(ch)
+	go this.pollJob(ch)
 
-	go this.pollMarch(marchChan)
-	go this.pollPve(pveChan)
+	<-this.stopChan
 
-	this.pollJob(jobCh)
+	this.jobQueryStmt.Close()
+	this.marchQueryStmt.Close()
+	this.pveQueryStmt.Close()
 }
 
-func (this *MysqlPoller) pollJob(jobCh chan<- Job) {
+func (this *MysqlPoller) pollJob(ch chan<- Schedulable) {
 	ticker := time.NewTicker(this.interval)
 	defer ticker.Stop()
 
-	var jobs []Job
+	var jobs []*Job
 	for now := range ticker.C {
 		jobs = this.fetchReadyJobs(now)
 		if len(jobs) == 0 {
@@ -88,17 +93,17 @@ func (this *MysqlPoller) pollJob(jobCh chan<- Job) {
 		log.Debug("waking up %+v", jobs)
 
 		for _, job := range jobs {
-			jobCh <- job
+			ch <- job
 		}
 
 	}
 }
 
-func (this *MysqlPoller) pollMarch(marchCh chan<- March) {
+func (this *MysqlPoller) pollMarch(ch chan<- Schedulable) {
 	ticker := time.NewTicker(this.interval)
 	defer ticker.Stop()
 
-	var marches MarchGroup
+	var marches []*March
 	for now := range ticker.C {
 		marches = this.fetchReadyMarches(now)
 		if len(marches) > 0 {
@@ -106,17 +111,17 @@ func (this *MysqlPoller) pollMarch(marchCh chan<- March) {
 		}
 
 		for _, march := range marches {
-			marchCh <- march
+			ch <- march
 		}
 	}
 
 }
 
-func (this *MysqlPoller) pollPve(pve chan<- Pve) {
+func (this *MysqlPoller) pollPve(ch chan<- Schedulable) {
 	ticker := time.NewTicker(this.interval)
 	defer ticker.Stop()
 
-	var marches []Pve
+	var marches []*Pve
 	for now := range ticker.C {
 		marches = this.fetchReadyPves(now)
 		if len(marches) > 0 {
@@ -124,13 +129,13 @@ func (this *MysqlPoller) pollPve(pve chan<- Pve) {
 		}
 
 		for _, march := range marches {
-			pve <- march
+			ch <- march
 		}
 	}
 
 }
 
-func (this *MysqlPoller) fetchReadyPves(dueTime time.Time) (marches []Pve) {
+func (this *MysqlPoller) fetchReadyPves(dueTime time.Time) (marches []*Pve) {
 	rows, err := this.pveQueryStmt.Query(dueTime.Unix())
 	if err != nil {
 		log.Error("db query: %s", err.Error())
@@ -145,14 +150,14 @@ func (this *MysqlPoller) fetchReadyPves(dueTime time.Time) (marches []Pve) {
 			continue
 		}
 
-		marches = append(marches, march)
+		marches = append(marches, &march)
 	}
 
 	rows.Close()
 	return
 }
 
-func (this *MysqlPoller) fetchReadyMarches(dueTime time.Time) (marches MarchGroup) {
+func (this *MysqlPoller) fetchReadyMarches(dueTime time.Time) (marches []*March) {
 	rows, err := this.marchQueryStmt.Query(dueTime.Unix())
 	if err != nil {
 		log.Error("db query: %s", err.Error())
@@ -170,10 +175,8 @@ func (this *MysqlPoller) fetchReadyMarches(dueTime time.Time) (marches MarchGrou
 			continue
 		}
 
-		marches = append(marches, march)
+		marches = append(marches, &march)
 	}
-
-	//marches.sortByDestination()
 
 	rows.Close()
 	return
@@ -185,7 +188,7 @@ func (this *MysqlPoller) fetchReadyMarches(dueTime time.Time) (marches MarchGrou
 // php(player) speedup 9 to 4
 // delete from Job where time_end<=8 will miss job(4)
 // contention exists between actord and php(because job can pause/speedup/cancel)
-func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) (jobs []Job) {
+func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) (jobs []*Job) {
 	//jobs = make([]Job, 0, 100)
 
 	rows, err := this.jobQueryStmt.Query(dueTime.Unix())
@@ -205,7 +208,7 @@ func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) (jobs []Job) {
 			continue
 		}
 
-		jobs = append(jobs, job)
+		jobs = append(jobs, &job)
 	}
 
 	rows.Close() // Failing to use rows.Close() or stmt.Close() can cause exhaustion of resources
@@ -214,6 +217,5 @@ func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) (jobs []Job) {
 }
 
 func (this *MysqlPoller) Stop() {
-	this.jobQueryStmt.Close()
-	this.marchQueryStmt.Close()
+	close(this.stopChan)
 }

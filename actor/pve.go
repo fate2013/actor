@@ -2,6 +2,7 @@ package actor
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -21,4 +22,17 @@ func (this *Pve) Marshal() []byte {
 
 func (this *Pve) Ignored() bool {
 	return this.State == "done"
+}
+
+func (this *Pve) DueTime() time.Time {
+	return this.EndTime
+}
+
+func (this Pve) String() string {
+	return fmt.Sprintf("Pve{uid:%d, mid:%d, due:%s, state:%s}",
+		this.Uid, this.MarchId, this.EndTime, this.State)
+}
+
+func (this *Pve) FlightKey() interface{} {
+	return *this
 }

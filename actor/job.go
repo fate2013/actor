@@ -21,7 +21,19 @@ func (this *Job) Marshal() []byte {
 	return b
 }
 
+func (this *Job) DueTime() time.Time {
+	return this.TimeEnd
+}
+
+func (this *Job) Ignored() bool {
+	return false
+}
+
+func (this *Job) FlightKey() interface{} {
+	return *this
+}
+
 func (this Job) String() string {
-	return fmt.Sprintf("Job{uid:%d, job_id:%d, due:%s}", this.Uid,
-		this.JobId, this.TimeEnd)
+	return fmt.Sprintf("Job{uid:%d, jid:%d, due:%s, type:%d}", this.Uid,
+		this.JobId, this.TimeEnd, this.Type)
 }

@@ -77,7 +77,7 @@ func (this *StatsRunner) Run() {
 		log.Info("ver:%s, elapsed:%s, jobs:%d, goroutine:%d, mem:%s, cpu:%3.2f%%us,%3.2f%%sy, rss:%s",
 			server.BuildID,
 			time.Since(this.actor.server.StartedAt),
-			this.scheduler.Len(),
+			this.scheduler.Outstandings(),
 			runtime.NumGoroutine(),
 			gofmt.ByteSize(ms.Alloc),
 			userCpuUtil,

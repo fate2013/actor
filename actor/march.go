@@ -2,21 +2,17 @@ package actor
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/cookieo9/go-misc/slice"
 	"time"
 )
 
 type March struct {
-	Uid     int64 `json:"uid"`
-	MarchId int64 `json:"march_id"`
-	//CityId    int64
-	//Type      string
-	State string `json:"state"`
-	//X0        int16
-	//Y0        int16
-	X1 int16
-	Y1 int16
-	//StartTime time.Time
+	Uid     int64  `json:"uid"`
+	MarchId int64  `json:"march_id"`
+	State   string `json:"state"`
+	X1      int16
+	Y1      int16
 	EndTime time.Time
 }
 
@@ -29,8 +25,21 @@ func (this *March) Marshal() []byte {
 	return b
 }
 
+func (this *March) FlightKey() interface{} {
+	return this.GeoHash()
+}
+
 func (this *March) Ignored() bool {
 	return this.State == "done" || this.State == "encamping"
+}
+
+func (this *March) DueTime() time.Time {
+	return this.EndTime
+}
+
+func (this March) String() string {
+	return fmt.Sprintf("March{uid:%d, mid:%d, due:%s, state:%s}",
+		this.Uid, this.MarchId, this.EndTime, this.State)
 }
 
 type MarchGroup []March

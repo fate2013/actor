@@ -1,7 +1,6 @@
 package actor
 
 import (
-	"encoding/json"
 	"fmt"
 	log "github.com/funkygao/log4go"
 	"github.com/funkygao/metrics"
@@ -11,11 +10,13 @@ import (
 )
 
 type PhpCallbacker struct {
-	url         string
-	config      *ConfigCallback
-	latency     metrics.Histogram
+	config *ConfigCallback
+
+	latency metrics.Histogram
+
 	jobFlight   *Flight
 	marchFlight *Flight
+	pveFlight   *Flight
 }
 
 func NewPhpCallbacker(config *ConfigCallback) *PhpCallbacker {
@@ -23,176 +24,66 @@ func NewPhpCallbacker(config *ConfigCallback) *PhpCallbacker {
 	this.config = config
 	this.jobFlight = NewFlight(10000) // FIXME
 	this.marchFlight = NewFlight(10000)
+	this.pveFlight = NewFlight(10000)
 	this.latency = metrics.NewHistogram(
 		metrics.NewExpDecaySample(1028, 0.015))
 	metrics.Register("latency.php", this.latency)
 	return this
 }
 
-func (this *PhpCallbacker) Play(m March) (retry bool) {
-	if this.config.March == "" {
-		// disabled
-		return
-	}
-
-	if !this.marchFlight.Takeoff(m.GeoHash()) { // lock failed
-		log.Warn("locked %+v", m)
-		return true
-	}
-
-	params := m.Marshal()
-	url := fmt.Sprintf(this.config.March, string(params))
-	log.Debug("%s", url)
-
-	t0 := time.Now()
-	res, err := http.Get(url)
-	this.latency.Update(time.Since(t0).Nanoseconds() / 1e6)
-	if err != nil {
-		log.Error("http err: %s", err.Error())
-		this.marchFlight.Land(m.GeoHash())
-		return
-	}
-
-	defer func() {
-		res.Body.Close()
-		this.marchFlight.Land(m.GeoHash())
-	}()
-
-	payload, err := ioutil.ReadAll(res.Body)
-	log.Debug("payload: %s, elapsed: %v", string(payload), time.Since(t0), m)
-	if err != nil {
-		log.Error("payload: %s", err.Error())
-		return
-	}
-
-	if res.StatusCode != http.StatusOK {
-		log.Error("callback err: %+v", res)
-		return
-	}
-
-	if string(payload) != "true" {
-		retry = true
-	}
-
-	return
-}
-
-func (this *PhpCallbacker) Pve(m Pve) (retry bool) {
-	if this.config.March == "" {
-		// disabled
-		return
-	}
-
-	if !this.marchFlight.Takeoff(m) { // lock failed
-		log.Warn("locked %+v", m)
-		return true
-	}
-
-	params := m.Marshal()
-	url := fmt.Sprintf(this.config.Pve, string(params))
-	log.Debug("%s", url)
-
-	t0 := time.Now()
-	res, err := http.Get(url)
-	this.latency.Update(time.Since(t0).Nanoseconds() / 1e6)
-	if err != nil {
-		log.Error("http err: %s", err.Error())
-		this.marchFlight.Land(m)
-		return
-	}
-
-	defer func() {
-		res.Body.Close()
-		this.marchFlight.Land(m)
-	}()
-
-	payload, err := ioutil.ReadAll(res.Body)
-	log.Debug("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), m)
-	if err != nil {
-		log.Error("payload: %s", err.Error())
-		return
-	}
-
-	if res.StatusCode != http.StatusOK {
-		log.Error("callback err: %+v", res)
-		return
-	}
-
-	if string(payload) != "true" {
-		retry = true
-	}
-
-	return
-}
-
-func (this *PhpCallbacker) Wakeup(j Job) (retry bool) {
-	if this.config.Job == "" {
-		// disabled
-		return
-	}
-
-	if !this.jobFlight.Takeoff(j) { // lock failed
-		log.Warn("locked %+v", j)
-		return true
-	}
-
-	params := j.Marshal()
-	url := fmt.Sprintf(this.config.Job, string(params))
-	log.Debug("%s", url)
-
-	t0 := time.Now()
-	res, err := http.Get(url)
-	this.latency.Update(time.Since(t0).Nanoseconds() / 1e6)
-	if err != nil {
-		log.Error("http err: %s", err.Error())
-		this.jobFlight.Land(j)
-		return
-	}
-
-	defer func() {
-		res.Body.Close()
-		this.jobFlight.Land(j)
-	}()
-
-	payload, err := ioutil.ReadAll(res.Body)
-	log.Debug("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), j)
-	if err != nil {
-		log.Error("payload: %s", err.Error())
-		return
-	}
-
-	if res.StatusCode != http.StatusOK {
-		log.Error("callback err: %+v", res)
-		return
-	}
-
-	if string(payload) != "true" {
-		retry = true
-	}
-
-	return
-
-	// parse php payload to check if to retry
+// FIXME retry is not used now
+func (this *PhpCallbacker) Call(s Schedulable) (retry bool) {
 	var (
-		objmap map[string]*json.RawMessage
-		ok     int
+		params          = string(s.Marshal())
+		url             string
+		flightContainer *Flight
+		flightKey       = s.FlightKey()
 	)
-	err = json.Unmarshal(payload, &objmap)
-	if err != nil {
-		log.Error("payload err: %s", err.Error())
+	switch s.(type) {
+	case *Pve:
+		url = fmt.Sprintf(this.config.Pve, params)
+		flightContainer = this.pveFlight
+
+	case *March:
+		url = fmt.Sprintf(this.config.March, params)
+		flightContainer = this.marchFlight
+
+	case *Job:
+		url = fmt.Sprintf(this.config.Job, params)
+		flightContainer = this.jobFlight
+	}
+
+	if !flightContainer.Takeoff(flightKey) {
+		log.Warn("locked %+v", s)
 		return
 	}
 
-	json.Unmarshal(*objmap["ok"], &ok)
-	log.Debug("payload ok: %d", ok)
+	log.Debug("%s", url)
 
-	switch ok {
-	case RESPONSE_OK:
-		break
+	t0 := time.Now()
+	res, err := http.Get(url)
+	this.latency.Update(time.Since(t0).Nanoseconds() / 1e6)
+	if err != nil {
+		log.Error("http err: %s", err.Error())
+		flightContainer.Land(flightKey)
+		return
+	}
 
-	case RESPONSE_RETRY:
-		// php tells me to retry
-		retry = true
+	defer func() {
+		res.Body.Close()
+		flightContainer.Land(flightKey)
+	}()
+
+	payload, err := ioutil.ReadAll(res.Body)
+	log.Debug("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), s)
+	if err != nil {
+		log.Error("payload: %s", err.Error())
+		return
+	}
+
+	if res.StatusCode != http.StatusOK {
+		log.Error("callback err: %+v", res)
+		return
 	}
 
 	return
