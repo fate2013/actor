@@ -11,7 +11,7 @@ type March struct {
 	MarchId int64 `json:"march_id"`
 	//CityId    int64
 	//Type      string
-	State string
+	State string `json:"state"`
 	//X0        int16
 	//Y0        int16
 	X1 int16

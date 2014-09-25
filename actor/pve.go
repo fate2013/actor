@@ -9,7 +9,7 @@ type Pve struct {
 	Uid     int64 `json:"uid"`
 	MarchId int64 `json:"march_id"`
 
-	State string
+	State string `json:"state"`
 
 	EndTime time.Time
 }

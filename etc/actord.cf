@@ -2,7 +2,7 @@
     rest_listen_addr: ":9010"
     prof_listen_addr: ":9011"
     sched_interval: 1
-    stats_interval: 60
+    stats_interval: 600
     //stats_interval: 3600
     metrics_logfile: "metrics.log"
 
