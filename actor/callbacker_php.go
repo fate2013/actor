@@ -125,7 +125,7 @@ func (this *PhpCallbacker) Pve(m Pve) (retry bool) {
 	return
 }
 
-func (this *PhpCallbacker) Call(j Job) (retry bool) {
+func (this *PhpCallbacker) Wakeup(j Job) (retry bool) {
 	if this.config.Job == "" {
 		// disabled
 		return

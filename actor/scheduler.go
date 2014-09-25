@@ -50,12 +50,19 @@ func (this *Scheduler) Run(myconf *ConfigMysql) {
 
 // TODO do we need finish t jobs callback before callback t+1?
 func (this *Scheduler) scheduleCallback() {
+	var now time.Time
 	for {
+		now = time.Now()
+
 		select {
 		case job, ok := <-this.jobChan:
 			if !ok {
 				log.Critical("job chan closed")
 				return
+			}
+
+			if now.Sub(job.TimeEnd).Seconds() > 1 {
+				log.Warn("late job: %+v, now: %s", job, now)
 			}
 
 			go this.callbackJob(job)
@@ -71,6 +78,10 @@ func (this *Scheduler) scheduleCallback() {
 				continue
 			}
 
+			if now.Sub(march.EndTime).Seconds() > 1 {
+				log.Warn("late march: %+v now: %s", march, now)
+			}
+
 			go this.callbackMarch(march)
 
 		case pve, ok := <-this.pveChan:
@@ -82,6 +93,10 @@ func (this *Scheduler) scheduleCallback() {
 			if pve.Ignored() {
 				log.Warn("ignored: %+v", pve)
 				continue
+			}
+
+			if now.Sub(pve.EndTime).Seconds() > 1 {
+				log.Warn("late pve: %+v, now: %s", pve, now)
 			}
 
 			go this.callbacker.Pve(pve)
@@ -107,7 +122,7 @@ func (this *Scheduler) callbackMarch(m March) {
 func (this *Scheduler) callbackJob(j Job) {
 	rtos := []time.Duration{1, 2, 3, 4, 5}
 	for i := 0; i < 5; i++ {
-		if retry := this.callbacker.Call(j); !retry {
+		if retry := this.callbacker.Wakeup(j); !retry {
 			log.Debug("ok job callback: %+v", j)
 			return
 		}
