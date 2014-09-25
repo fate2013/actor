@@ -65,7 +65,7 @@ func (this *Scheduler) scheduleCallback() {
 				log.Warn("late job: %+v, now: %s", job, now)
 			}
 
-			go this.callbackJob(job)
+			go this.callbacker.Wakeup(job)
 
 		case march, ok := <-this.marchChan:
 			if !ok {
@@ -82,7 +82,7 @@ func (this *Scheduler) scheduleCallback() {
 				log.Warn("late march: %+v now: %s", march, now)
 			}
 
-			go this.callbackMarch(march)
+			go this.callbacker.Play(march)
 
 		case pve, ok := <-this.pveChan:
 			if !ok {
@@ -105,11 +105,11 @@ func (this *Scheduler) scheduleCallback() {
 	}
 }
 
+// TODO kill this
 func (this *Scheduler) callbackMarch(m March) {
 	rtos := []time.Duration{1, 2, 3, 4, 5}
 	for i := 0; i < 5; i++ {
 		if retry := this.callbacker.Play(m); !retry {
-			//log.Debug("ok march callback: %+v", m)
 			return
 		}
 
@@ -119,6 +119,7 @@ func (this *Scheduler) callbackMarch(m March) {
 	}
 }
 
+// TODO kill this
 func (this *Scheduler) callbackJob(j Job) {
 	rtos := []time.Duration{1, 2, 3, 4, 5}
 	for i := 0; i < 5; i++ {

@@ -42,7 +42,7 @@ func (this *PhpCallbacker) Play(m March) (retry bool) {
 
 	params := m.Marshal()
 	url := fmt.Sprintf(this.config.March, string(params))
-	log.Debug("march callback: %s", url)
+	log.Debug("%s", url)
 
 	t0 := time.Now()
 	res, err := http.Get(url)
@@ -59,7 +59,7 @@ func (this *PhpCallbacker) Play(m March) (retry bool) {
 	}()
 
 	payload, err := ioutil.ReadAll(res.Body)
-	log.Debug("%+v, payload: %s, elapsed: %v", m, string(payload), time.Since(t0))
+	log.Debug("payload: %s, elapsed: %v", string(payload), time.Since(t0), m)
 	if err != nil {
 		log.Error("payload: %s", err.Error())
 		return
@@ -90,7 +90,7 @@ func (this *PhpCallbacker) Pve(m Pve) (retry bool) {
 
 	params := m.Marshal()
 	url := fmt.Sprintf(this.config.Pve, string(params))
-	log.Debug("pve callback: %s", url)
+	log.Debug("%s", url)
 
 	t0 := time.Now()
 	res, err := http.Get(url)
@@ -107,7 +107,7 @@ func (this *PhpCallbacker) Pve(m Pve) (retry bool) {
 	}()
 
 	payload, err := ioutil.ReadAll(res.Body)
-	log.Debug("%+v, payload: %s, elapsed: %v", m, string(payload), time.Since(t0))
+	log.Debug("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), m)
 	if err != nil {
 		log.Error("payload: %s", err.Error())
 		return
@@ -138,7 +138,7 @@ func (this *PhpCallbacker) Wakeup(j Job) (retry bool) {
 
 	params := j.Marshal()
 	url := fmt.Sprintf(this.config.Job, string(params))
-	log.Debug("job callback: %s", url)
+	log.Debug("%s", url)
 
 	t0 := time.Now()
 	res, err := http.Get(url)
@@ -155,7 +155,7 @@ func (this *PhpCallbacker) Wakeup(j Job) (retry bool) {
 	}()
 
 	payload, err := ioutil.ReadAll(res.Body)
-	log.Debug("%+v, payload: %s, elapsed: %v", j, string(payload), time.Since(t0))
+	log.Debug("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), j)
 	if err != nil {
 		log.Error("payload: %s", err.Error())
 		return
