@@ -61,6 +61,7 @@ func (this *Scheduler) scheduleCallback() {
 				return
 			}
 
+			// FIXME now always 1s late
 			if now.Sub(job.TimeEnd).Seconds() > 1 {
 				log.Warn("late job: %+v, now: %s", job, now)
 			}

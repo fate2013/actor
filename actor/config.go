@@ -151,7 +151,7 @@ func (this *ConfigMysqlInstance) loadConfig(section *conf.Conf) {
 		}
 	}
 	this.dsn += fmt.Sprintf("@tcp(%s:%s)/%s?", this.Host, this.Port, this.DbName)
-	if this.Charset != "" {
+	if this.Charset != "utf8" { // driver default utf-8
 		this.dsn += "charset=" + this.Charset
 	}
 	this.dsn += "&parseTime=true" // parse db timestamp automatically
