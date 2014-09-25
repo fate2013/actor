@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-type PhpCallbacker struct {
+type PhpWorker struct {
 	config *ConfigCallback
 
 	latency metrics.Histogram
@@ -19,8 +19,8 @@ type PhpCallbacker struct {
 	pveFlight   *Flight
 }
 
-func NewPhpCallbacker(config *ConfigCallback) *PhpCallbacker {
-	this := new(PhpCallbacker)
+func NewPhpWorker(config *ConfigCallback) *PhpWorker {
+	this := new(PhpWorker)
 	this.config = config
 	this.jobFlight = NewFlight(10000) // FIXME
 	this.marchFlight = NewFlight(10000)
@@ -31,15 +31,19 @@ func NewPhpCallbacker(config *ConfigCallback) *PhpCallbacker {
 	return this
 }
 
+func (this *PhpWorker) Outstandings() int {
+	return this.jobFlight.Len()
+}
+
 // FIXME retry is not used now
-func (this *PhpCallbacker) Call(s Schedulable) (retry bool) {
+func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 	var (
-		params          = string(s.Marshal())
+		params          = string(w.Marshal())
 		url             string
 		flightContainer *Flight
-		flightKey       = s.FlightKey()
+		flightKey       = w.FlightKey()
 	)
-	switch s.(type) {
+	switch w.(type) {
 	case *Pve:
 		url = fmt.Sprintf(this.config.Pve, params)
 		flightContainer = this.pveFlight
@@ -54,7 +58,7 @@ func (this *PhpCallbacker) Call(s Schedulable) (retry bool) {
 	}
 
 	if !flightContainer.Takeoff(flightKey) {
-		log.Warn("locked %+v", s)
+		log.Warn("locked %+v", w)
 		return
 	}
 
@@ -75,7 +79,7 @@ func (this *PhpCallbacker) Call(s Schedulable) (retry bool) {
 	}()
 
 	payload, err := ioutil.ReadAll(res.Body)
-	log.Debug("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), s)
+	log.Debug("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), w)
 	if err != nil {
 		log.Error("payload: %s", err.Error())
 		return

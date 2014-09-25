@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type Schedulable interface {
+type Wakeable interface {
 	DueTime() time.Time
 	Marshal() []byte
 	FlightKey() interface{}

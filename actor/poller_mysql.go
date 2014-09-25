@@ -70,7 +70,7 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 	return this
 }
 
-func (this *MysqlPoller) Run(ch chan<- Schedulable) {
+func (this *MysqlPoller) Run(ch chan<- Wakeable) {
 	go this.poll("job", ch)
 	go this.poll("march", ch)
 	go this.poll("pve", ch)
@@ -82,26 +82,26 @@ func (this *MysqlPoller) Run(ch chan<- Schedulable) {
 	this.pveQueryStmt.Close()
 }
 
-func (this *MysqlPoller) poll(typ string, ch chan<- Schedulable) {
+func (this *MysqlPoller) poll(typ string, ch chan<- Wakeable) {
 	ticker := time.NewTicker(this.interval)
 	defer ticker.Stop()
 
-	var ss []Schedulable
+	var ws []Wakeable
 	for now := range ticker.C {
-		ss = this.fetchSchedulables(typ, now)
-		if len(ss) == 0 {
+		ws = this.fetchSchedulables(typ, now)
+		if len(ws) == 0 {
 			continue
 		}
 
-		log.Debug("waking up %+v", ss)
+		log.Debug("waking up %+v", ws)
 
-		for _, s := range ss {
-			ch <- s
+		for _, w := range ws {
+			ch <- w
 		}
 	}
 }
 
-func (this *MysqlPoller) fetchSchedulables(typ string, dueTime time.Time) (ss []Schedulable) {
+func (this *MysqlPoller) fetchSchedulables(typ string, dueTime time.Time) (ws []Wakeable) {
 	if this.breaker.Open() {
 		log.Warn("breaker open %+v", *this.breaker)
 		return
@@ -133,41 +133,41 @@ func (this *MysqlPoller) fetchSchedulables(typ string, dueTime time.Time) (ss []
 
 	switch typ {
 	case "job":
-		var s Job
+		var w Job
 		for rows.Next() {
-			err = rows.Scan(&s.Uid, &s.JobId, &s.CityId,
-				&s.Type, &s.TimeStart, &s.TimeEnd, &s.Trace)
+			err = rows.Scan(&w.Uid, &w.JobId, &w.CityId,
+				&w.Type, &w.TimeStart, &w.TimeEnd, &w.Trace)
 			if err != nil {
 				log.Error("db scan: %s", err.Error())
 				continue
 			}
 
-			ss = append(ss, &s)
+			ws = append(ws, &w)
 		}
 
 	case "march":
-		var s March
+		var w March
 		for rows.Next() {
-			err = rows.Scan(&s.Uid, &s.MarchId, &s.X1, &s.Y1,
-				&s.State, &s.EndTime)
+			err = rows.Scan(&w.Uid, &w.MarchId, &w.X1, &w.Y1,
+				&w.State, &w.EndTime)
 			if err != nil {
 				log.Error("db scan: %s", err.Error())
 				continue
 			}
 
-			ss = append(ss, &s)
+			ws = append(ws, &w)
 		}
 
 	case "pve":
-		var s Pve
+		var w Pve
 		for rows.Next() {
-			err = rows.Scan(&s.Uid, &s.MarchId, &s.State, &s.EndTime)
+			err = rows.Scan(&w.Uid, &w.MarchId, &w.State, &w.EndTime)
 			if err != nil {
 				log.Error("db scan: %s", err.Error())
 				continue
 			}
 
-			ss = append(ss, &s)
+			ws = append(ws, &w)
 		}
 	}
 

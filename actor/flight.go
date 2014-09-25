@@ -28,3 +28,7 @@ func (this *Flight) Takeoff(key cache.Key) bool {
 func (this *Flight) Land(key cache.Key) {
 	this.entries.Del(key)
 }
+
+func (this *Flight) Len() int {
+	return this.entries.Len()
+}

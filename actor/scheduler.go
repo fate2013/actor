@@ -8,20 +8,20 @@ import (
 type Scheduler struct {
 	interval time.Duration
 
-	// Poller -> ch -> Callbacker
-	ch chan Schedulable
+	// Poller -> ch -> Worker
+	ch chan Wakeable
 
-	pollers    map[string]Poller // key is db pool name
-	callbacker Callbacker
+	pollers map[string]Poller // key is db pool name
+	worker  Worker
 }
 
 func NewScheduler(interval time.Duration, callbackConf *ConfigCallback,
 	conf *ConfigMysql) *Scheduler {
 	this := new(Scheduler)
 	this.interval = interval
-	this.ch = make(chan Schedulable, 10000)
+	this.ch = make(chan Wakeable, 10000)
 	this.pollers = make(map[string]Poller)
-	this.callbacker = NewPhpCallbacker(callbackConf)
+	this.worker = NewPhpWorker(callbackConf)
 	return this
 }
 
@@ -30,7 +30,7 @@ func (this *Scheduler) Outstandings() int {
 }
 
 func (this *Scheduler) Run(myconf *ConfigMysql) {
-	go this.scheduleCallback()
+	go this.runWorker()
 
 	for pool, my := range myconf.Servers {
 		this.pollers[pool] = NewMysqlPoller(this.interval, my, &myconf.Breaker)
@@ -45,25 +45,25 @@ func (this *Scheduler) Run(myconf *ConfigMysql) {
 }
 
 // TODO do we need finish t jobs callback before callback t+1?
-func (this *Scheduler) scheduleCallback() {
+func (this *Scheduler) runWorker() {
 	for {
 		select {
-		case s, ok := <-this.ch:
+		case w, ok := <-this.ch:
 			if !ok {
 				log.Critical("scheduler chan closed")
 				return
 			}
 
-			if s.Ignored() {
-				log.Debug("ignored: %+v", s)
+			if w.Ignored() {
+				log.Debug("ignored: %+v", w)
 				continue
 			}
 
-			if time.Since(s.DueTime()).Seconds() > this.interval.Seconds() {
-				log.Debug("late %+v", s)
+			if time.Since(w.DueTime()).Seconds() > this.interval.Seconds() {
+				log.Debug("late %+v", w)
 			}
 
-			go this.callbacker.Call(s)
+			go this.worker.Wake(w)
 		}
 	}
 }

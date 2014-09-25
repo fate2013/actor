@@ -3,11 +3,12 @@
      |
    actor --- schduler --- pollers --- mysql farm
                |            |
-               |            | scheduler.jobChan
-             callback ------+
+               |            | scheduler.ch
+             worker --------+
                |
-               |
-              php
+    -------------------------------------------------------- 
+               |        |       |
+              php      php     php
 
 */
 package actor

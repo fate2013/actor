@@ -74,6 +74,7 @@ func (this *StatsRunner) Run() {
 		lastUserTime = userTime
 		lastSysTime = sysTime
 
+		// TODO worker outstandings
 		log.Info("ver:%s, elapsed:%s, jobs:%d, goroutine:%d, mem:%s, cpu:%3.2f%%us,%3.2f%%sy, rss:%s",
 			server.BuildID,
 			time.Since(this.actor.server.StartedAt),
