@@ -2,36 +2,37 @@ package actor
 
 import (
 	"database/sql"
+	"github.com/funkygao/golib/breaker"
 	log "github.com/funkygao/log4go"
 	"github.com/funkygao/metrics"
 	"time"
 )
 
 type MysqlPoller struct {
-	interval          time.Duration
-	stopChan          chan bool
-	mysql             *mysql
-	jobQueryStmt      *sql.Stmt
-	marchQueryStmt    *sql.Stmt
-	pveQueryStmt      *sql.Stmt
-	jobQueryLatency   metrics.Histogram
-	marchQueryLatency metrics.Histogram
+	interval time.Duration
+	stopChan chan bool
+
+	breaker *breaker.Consecutive
+
+	mysql          *mysql
+	jobQueryStmt   *sql.Stmt
+	marchQueryStmt *sql.Stmt
+	pveQueryStmt   *sql.Stmt
+
+	latency metrics.Histogram
 }
 
 func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
-	breaker *ConfigBreaker) *MysqlPoller {
+	bc *ConfigBreaker) *MysqlPoller {
 	this := new(MysqlPoller)
 	this.interval = interval
 	this.stopChan = make(chan bool)
 
-	this.jobQueryLatency = metrics.NewHistogram(
+	this.latency = metrics.NewHistogram(
 		metrics.NewExpDecaySample(1028, 0.015))
-	metrics.Register("latency.db.job", this.jobQueryLatency)
-	this.marchQueryLatency = metrics.NewHistogram(
-		metrics.NewExpDecaySample(1028, 0.015))
-	metrics.Register("latency.db.march", this.marchQueryLatency)
+	metrics.Register("latency.db", this.latency)
 
-	this.mysql = newMysql(my.DSN(), breaker)
+	this.mysql = newMysql(my.DSN(), bc)
 	err := this.mysql.Open()
 	if err != nil {
 		log.Critical("open mysql[%+v] failed: %s", *my, err)
@@ -61,6 +62,10 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 		log.Critical("db prepare err: %s", err.Error())
 		return nil
 	}
+
+	this.breaker = &breaker.Consecutive{
+		FailureAllowance: bc.FailureAllowance,
+		RetryTimeout:     bc.RetryTimeout}
 
 	return this
 }
@@ -97,6 +102,11 @@ func (this *MysqlPoller) poll(typ string, ch chan<- Schedulable) {
 }
 
 func (this *MysqlPoller) fetchSchedulables(typ string, dueTime time.Time) (ss []Schedulable) {
+	if this.breaker.Open() {
+		log.Warn("breaker open %+v", *this.breaker)
+		return
+	}
+
 	var stmt *sql.Stmt
 	switch typ {
 	case "job":
@@ -112,8 +122,14 @@ func (this *MysqlPoller) fetchSchedulables(typ string, dueTime time.Time) (ss []
 	rows, err := stmt.Query(dueTime.Unix())
 	if err != nil {
 		log.Error("db query: %s", err.Error())
+
+		this.breaker.Fail()
 		return
+	} else {
+		this.breaker.Succeed()
 	}
+
+	this.latency.Update(time.Since(dueTime).Nanoseconds() / 1e6)
 
 	switch typ {
 	case "job":
