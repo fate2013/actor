@@ -29,6 +29,10 @@ func (this *March) Marshal() []byte {
 	return b
 }
 
+func (this *March) Ignored() bool {
+	return this.State == "done" || this.State == "encamping"
+}
+
 type MarchGroup []March
 
 func (this *MarchGroup) sortByDestination() {

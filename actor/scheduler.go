@@ -64,6 +64,11 @@ func (this *Scheduler) scheduleCallback() {
 				return
 			}
 
+			if march.Ignored() {
+				log.Warn("ignored: %+v", march)
+				continue
+			}
+
 			go this.callbackMarch(march)
 		}
 
