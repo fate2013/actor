@@ -29,3 +29,4 @@ cmd/feed/feed
 bench/unix_sock/client
 bench/unix_sock/server
 metrics.log
+actord.lock
