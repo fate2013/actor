@@ -32,6 +32,12 @@ func (this *Scheduler) InFlight() int {
 	return this.worker.InFlight()
 }
 
+func (this *Scheduler) Stop() {
+	for _, p := range this.pollers {
+		p.Stop()
+	}
+}
+
 func (this *Scheduler) Run(myconf *ConfigMysql) {
 	go this.runWorker()
 

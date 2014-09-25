@@ -88,12 +88,12 @@ func (this *MysqlPoller) poll(typ string, ch chan<- Wakeable) {
 
 	var ws []Wakeable
 	for now := range ticker.C {
-		ws = this.fetchSchedulables(typ, now)
+		ws = this.fetchWakeables(typ, now)
 		if len(ws) == 0 {
 			continue
 		}
 
-		log.Debug("waking up %+v", ws)
+		log.Debug("wakes: %+v", ws)
 
 		for _, w := range ws {
 			ch <- w
@@ -101,7 +101,7 @@ func (this *MysqlPoller) poll(typ string, ch chan<- Wakeable) {
 	}
 }
 
-func (this *MysqlPoller) fetchSchedulables(typ string, dueTime time.Time) (ws []Wakeable) {
+func (this *MysqlPoller) fetchWakeables(typ string, dueTime time.Time) (ws []Wakeable) {
 	if this.breaker.Open() {
 		log.Warn("breaker open %+v", *this.breaker)
 		return
