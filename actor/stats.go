@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"syscall"
 	"time"
 )
 
@@ -88,23 +89,45 @@ func (this *StatsRunner) handleHttpQuery(w http.ResponseWriter, req *http.Reques
 	)
 
 	switch cmd {
+	case "ping":
+		output["status"] = "ok"
+
 	case "ver":
 		output["ver"] = server.BuildID
+
+	case "debug":
+		stack := make([]byte, 1<<20)
+		stackSize := runtime.Stack(stack, true)
+		output["callstack"] = string(stack[:stackSize])
+
+	case "stat":
+		output["goroutines"] = runtime.NumGoroutine()
+
+		memStats := new(runtime.MemStats)
+		runtime.ReadMemStats(memStats)
+		output["memory"] = *memStats
+
+		rusage := syscall.Rusage{}
+		syscall.Getrusage(0, &rusage)
+		output["rusage"] = rusage
 
 	case "conf":
 		output["conf"] = *this.actor.server.Conf
 
-	case "guide", "help", "h":
-		output["uris"] = []string{
-			"/s/ver",
-			"/s/conf",
-		}
-		if this.actor.config.ProfListenAddr != "" {
-			output["pprof"] = "http://" + this.actor.config.ProfListenAddr + "/debug/pprof/"
-		}
-
 	default:
 		return nil, server.ErrHttp404
+	}
+
+	output["links"] = []string{
+		"/s/ping",
+		"/s/ver",
+		"/s/conf",
+		"/s/stat",
+		"/s/debug",
+	}
+	if this.actor.config.ProfListenAddr != "" {
+		output["pprof"] = "http://" +
+			this.actor.config.ProfListenAddr + "/debug/pprof/"
 	}
 
 	return output, nil
