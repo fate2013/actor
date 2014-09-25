@@ -15,13 +15,12 @@ type Scheduler struct {
 	worker  Worker
 }
 
-func NewScheduler(interval time.Duration, callbackConf *ConfigCallback,
-	conf *ConfigMysql) *Scheduler {
+func NewScheduler(interval time.Duration, workerConf *ConfigWorker) *Scheduler {
 	this := new(Scheduler)
 	this.interval = interval
 	this.ch = make(chan Wakeable, 10000)
 	this.pollers = make(map[string]Poller)
-	this.worker = NewPhpWorker(callbackConf)
+	this.worker = NewPhpWorker(workerConf)
 	return this
 }
 
@@ -35,7 +34,7 @@ func (this *Scheduler) Run(myconf *ConfigMysql) {
 	for pool, my := range myconf.Servers {
 		this.pollers[pool] = NewMysqlPoller(this.interval, my, &myconf.Breaker)
 		if this.pollers[pool] != nil {
-			log.Debug("started %s poller", pool)
+			log.Debug("started poller[%s]", pool)
 
 			go this.pollers[pool].Run(this.ch)
 		}
@@ -44,7 +43,6 @@ func (this *Scheduler) Run(myconf *ConfigMysql) {
 	log.Info("scheduler started")
 }
 
-// TODO do we need finish t jobs callback before callback t+1?
 func (this *Scheduler) runWorker() {
 	for {
 		select {
@@ -60,7 +58,7 @@ func (this *Scheduler) runWorker() {
 			}
 
 			if time.Since(w.DueTime()).Seconds() > this.interval.Seconds() {
-				log.Debug("late %+v", w)
+				log.Debug("late for %+v", w)
 			}
 
 			go this.worker.Wake(w)

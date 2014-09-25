@@ -6,7 +6,7 @@
                |            | scheduler.ch
              worker --------+
                |
-    -------------------------------------------------------- 
+    --------------------------------------------------------
                |        |       |
               php      php     php
 
@@ -35,7 +35,7 @@ func New(server *server.Server) (this *Actor) {
 	}
 
 	this.scheduler = NewScheduler(this.config.ScheduleInterval,
-		this.config.CallbackConfig, this.config.MysqlConfig)
+		this.config.WorkerConfig)
 	this.statsRunner = NewStatsRunner(this, this.scheduler)
 
 	return

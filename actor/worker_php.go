@@ -10,7 +10,7 @@ import (
 )
 
 type PhpWorker struct {
-	config *ConfigCallback
+	config *ConfigWorker
 
 	latency metrics.Histogram
 
@@ -19,7 +19,7 @@ type PhpWorker struct {
 	pveFlight   *Flight
 }
 
-func NewPhpWorker(config *ConfigCallback) *PhpWorker {
+func NewPhpWorker(config *ConfigWorker) *PhpWorker {
 	this := new(PhpWorker)
 	this.config = config
 	this.jobFlight = NewFlight(10000) // FIXME
@@ -86,7 +86,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 	}
 
 	if res.StatusCode != http.StatusOK {
-		log.Error("callback err: %+v", res)
+		log.Error("worker: %+v", res)
 		return
 	}
 

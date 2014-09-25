@@ -14,8 +14,8 @@ type ActorConfig struct {
 	ScheduleInterval     time.Duration
 	ConsoleStatsInterval time.Duration
 
-	MysqlConfig    *ConfigMysql
-	CallbackConfig *ConfigCallback
+	MysqlConfig  *ConfigMysql
+	WorkerConfig *ConfigWorker
 }
 
 func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
@@ -33,18 +33,18 @@ func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
 	}
 	this.MysqlConfig.loadConfig(section)
 
-	this.CallbackConfig = new(ConfigCallback)
-	section, err = cf.Section("callback")
+	this.WorkerConfig = new(ConfigWorker)
+	section, err = cf.Section("worker")
 	if err != nil {
 		return
 	}
-	this.CallbackConfig.loadConfig(section)
+	this.WorkerConfig.loadConfig(section)
 
 	log.Debug("actor config %+v", *this)
 	return
 }
 
-type ConfigCallback struct {
+type ConfigWorker struct {
 	Timeout time.Duration
 	Job     string
 	March   string
@@ -52,14 +52,14 @@ type ConfigCallback struct {
 	MqAddr  string
 }
 
-func (this *ConfigCallback) loadConfig(cf *conf.Conf) {
+func (this *ConfigWorker) loadConfig(cf *conf.Conf) {
 	this.Timeout = time.Duration(cf.Int("timeout", 5)) * time.Second
 	this.Job = cf.String("job", "")
 	this.March = cf.String("march", "")
 	this.Pve = cf.String("pve", "")
 	this.MqAddr = cf.String("mq_addr", "")
 
-	log.Debug("callback config: %+v", *this)
+	log.Debug("worker config: %+v", *this)
 }
 
 type ConfigMysql struct {
@@ -155,8 +155,10 @@ func (this *ConfigMysqlInstance) loadConfig(section *conf.Conf) {
 		this.dsn += "charset=" + this.Charset
 	}
 	this.dsn += "&parseTime=true" // parse db timestamp automatically
+}
 
-	log.Debug("mysql instance: %s", this.dsn)
+func (this *ConfigMysqlInstance) String() string {
+	return this.DSN()
 }
 
 func (this *ConfigMysqlInstance) DSN() string {
