@@ -38,8 +38,8 @@ func (this *March) DueTime() time.Time {
 }
 
 func (this March) String() string {
-	return fmt.Sprintf("March{uid:%d, mid:%d, due:%s, state:%s}",
-		this.Uid, this.MarchId, this.EndTime, this.State)
+	return fmt.Sprintf("March{uid:%d, mid:%d, state:%s, due:%s}",
+		this.Uid, this.MarchId, this.State, this.EndTime)
 }
 
 type MarchGroup []March

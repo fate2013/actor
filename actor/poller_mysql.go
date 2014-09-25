@@ -65,12 +65,10 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 	return this
 }
 
-// TODO select timeout jobs, then delete them
-// in case of multiple actord, check delete afftectedRows==rowsCount, then dispatch job
 func (this *MysqlPoller) Run(ch chan<- Schedulable) {
-	go this.pollMarch(ch)
-	go this.pollPve(ch)
-	go this.pollJob(ch)
+	go this.poll("job", ch)
+	go this.poll("march", ch)
+	go this.poll("pve", ch)
 
 	<-this.stopChan
 
@@ -79,140 +77,85 @@ func (this *MysqlPoller) Run(ch chan<- Schedulable) {
 	this.pveQueryStmt.Close()
 }
 
-func (this *MysqlPoller) pollJob(ch chan<- Schedulable) {
+func (this *MysqlPoller) poll(typ string, ch chan<- Schedulable) {
 	ticker := time.NewTicker(this.interval)
 	defer ticker.Stop()
 
-	var jobs []*Job
+	var ss []Schedulable
 	for now := range ticker.C {
-		jobs = this.fetchReadyJobs(now)
-		if len(jobs) == 0 {
+		ss = this.fetchSchedulables(typ, now)
+		if len(ss) == 0 {
 			continue
 		}
 
-		log.Debug("waking up %+v", jobs)
+		log.Debug("waking up %+v", ss)
 
-		for _, job := range jobs {
-			ch <- job
+		for _, s := range ss {
+			ch <- s
 		}
-
 	}
 }
 
-func (this *MysqlPoller) pollMarch(ch chan<- Schedulable) {
-	ticker := time.NewTicker(this.interval)
-	defer ticker.Stop()
+func (this *MysqlPoller) fetchSchedulables(typ string, dueTime time.Time) (ss []Schedulable) {
+	var stmt *sql.Stmt
+	switch typ {
+	case "job":
+		stmt = this.jobQueryStmt
 
-	var marches []*March
-	for now := range ticker.C {
-		marches = this.fetchReadyMarches(now)
-		if len(marches) > 0 {
-			log.Debug("due %+v", marches)
-		}
+	case "march":
+		stmt = this.marchQueryStmt
 
-		for _, march := range marches {
-			ch <- march
-		}
+	case "pve":
+		stmt = this.pveQueryStmt
 	}
 
-}
-
-func (this *MysqlPoller) pollPve(ch chan<- Schedulable) {
-	ticker := time.NewTicker(this.interval)
-	defer ticker.Stop()
-
-	var marches []*Pve
-	for now := range ticker.C {
-		marches = this.fetchReadyPves(now)
-		if len(marches) > 0 {
-			log.Debug("pve %+v", marches)
-		}
-
-		for _, march := range marches {
-			ch <- march
-		}
-	}
-
-}
-
-func (this *MysqlPoller) fetchReadyPves(dueTime time.Time) (marches []*Pve) {
-	rows, err := this.pveQueryStmt.Query(dueTime.Unix())
+	rows, err := stmt.Query(dueTime.Unix())
 	if err != nil {
 		log.Error("db query: %s", err.Error())
 		return
 	}
 
-	var march Pve
-	for rows.Next() {
-		err = rows.Scan(&march.Uid, &march.MarchId, &march.State, &march.EndTime)
-		if err != nil {
-			log.Error("db scan: %s", err.Error())
-			continue
+	switch typ {
+	case "job":
+		var s Job
+		for rows.Next() {
+			err = rows.Scan(&s.Uid, &s.JobId, &s.CityId,
+				&s.Type, &s.TimeStart, &s.TimeEnd, &s.Trace)
+			if err != nil {
+				log.Error("db scan: %s", err.Error())
+				continue
+			}
+
+			ss = append(ss, &s)
 		}
 
-		marches = append(marches, &march)
+	case "march":
+		var s March
+		for rows.Next() {
+			err = rows.Scan(&s.Uid, &s.MarchId, &s.X1, &s.Y1,
+				&s.State, &s.EndTime)
+			if err != nil {
+				log.Error("db scan: %s", err.Error())
+				continue
+			}
+
+			ss = append(ss, &s)
+		}
+
+	case "pve":
+		var s Pve
+		for rows.Next() {
+			err = rows.Scan(&s.Uid, &s.MarchId, &s.State, &s.EndTime)
+			if err != nil {
+				log.Error("db scan: %s", err.Error())
+				continue
+			}
+
+			ss = append(ss, &s)
+		}
 	}
 
 	rows.Close()
-	return
-}
-
-func (this *MysqlPoller) fetchReadyMarches(dueTime time.Time) (marches []*March) {
-	rows, err := this.marchQueryStmt.Query(dueTime.Unix())
-	if err != nil {
-		log.Error("db query: %s", err.Error())
-		return
-	}
-
-	this.marchQueryLatency.Update(time.Since(dueTime).Nanoseconds() / 1e6)
-
-	var march March
-	for rows.Next() {
-		err = rows.Scan(&march.Uid, &march.MarchId, &march.X1, &march.Y1,
-			&march.State, &march.EndTime)
-		if err != nil {
-			log.Error("db scan: %s", err.Error())
-			continue
-		}
-
-		marches = append(marches, &march)
-	}
-
-	rows.Close()
-	return
-}
-
-// TODO disable autocommit
-// Job rows: time_end with 1, 5, 9
-// select * from Job where time_end<=8
-// php(player) speedup 9 to 4
-// delete from Job where time_end<=8 will miss job(4)
-// contention exists between actord and php(because job can pause/speedup/cancel)
-func (this *MysqlPoller) fetchReadyJobs(dueTime time.Time) (jobs []*Job) {
-	//jobs = make([]Job, 0, 100)
-
-	rows, err := this.jobQueryStmt.Query(dueTime.Unix())
-	if err != nil {
-		log.Error("db query: %s", err.Error())
-		return
-	}
-
-	this.jobQueryLatency.Update(time.Since(dueTime).Nanoseconds() / 1e6)
-
-	var job Job
-	for rows.Next() {
-		err = rows.Scan(&job.Uid, &job.JobId, &job.CityId,
-			&job.Type, &job.TimeStart, &job.TimeEnd, &job.Trace)
-		if err != nil {
-			log.Error("db scan: %s", err.Error())
-			continue
-		}
-
-		jobs = append(jobs, &job)
-	}
-
-	rows.Close() // Failing to use rows.Close() or stmt.Close() can cause exhaustion of resources
-
 	return
 }
 

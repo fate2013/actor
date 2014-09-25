@@ -34,6 +34,6 @@ func (this *Job) FlightKey() interface{} {
 }
 
 func (this Job) String() string {
-	return fmt.Sprintf("Job{uid:%d, jid:%d, due:%s, type:%d}", this.Uid,
-		this.JobId, this.TimeEnd, this.Type)
+	return fmt.Sprintf("Job{uid:%d, jid:%d, type:%d, due:%s}",
+		this.Uid, this.JobId, this.Type, this.TimeEnd)
 }
