@@ -119,7 +119,7 @@ func (this *ConfigBreaker) loadConfig(cf *conf.Conf) {
 }
 
 type ConfigMysqlInstance struct {
-	ConnectTimeout time.Duration // TODO not used yet, should be part of DSN
+	ConnectTimeout time.Duration
 	IoTimeout      time.Duration // TODO not used yet
 
 	Pool    string
@@ -156,8 +156,10 @@ func (this *ConfigMysqlInstance) loadConfig(section *conf.Conf) {
 		}
 	}
 	this.dsn += fmt.Sprintf("@tcp(%s:%s)/%s?", this.Host, this.Port, this.DbName)
+	this.dsn += "autocommit=true" // we are not using transaction
+	this.dsn += fmt.Sprintf("&timeout=%s", this.ConnectTimeout)
 	if this.Charset != "utf8" { // driver default utf-8
-		this.dsn += "charset=" + this.Charset
+		this.dsn += "&charset=" + this.Charset
 	}
 	this.dsn += "&parseTime=true" // parse db timestamp automatically
 }
