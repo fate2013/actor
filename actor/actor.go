@@ -34,8 +34,7 @@ func New(server *server.Server) (this *Actor) {
 		panic(err)
 	}
 
-	this.scheduler = NewScheduler(this.config.ScheduleInterval,
-		this.config.WorkerConfig)
+	this.scheduler = NewScheduler(this.config.ScheduleInterval, this.config.WorkerConfig)
 	this.statsRunner = NewStatsRunner(this, this.scheduler)
 
 	return
