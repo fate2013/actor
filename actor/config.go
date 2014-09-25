@@ -48,6 +48,7 @@ type ConfigCallback struct {
 	Timeout time.Duration
 	Job     string
 	March   string
+	Pve     string
 	MqAddr  string
 }
 
@@ -55,6 +56,7 @@ func (this *ConfigCallback) loadConfig(cf *conf.Conf) {
 	this.Timeout = time.Duration(cf.Int("timeout", 5)) * time.Second
 	this.Job = cf.String("job", "")
 	this.March = cf.String("march", "")
+	this.Pve = cf.String("pve", "")
 	this.MqAddr = cf.String("mq_addr", "")
 
 	log.Debug("callback config: %+v", *this)

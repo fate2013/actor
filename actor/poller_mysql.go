@@ -12,6 +12,7 @@ type MysqlPoller struct {
 	mysql             *mysql
 	jobQueryStmt      *sql.Stmt
 	marchQueryStmt    *sql.Stmt
+	pveQueryStmt      *sql.Stmt
 	jobQueryLatency   metrics.Histogram
 	marchQueryLatency metrics.Histogram
 }
@@ -53,17 +54,24 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 		return nil
 	}
 
+	this.pveQueryStmt, err = this.mysql.db.Prepare(PVE_QUERY)
+	if err != nil {
+		log.Critical("db prepare err: %s", err.Error())
+		return nil
+	}
+
 	return this
 }
 
 // TODO select timeout jobs, then delete them
 // in case of multiple actord, check delete afftectedRows==rowsCount, then dispatch job
-func (this *MysqlPoller) Run(jobCh chan<- Job, marchChan chan<- March) {
+func (this *MysqlPoller) Run(jobCh chan<- Job, marchChan chan<- March, pveChan chan<- Pve) {
 	defer this.Stop()
 
-	this.pollMarch(marchChan)
+	go this.pollMarch(marchChan)
+	go this.pollPve(pveChan)
 
-	//this.pollJob(jobCh)
+	this.pollJob(jobCh)
 }
 
 func (this *MysqlPoller) pollJob(jobCh chan<- Job) {
@@ -102,6 +110,46 @@ func (this *MysqlPoller) pollMarch(marchCh chan<- March) {
 		}
 	}
 
+}
+
+func (this *MysqlPoller) pollPve(pve chan<- Pve) {
+	ticker := time.NewTicker(this.interval)
+	defer ticker.Stop()
+
+	var marches []Pve
+	for now := range ticker.C {
+		marches = this.fetchReadyPves(now)
+		if len(marches) > 0 {
+			log.Debug("due %+v", marches)
+		}
+
+		for _, march := range marches {
+			pve <- march
+		}
+	}
+
+}
+
+func (this *MysqlPoller) fetchReadyPves(dueTime time.Time) (marches []Pve) {
+	rows, err := this.pveQueryStmt.Query(dueTime.Unix())
+	if err != nil {
+		log.Error("db query: %s", err.Error())
+		return
+	}
+
+	var march Pve
+	for rows.Next() {
+		err = rows.Scan(&march.Uid, &march.MarchId, &march.State, &march.EndTime)
+		if err != nil {
+			log.Error("db scan: %s", err.Error())
+			continue
+		}
+
+		marches = append(marches, march)
+	}
+
+	rows.Close()
+	return
 }
 
 func (this *MysqlPoller) fetchReadyMarches(dueTime time.Time) (marches MarchGroup) {

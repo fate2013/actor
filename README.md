@@ -12,3 +12,8 @@ DragonServer
 [MySQL] 2014/09/24 09:29:15 statement.go:24: Invalid Connection
 [MySQL] 2014/09/24 09:29:15 statement.go:24: Invalid Connection
 [09/24/14 09:29:15] [EROR] db query: driver: bad connection
+
+
+
+teleport race with actor
+

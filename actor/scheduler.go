@@ -11,6 +11,7 @@ type Scheduler struct {
 	// Poller -> jobChan -> Callbacker
 	jobChan   chan Job
 	marchChan chan March
+	pveChan   chan Pve
 
 	pollers    map[string]Poller // key is db pool name
 	callbacker Callbacker
@@ -22,13 +23,14 @@ func NewScheduler(interval time.Duration, callbackConf *ConfigCallback,
 	this.interval = interval
 	this.jobChan = make(chan Job, 1000)     // TODO
 	this.marchChan = make(chan March, 1000) // TODO
+	this.pveChan = make(chan Pve, 1000)
 	this.pollers = make(map[string]Poller)
 	this.callbacker = NewPhpCallbacker(callbackConf)
 	return this
 }
 
 func (this *Scheduler) Len() int {
-	return len(this.jobChan) + len(this.marchChan)
+	return len(this.jobChan) + len(this.marchChan) + len(this.pveChan)
 }
 
 func (this *Scheduler) Run(myconf *ConfigMysql) {
@@ -39,7 +41,7 @@ func (this *Scheduler) Run(myconf *ConfigMysql) {
 		if this.pollers[pool] != nil {
 			log.Debug("started %s poller", pool)
 
-			go this.pollers[pool].Run(this.jobChan, this.marchChan)
+			go this.pollers[pool].Run(this.jobChan, this.marchChan, this.pveChan)
 		}
 	}
 
@@ -70,6 +72,19 @@ func (this *Scheduler) scheduleCallback() {
 			}
 
 			go this.callbackMarch(march)
+
+		case pve, ok := <-this.pveChan:
+			if !ok {
+				log.Critical("pve chan closed")
+				return
+			}
+
+			if pve.Ignored() {
+				log.Warn("ignored: %+v", pve)
+				continue
+			}
+
+			go this.callbacker.Pve(pve)
 		}
 
 	}

@@ -77,6 +77,54 @@ func (this *PhpCallbacker) Play(m March) (retry bool) {
 	return
 }
 
+func (this *PhpCallbacker) Pve(m Pve) (retry bool) {
+	if this.config.March == "" {
+		// disabled
+		return
+	}
+
+	if !this.marchFlight.Takeoff(m) { // lock failed
+		log.Warn("locked %+v", m)
+		return true
+	}
+
+	params := m.Marshal()
+	url := fmt.Sprintf(this.config.Pve, string(params))
+	log.Debug("pve callback: %s", url)
+
+	t0 := time.Now()
+	res, err := http.Get(url)
+	this.latency.Update(time.Since(t0).Nanoseconds() / 1e6)
+	if err != nil {
+		log.Error("http err: %s", err.Error())
+		this.marchFlight.Land(m)
+		return
+	}
+
+	defer func() {
+		res.Body.Close()
+		this.marchFlight.Land(m)
+	}()
+
+	payload, err := ioutil.ReadAll(res.Body)
+	log.Debug("%+v, payload: %s, elapsed: %v", m, string(payload), time.Since(t0))
+	if err != nil {
+		log.Error("payload: %s", err.Error())
+		return
+	}
+
+	if res.StatusCode != http.StatusOK {
+		log.Error("callback err: %+v", res)
+		return
+	}
+
+	if string(payload) != "true" {
+		retry = true
+	}
+
+	return
+}
+
 func (this *PhpCallbacker) Call(j Job) (retry bool) {
 	if this.config.Job == "" {
 		// disabled
@@ -107,7 +155,7 @@ func (this *PhpCallbacker) Call(j Job) (retry bool) {
 	}()
 
 	payload, err := ioutil.ReadAll(res.Body)
-	log.Debug("payload: %s, elapsed: %v", string(payload), time.Since(t0))
+	log.Debug("%+v, payload: %s, elapsed: %v", j, string(payload), time.Since(t0))
 	if err != nil {
 		log.Error("payload: %s", err.Error())
 		return

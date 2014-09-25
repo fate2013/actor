@@ -2,7 +2,8 @@
     rest_listen_addr: ":9010"
     prof_listen_addr: ":9011"
     sched_interval: 1
-    stats_interval: 3600
+    stats_interval: 60
+    //stats_interval: 3600
     metrics_logfile: "metrics.log"
 
     callback: {
@@ -10,6 +11,7 @@
         //mq_addr: "127.0.0.1:11300"
         job: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=wakeup&params=%s"
         march: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=play&params=%s"
+        pve: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=pve&params=%s"
         //march: "http://dwtest.com/api/?class=actor&method=play&params=%s"
     }
 
