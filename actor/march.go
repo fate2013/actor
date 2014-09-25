@@ -18,7 +18,13 @@ type March struct {
 }
 
 func (this *March) GeoHash() int {
-	return int(this.X1<<11 | this.Y1)
+	return int(this.X1)<<11 | int(this.Y1)
+}
+
+func (this *March) DecodeGeoHash(hash int) (x, y int16) {
+	x = int16(hash >> 11)
+	y = int16(((1 << 11) - 1) & hash)
+	return
 }
 
 func (this *March) Marshal() []byte {

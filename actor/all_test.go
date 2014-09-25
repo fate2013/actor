@@ -38,6 +38,13 @@ func BenchmarkAdd(b *testing.B) {
 	}
 }
 
+func BenchmarkBitShift(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = 12 << 22
+	}
+
+}
+
 func BenchmarkJobMarshal(b *testing.B) {
 	b.ReportAllocs()
 	job := Job{Uid: 534343, JobId: 5677, TimeEnd: time.Now()}
@@ -114,6 +121,7 @@ func BenchmarkPhpPayloadFullDecode(b *testing.B) {
 	}
 }
 
+// test json omit
 func TestJobEncode(t *testing.T) {
 	job := Job{Uid: 534343, JobId: 5677, TimeEnd: time.Now()}
 	body, _ := json.Marshal(job)
@@ -122,5 +130,10 @@ func TestJobEncode(t *testing.T) {
 
 func TestMarchGeoHash(t *testing.T) {
 	march := March{Uid: 22323, MarchId: 34343434343, X1: 2323, Y1: 343}
-	assert.Equal(t, 12, march.GeoHash())
+	hash := march.GeoHash()
+	assert.Equal(t, 4757847, hash)
+
+	x, y := march.DecodeGeoHash(hash)
+	assert.Equal(t, int16(2323), x)
+	assert.Equal(t, int16(343), y)
 }
