@@ -115,7 +115,8 @@ func (this *MysqlPoller) fetchReadyMarches(dueTime time.Time) (marches MarchGrou
 
 	var march March
 	for rows.Next() {
-		err = rows.Scan(&march.Uid, &march.MarchId, &march.X1, &march.Y1)
+		err = rows.Scan(&march.Uid, &march.MarchId, &march.X1, &march.Y1,
+			&march.State, &march.EndTime)
 		if err != nil {
 			log.Error("db scan: %s", err.Error())
 			continue

@@ -49,17 +49,17 @@ func (this *PhpCallbacker) Play(m March) (retry bool) {
 	this.latency.Update(time.Since(t0).Nanoseconds() / 1e6)
 	if err != nil {
 		log.Error("http err: %s", err.Error())
-		this.marchFlight.Land(m)
+		this.marchFlight.Land(m.GeoHash())
 		return
 	}
 
 	defer func() {
 		res.Body.Close()
-		this.marchFlight.Land(m)
+		this.marchFlight.Land(m.GeoHash())
 	}()
 
 	payload, err := ioutil.ReadAll(res.Body)
-	log.Debug("payload: %s, elapsed: %v", string(payload), time.Since(t0))
+	log.Debug("%+v, payload: %s, elapsed: %v", m, string(payload), time.Since(t0))
 	if err != nil {
 		log.Error("payload: %s", err.Error())
 		return
@@ -68,6 +68,10 @@ func (this *PhpCallbacker) Play(m March) (retry bool) {
 	if res.StatusCode != http.StatusOK {
 		log.Error("callback err: %+v", res)
 		return
+	}
+
+	if string(payload) != "true" {
+		retry = true
 	}
 
 	return
@@ -112,6 +116,10 @@ func (this *PhpCallbacker) Call(j Job) (retry bool) {
 	if res.StatusCode != http.StatusOK {
 		log.Error("callback err: %+v", res)
 		return
+	}
+
+	if string(payload) != "true" {
+		retry = true
 	}
 
 	return

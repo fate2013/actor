@@ -28,7 +28,7 @@ func NewScheduler(interval time.Duration, callbackConf *ConfigCallback,
 }
 
 func (this *Scheduler) Len() int {
-	return len(this.jobChan)
+	return len(this.jobChan) + len(this.marchChan)
 }
 
 func (this *Scheduler) Run(myconf *ConfigMysql) {
@@ -74,10 +74,11 @@ func (this *Scheduler) callbackMarch(m March) {
 	rtos := []time.Duration{1, 2, 3, 4, 5}
 	for i := 0; i < 5; i++ {
 		if retry := this.callbacker.Play(m); !retry {
-			log.Debug("ok march callback: %+v", m)
+			//log.Debug("ok march callback: %+v", m)
 			return
 		}
 
+		return
 		time.Sleep(time.Second * rtos[i])
 		log.Warn("recallback %+v", m)
 	}
@@ -90,6 +91,8 @@ func (this *Scheduler) callbackJob(j Job) {
 			log.Debug("ok job callback: %+v", j)
 			return
 		}
+
+		return
 
 		time.Sleep(time.Second * rtos[i])
 		log.Warn("recallback %+v", j)
