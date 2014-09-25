@@ -9,11 +9,11 @@ import (
 type Job struct {
 	Uid       int64     `json:"uid"`
 	JobId     int64     `json:"job_id"`
-	CityId    int64     `json:"city_id"`
-	Type      uint16    `json:"event_type"`
-	TimeStart time.Time `json:"time_start"`
-	TimeEnd   time.Time `json:"time_end"`
-	Trace     string    `json:"trace"`
+	CityId    int64     `json:"-"` // ignored json field, json:"myname,omitempty"
+	Type      uint16    `json:"-"`
+	TimeStart time.Time `json:"-"`
+	TimeEnd   time.Time `json:"-"`
+	Trace     string    `json:"-"`
 }
 
 func (this *Job) Marshal() []byte {
