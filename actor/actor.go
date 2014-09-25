@@ -1,59 +1,48 @@
 /*
-      php server -----------------------+
-        |                               |
-        | job{who, when, where, op}     |
-        V                               |
-      syslogng                          |
-        |                               |
-      proxyd                            |
-        |                               |
-        V                               |
-   +------------------------+           |
-   |        |         actor |           |
-   |        |               |           |
-   |        V               |           |
-   |      queue             |           |
-   |        ^               |           |
-   |        | tick          |           |
-   |        | peekOrPop     |           |
-   |        V               |           |
-   |      dispatcher        |           |
-   |        |               |           |
-   +------------------------+           |
-            |                           |
-            +-------->------------------+
-            	callback
+   statsRunner
+     |
+   actor --- schduler --- pollers --- mysql farm
+               |            |
+               |            | scheduler.ch
+             worker --------+
+               |
+    --------------------------------------------------------
+               |        |       |
+              php      php     php
 
 */
 package actor
 
 import (
-	"github.com/funkygao/dragon/queue"
 	"github.com/funkygao/dragon/server"
 )
 
 type Actor struct {
 	server *server.Server
+	config *ActorConfig
 
-	replicator *replicator
-
-	totalReqN      int64
-	totalSessionN  int64
-	activeSessionN int32
-
-	queue *queue.Queue
+	statsRunner *StatsRunner
+	scheduler   *Scheduler
 }
 
 func New(server *server.Server) (this *Actor) {
 	this = new(Actor)
 	this.server = server
-	this.replicator = NewReplicator()
-	replicatorConf, err := server.Section("replicator")
-	if err != nil {
+
+	this.config = new(ActorConfig)
+	if err := this.config.LoadConfig(server.Conf); err != nil {
 		panic(err)
 	}
-	this.replicator.LoadConfig(replicatorConf)
-	this.queue = queue.New()
+
+	this.scheduler = NewScheduler(this.config.ScheduleInterval,
+		this.config.WorkerConfig)
+	this.statsRunner = NewStatsRunner(this, this.scheduler)
 
 	return
+}
+
+func (this *Actor) ServeForever() {
+	go this.scheduler.Run(this.config.MysqlConfig)
+
+	this.statsRunner.Run()
 }

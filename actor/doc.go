@@ -1,4 +1,20 @@
 /*
+
+A gathering, 2s left, then B attack A, push is late,so A loadMarch to server, but at this
+moment, A might go home or arrive home. Then the push arrives, how client handle this push?
+
+                           +-- mysql
+                           |
+          persistent conn  |-- mysql
+   actord -----------------|
+     |           job poll  |-- mysql
+     | http                |
+     | callback            +-- mysql
+     |
+    php ---+
+     |     | lock
+     +-----+
+
 actor schedules march event: arrive(speedup), recall(homeBack)
 
 

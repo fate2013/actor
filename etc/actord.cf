@@ -1,15 +1,39 @@
 {
-    listen_addr: ":9002"
     rest_listen_addr: ":9010"
     prof_listen_addr: ":9011"
-    callback_url: "http://gaopeng.dw-test.com/api/?class=actor&method=play&params=%s"
-    tcp_nodelay: true
-    tcp_io_timeout: 5
     sched_interval: 1
-    stats_interval: 5
-    replicator: {
-        addr: "127.0.0.1:9005"
-        tcp_nodelay: true
-        binlog: "bin.log"
+    stats_interval: 600
+    //stats_interval: 3600
+    metrics_logfile: "metrics.log"
+
+    worker: {
+        timeout: 5
+        //mq_addr: "127.0.0.1:11300"
+        job: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=wakeup&params=%s"
+        march: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=play&params=%s"
+        pve: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=pve&params=%s"
+        //march: "http://dwtest.com/api/?class=actor&method=play&params=%s"
+    }
+
+    mysql: {
+        connect_timeout: 4
+        io_timeout: 30
+        slow_threshold: 1
+
+        breaker: {
+            failure_allowance: 5
+            retry_timeout: 10
+        }
+
+        servers: [
+            {
+                pool: "UserShard1"
+                host: "192.168.42.106"
+                port: 3306
+                username: "hellofarm"
+                password: "halfquestfarm4321"
+                db: "UserShard1"
+            }
+        ]
     }
 }

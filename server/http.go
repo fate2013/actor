@@ -1,4 +1,4 @@
-package http
+package server
 
 import (
 	"encoding/json"
@@ -39,7 +39,7 @@ func LaunchHttpServ(listenAddr string, debugAddr string) (err error) {
 		return err
 	}
 
-	log.Info("HTTP server ready at http:%s with pprof at %s", listenAddr, debugAddr)
+	log.Info("HTTP serving at %s with pprof at %s", listenAddr, debugAddr)
 
 	go api.httpServer.Serve(api.httpListener)
 	if debugAddr != "" {

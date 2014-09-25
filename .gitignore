@@ -21,9 +21,12 @@ _testmain.go
 
 *.exe
 *.test
+*.swp
 
 daemon/actord/actord
 daemon/proxyd/proxyd
 cmd/feed/feed
 bench/unix_sock/client
 bench/unix_sock/server
+metrics.log
+actord.lock
