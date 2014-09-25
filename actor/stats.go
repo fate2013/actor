@@ -2,6 +2,7 @@ package actor
 
 import (
 	"github.com/funkygao/dragon/server"
+	"github.com/funkygao/golib/gofmt"
 	log "github.com/funkygao/log4go"
 	"github.com/funkygao/metrics"
 	"github.com/gorilla/mux"
@@ -50,17 +51,40 @@ func (this *StatsRunner) Run() {
 	ticker := time.NewTicker(this.actor.config.ConsoleStatsInterval)
 	defer ticker.Stop()
 
+	var (
+		ms           = new(runtime.MemStats)
+		rusage       = &syscall.Rusage{}
+		lastUserTime int64
+		lastSysTime  int64
+		userTime     int64
+		sysTime      int64
+		userCpuUtil  float64
+		sysCpuUtil   float64
+	)
 	for _ = range ticker.C {
-		this.showStats()
-	}
-}
+		runtime.ReadMemStats(ms)
 
-func (this *StatsRunner) showStats() {
-	log.Info("ver: %s, elapsed:%s, jobs:%d, goroutine:%d",
-		server.BuildID,
-		time.Since(this.actor.server.StartedAt),
-		this.scheduler.Len(),
-		runtime.NumGoroutine())
+		syscall.Getrusage(syscall.RUSAGE_SELF, rusage)
+		syscall.Getrusage(syscall.RUSAGE_SELF, rusage)
+		userTime = rusage.Utime.Sec*1000000000 + int64(rusage.Utime.Usec)
+		sysTime = rusage.Stime.Sec*1000000000 + int64(rusage.Stime.Usec)
+		userCpuUtil = float64(userTime-lastUserTime) * 100 / float64(this.actor.config.ConsoleStatsInterval)
+		sysCpuUtil = float64(sysTime-lastSysTime) * 100 / float64(this.actor.config.ConsoleStatsInterval)
+
+		lastUserTime = userTime
+		lastSysTime = sysTime
+
+		log.Info("ver: %s, elapsed:%s, jobs:%d, goroutine:%d, mem:%s",
+			server.BuildID,
+			time.Since(this.actor.server.StartedAt),
+			this.scheduler.Len(),
+			runtime.NumGoroutine(),
+			gofmt.ByteSize(ms.Alloc))
+		log.Info("cpu: %3.2f%% us, %3.2f%% sy, rss:%s",
+			userCpuUtil,
+			sysCpuUtil,
+			gofmt.ByteSize(float64(rusage.Maxrss*1024)))
+	}
 }
 
 func (this *StatsRunner) launchHttpServ() {
