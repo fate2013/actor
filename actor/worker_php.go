@@ -22,9 +22,9 @@ type PhpWorker struct {
 func NewPhpWorker(config *ConfigWorker) *PhpWorker {
 	this := new(PhpWorker)
 	this.config = config
-	this.jobFlight = NewFlight(10000) // FIXME
-	this.marchFlight = NewFlight(10000)
-	this.pveFlight = NewFlight(10000)
+	this.jobFlight = NewFlight(config.MaxFlightEntries)
+	this.marchFlight = NewFlight(config.MaxFlightEntries)
+	this.pveFlight = NewFlight(config.MaxFlightEntries)
 	this.latency = metrics.NewHistogram(
 		metrics.NewExpDecaySample(1028, 0.015))
 	metrics.Register("latency.php", this.latency)
@@ -66,12 +66,14 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 
 	t0 := time.Now()
 	res, err := http.Get(url)
-	this.latency.Update(time.Since(t0).Nanoseconds() / 1e6)
 	if err != nil {
 		log.Error("http err: %s", err.Error())
+
 		flightContainer.Land(flightKey)
 		return
 	}
+
+	this.latency.Update(time.Since(t0).Nanoseconds() / 1e6)
 
 	defer func() {
 		res.Body.Close()
@@ -79,16 +81,17 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 	}()
 
 	payload, err := ioutil.ReadAll(res.Body)
-	log.Debug("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), w)
 	if err != nil {
 		log.Error("payload: %s", err.Error())
 		return
 	}
 
 	if res.StatusCode != http.StatusOK {
-		log.Error("worker: %+v", res)
+		log.Error("unexpected php status: %s", res.Status)
 		return
 	}
+
+	log.Debug("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), w)
 
 	return
 }

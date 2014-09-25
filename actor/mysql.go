@@ -8,7 +8,7 @@ import (
 )
 
 // A mysql conn to a single mysql instance
-// Conn pool is natively supported by golang
+// Conn pool/auto reconnect is natively supported by golang mysql driver
 type mysql struct {
 	dsn       string
 	db        *sql.DB
@@ -48,6 +48,7 @@ func (this mysql) String() string {
 	return this.dsn
 }
 
+// TODO not used
 func (this *mysql) Query(query string, args ...interface{}) (rows *sql.Rows,
 	err error) {
 	log.Debug("db query=%s, args=%+v", query, args)
@@ -66,6 +67,7 @@ func (this *mysql) Query(query string, args ...interface{}) (rows *sql.Rows,
 	return
 }
 
+// TODO not used
 func (this *mysql) Exec(query string, args ...interface{}) (afftectedRows int64,
 	lastInsertId int64, err error) {
 	log.Debug("db exec=%s, args=%+v\n", query, args)

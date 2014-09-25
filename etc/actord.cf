@@ -7,6 +7,7 @@
     metrics_logfile: "metrics.log"
 
     worker: {
+        max_flight_entries: 100000
         timeout: 5
         //mq_addr: "127.0.0.1:11300"
         job: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=wakeup&params=%s"

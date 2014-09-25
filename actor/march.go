@@ -8,16 +8,23 @@ import (
 )
 
 type March struct {
-	Uid     int64  `json:"uid"`
-	MarchId int64  `json:"march_id"`
-	State   string `json:"state"`
-	X1      int16
-	Y1      int16
-	EndTime time.Time
+	Uid     int64 `json:"uid"`
+	MarchId int64 `json:"march_id"`
+
+	State   string    `json:"-"`
+	X1      int16     `json:"-"`
+	Y1      int16     `json:"-"`
+	EndTime time.Time `json:"-"`
 }
 
 func (this *March) GeoHash() int {
-	return int(this.X1<<11 | this.Y1)
+	return int(this.X1)<<11 | int(this.Y1)
+}
+
+func (this *March) DecodeGeoHash(hash int) (x, y int16) {
+	x = int16(hash >> 11)
+	y = int16(((1 << 11) - 1) & hash)
+	return
 }
 
 func (this *March) Marshal() []byte {
@@ -38,10 +45,11 @@ func (this *March) DueTime() time.Time {
 }
 
 func (this March) String() string {
-	return fmt.Sprintf("March{uid:%d, mid:%d, state:%s, due:%s}",
-		this.Uid, this.MarchId, this.State, this.EndTime)
+	return fmt.Sprintf("March{uid:%d, mid:%d, state:%s, (%d, %d), due:%s}",
+		this.Uid, this.MarchId, this.State, this.X1, this.Y1, this.EndTime)
 }
 
+// FIXME not used yet
 type MarchGroup []March
 
 func (this *MarchGroup) sortByDestination() {
