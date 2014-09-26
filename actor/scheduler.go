@@ -70,7 +70,7 @@ func (this *Scheduler) runWorker() {
 			}
 
 			if time.Since(w.DueTime()).Seconds() > this.interval.Seconds() {
-				log.Debug("late for %+v", w)
+				log.Warn("late for %+v", w)
 			}
 
 			go this.worker.Wake(w)

@@ -70,7 +70,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 	t0 := time.Now()
 	res, err := http.Get(url)
 	if err != nil {
-		log.Error("http err: %s", err.Error())
+		log.Error("http: %s", err.Error())
 
 		flightContainer.Land(flightKey)
 		return
@@ -85,7 +85,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 
 	payload, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		log.Error("payload: %s", err.Error())
+		log.Error("http: %s", err.Error())
 		return
 	}
 
