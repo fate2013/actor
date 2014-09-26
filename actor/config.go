@@ -49,6 +49,7 @@ func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
 }
 
 type ConfigWorker struct {
+	DryRun           bool
 	Timeout          time.Duration
 	MaxFlightEntries int
 
@@ -62,6 +63,7 @@ type ConfigWorker struct {
 }
 
 func (this *ConfigWorker) loadConfig(cf *conf.Conf) {
+	this.DryRun = cf.Bool("dry_run", true)
 	this.Timeout = time.Duration(cf.Int("timeout", 5)) * time.Second
 	this.MaxFlightEntries = cf.Int("max_flight_entries", 100000)
 	this.Job = cf.String("job", "")
