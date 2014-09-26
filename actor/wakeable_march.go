@@ -11,6 +11,7 @@ type March struct {
 	Uid     int64 `json:"uid"`
 	MarchId int64 `json:"march_id"`
 
+	Type    string    `json:"type"`
 	State   string    `json:"-"`
 	X1      int16     `json:"-"`
 	Y1      int16     `json:"-"`
@@ -45,8 +46,8 @@ func (this *March) DueTime() time.Time {
 }
 
 func (this March) String() string {
-	return fmt.Sprintf("March{uid:%d, mid:%d, state:%s, (%d, %d), due:%s}",
-		this.Uid, this.MarchId, this.State, this.X1, this.Y1, this.EndTime)
+	return fmt.Sprintf("March{uid:%d, mid:%d, type:%s, state:%s, (%d, %d), due:%s}",
+		this.Uid, this.MarchId, this.Type, this.State, this.X1, this.Y1, this.EndTime)
 }
 
 // FIXME not used yet

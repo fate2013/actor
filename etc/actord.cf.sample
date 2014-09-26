@@ -30,7 +30,7 @@
 
         query: {
             job: "SELECT uid,job_id,city_id,event_type,time_start,time_end,trace FROM Job WHERE unix_timestamp(time_end)<=? ORDER BY time_end ASC"
-            march: "SELECT uid,march_id,end_x,end_y,state,end_time FROM March WHERE state!='done' AND unix_timestamp(end_time)<=? ORDER BY end_time ASC, end_x, end_y"
+            march: "SELECT uid,march_id,end_x,end_y,type,state,end_time FROM March WHERE state!='done' AND unix_timestamp(end_time)<=? ORDER BY end_time ASC, end_x, end_y"
             pve: "SELECT uid,march_id,state,end_time FROM PVEMarch WHERE unix_timestamp(end_time)<=? AND state!='done' ORDER BY end_time ASC"
         }
 
