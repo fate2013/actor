@@ -8,9 +8,10 @@ import (
 )
 
 type ActorConfig struct {
-	RestListenAddr string
-	ProfListenAddr string
-	MetricsLogfile string
+	RestListenAddr   string
+	ProfListenAddr   string
+	MetricsLogfile   string
+	SchedulerBacklog int
 
 	ScheduleInterval     time.Duration
 	ConsoleStatsInterval time.Duration
@@ -23,6 +24,7 @@ func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
 	this.RestListenAddr = cf.String("rest_listen_addr", "")
 	this.ProfListenAddr = cf.String("prof_listen_addr", "")
 	this.MetricsLogfile = cf.String("metrics_logfile", "")
+	this.SchedulerBacklog = cf.Int("sched_backlog", 10000)
 
 	this.ScheduleInterval = time.Duration(cf.Int("sched_interval", 1)) * time.Second
 	this.ConsoleStatsInterval = time.Duration(cf.Int("stats_interval", 60*10)) * time.Second

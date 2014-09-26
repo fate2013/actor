@@ -9,23 +9,24 @@ type Scheduler struct {
 	interval time.Duration
 
 	// Poller -> WakeableChannel -> Worker
-	ch chan Wakeable
+	backlog chan Wakeable
 
 	pollers map[string]Poller // key is db pool name
 	worker  Worker
 }
 
-func NewScheduler(interval time.Duration, workerConf *ConfigWorker) *Scheduler {
+func NewScheduler(interval time.Duration, backlog int,
+	workerConf *ConfigWorker) *Scheduler {
 	this := new(Scheduler)
 	this.interval = interval
-	this.ch = make(chan Wakeable, 10000)
+	this.backlog = make(chan Wakeable, backlog)
 	this.pollers = make(map[string]Poller)
 	this.worker = NewPhpWorker(workerConf)
 	return this
 }
 
 func (this *Scheduler) Outstandings() int {
-	return len(this.ch)
+	return len(this.backlog)
 }
 
 func (this *Scheduler) InFlight() int {
@@ -46,7 +47,7 @@ func (this *Scheduler) Run(myconf *ConfigMysql) {
 		if this.pollers[pool] != nil {
 			log.Debug("started poller[%s]", pool)
 
-			go this.pollers[pool].Poll(this.ch)
+			go this.pollers[pool].Poll(this.backlog)
 		}
 	}
 
@@ -56,7 +57,7 @@ func (this *Scheduler) Run(myconf *ConfigMysql) {
 func (this *Scheduler) runWorker() {
 	for {
 		select {
-		case w, ok := <-this.ch:
+		case w, ok := <-this.backlog:
 			if !ok {
 				log.Critical("scheduler chan closed")
 				return

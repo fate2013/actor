@@ -3,6 +3,7 @@
     prof_listen_addr: ":9011"
     sched_interval: 1
     stats_interval: 600
+    sched_backlog: 5000
     //stats_interval: 3600
     metrics_logfile: "metrics.log"
 
