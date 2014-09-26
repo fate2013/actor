@@ -30,6 +30,7 @@ func (this *Job) Ignored() bool {
 	return false
 }
 
+// FIXME (uid, job), ResourceBoost case
 func (this *Job) FlightKey() interface{} {
 	return *this
 }
