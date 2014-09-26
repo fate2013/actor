@@ -58,7 +58,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 	}
 
 	if !flightContainer.Takeoff(flightKey) {
-		log.Warn("locked %+v", w)
+		log.Debug("locked %+v", w)
 		return
 	}
 
