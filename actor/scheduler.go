@@ -43,8 +43,8 @@ func (this *Scheduler) Run(myconf *ConfigMysql) {
 	go this.runWorker()
 
 	for pool, my := range myconf.Servers {
-		this.pollers[pool] = NewMysqlPoller(this.interval, my, &myconf.Query,
-			&myconf.Breaker)
+		this.pollers[pool] = NewMysqlPoller(this.interval, myconf.SlowThreshold,
+			my, &myconf.Query, &myconf.Breaker)
 		if this.pollers[pool] != nil {
 			log.Debug("started poller[%s]", pool)
 

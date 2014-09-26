@@ -10,7 +10,9 @@ import (
 )
 
 type MysqlPoller struct {
-	interval time.Duration
+	interval           time.Duration
+	slowQueryThreshold time.Duration
+
 	stopChan chan bool
 
 	mysql   *sql.DB
@@ -23,10 +25,12 @@ type MysqlPoller struct {
 	latency metrics.Histogram
 }
 
-func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
-	query *ConfigMysqlQuery, bc *ConfigBreaker) *MysqlPoller {
+func NewMysqlPoller(interval time.Duration, slowQueryThreshold time.Duration,
+	my *ConfigMysqlInstance, query *ConfigMysqlQuery, bc *ConfigBreaker) *MysqlPoller {
 	this := new(MysqlPoller)
 	this.interval = interval
+	this.slowQueryThreshold = slowQueryThreshold
+
 	this.stopChan = make(chan bool)
 
 	this.latency = metrics.NewHistogram(
@@ -176,12 +180,18 @@ func (this *MysqlPoller) Query(stmt *sql.Stmt,
 		return nil, ErrCircuitOpen
 	}
 
+	t0 := time.Now()
 	rows, err = stmt.Query(args...)
 	if err != nil {
 		this.breaker.Fail()
 		return
 	} else {
 		this.breaker.Succeed()
+	}
+
+	elapsed := time.Since(t0)
+	if elapsed > this.slowQueryThreshold {
+		log.Warn("slow query:%v, %+v", elapsed, *stmt)
 	}
 
 	return
