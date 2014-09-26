@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/funkygao/dragon/actor"
-	"github.com/funkygao/dragon/server"
 	"github.com/funkygao/golib/locking"
+	"github.com/funkygao/golib/server"
 	"github.com/funkygao/golib/signal"
 	"os"
 	"runtime/debug"

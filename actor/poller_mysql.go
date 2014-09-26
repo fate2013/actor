@@ -5,6 +5,7 @@ import (
 	"github.com/funkygao/golib/breaker"
 	log "github.com/funkygao/log4go"
 	"github.com/funkygao/metrics"
+	_ "github.com/go-sql-driver/mysql"
 	"time"
 )
 
@@ -12,9 +13,9 @@ type MysqlPoller struct {
 	interval time.Duration
 	stopChan chan bool
 
+	mysql   *sql.DB
 	breaker *breaker.Consecutive
 
-	mysql          *mysql
 	jobQueryStmt   *sql.Stmt
 	marchQueryStmt *sql.Stmt
 	pveQueryStmt   *sql.Stmt
@@ -32,12 +33,16 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 		metrics.NewExpDecaySample(1028, 0.015))
 	metrics.Register("latency.db", this.latency)
 
-	this.mysql = newMysql(my.DSN(), bc)
-	err := this.mysql.Open()
+	this.breaker = &breaker.Consecutive{
+		FailureAllowance: bc.FailureAllowance,
+		RetryTimeout:     bc.RetryTimeout}
+	var err error
+	this.mysql, err = sql.Open("mysql", my.DSN())
 	if err != nil {
 		log.Critical("open mysql[%+v] failed: %s", *my, err)
 		return nil
 	}
+
 	err = this.mysql.Ping()
 	if err != nil {
 		log.Critical("ping mysql[%s]: %s", my.DSN(), err)
@@ -45,27 +50,23 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 	}
 	log.Debug("mysql connected: %s", my.DSN())
 
-	this.jobQueryStmt, err = this.mysql.db.Prepare(JOB_QUERY)
+	this.jobQueryStmt, err = this.mysql.Prepare(JOB_QUERY)
 	if err != nil {
 		log.Critical("db prepare err: %s", err.Error())
 		return nil
 	}
 
-	this.marchQueryStmt, err = this.mysql.db.Prepare(MARCH_QUERY)
+	this.marchQueryStmt, err = this.mysql.Prepare(MARCH_QUERY)
 	if err != nil {
 		log.Critical("db prepare err: %s", err.Error())
 		return nil
 	}
 
-	this.pveQueryStmt, err = this.mysql.db.Prepare(PVE_QUERY)
+	this.pveQueryStmt, err = this.mysql.Prepare(PVE_QUERY)
 	if err != nil {
 		log.Critical("db prepare err: %s", err.Error())
 		return nil
 	}
-
-	this.breaker = &breaker.Consecutive{
-		FailureAllowance: bc.FailureAllowance,
-		RetryTimeout:     bc.RetryTimeout}
 
 	return this
 }
@@ -102,11 +103,6 @@ func (this *MysqlPoller) poll(typ string, ch chan<- Wakeable) {
 }
 
 func (this *MysqlPoller) fetchWakeables(typ string, dueTime time.Time) (ws []Wakeable) {
-	if this.breaker.Open() {
-		log.Warn("breaker open %+v", *this.breaker)
-		return
-	}
-
 	var stmt *sql.Stmt
 	switch typ {
 	case "job":
@@ -119,14 +115,11 @@ func (this *MysqlPoller) fetchWakeables(typ string, dueTime time.Time) (ws []Wak
 		stmt = this.pveQueryStmt
 	}
 
-	rows, err := stmt.Query(dueTime.Unix())
+	rows, err := this.Query(stmt, dueTime.Unix())
 	if err != nil {
 		log.Error("db query: %s", err.Error())
 
-		this.breaker.Fail()
 		return
-	} else {
-		this.breaker.Succeed()
 	}
 
 	this.latency.Update(time.Since(dueTime).Nanoseconds() / 1e6)
@@ -172,6 +165,25 @@ func (this *MysqlPoller) fetchWakeables(typ string, dueTime time.Time) (ws []Wak
 	}
 
 	rows.Close()
+	return
+}
+
+func (this *MysqlPoller) Query(stmt *sql.Stmt,
+	args ...interface{}) (rows *sql.Rows, err error) {
+	//log.Debug("%+v, args=%+v", *stmt, args)
+
+	if this.breaker.Open() {
+		return nil, ErrCircuitOpen
+	}
+
+	rows, err = stmt.Query(args...)
+	if err != nil {
+		this.breaker.Fail()
+		return
+	} else {
+		this.breaker.Succeed()
+	}
+
 	return
 }
 

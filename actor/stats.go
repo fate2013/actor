@@ -1,8 +1,8 @@
 package actor
 
 import (
-	"github.com/funkygao/dragon/server"
 	"github.com/funkygao/golib/gofmt"
+	"github.com/funkygao/golib/server"
 	log "github.com/funkygao/log4go"
 	"github.com/funkygao/metrics"
 	"github.com/gorilla/mux"

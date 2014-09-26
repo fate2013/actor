@@ -3,6 +3,7 @@ package actor
 import (
 	"encoding/json"
 	"github.com/funkygao/assert"
+	"github.com/funkygao/golib/breaker"
 	"sync"
 	"testing"
 	"time"
@@ -79,6 +80,15 @@ func BenchmarkMutex(b *testing.B) {
 		mutex.Lock()
 		mutex.Unlock()
 	}
+}
+
+func BenchmarkBreakerSucceed(b *testing.B) {
+	b.ReportAllocs()
+	breaker := breaker.Consecutive{}
+	for i := 0; i < b.N; i++ {
+		breaker.Succeed()
+	}
+
 }
 
 func BenchmarkFlightTakeoff(b *testing.B) {

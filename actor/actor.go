@@ -17,7 +17,7 @@
 package actor
 
 import (
-	"github.com/funkygao/dragon/server"
+	"github.com/funkygao/golib/server"
 )
 
 type Actor struct {
