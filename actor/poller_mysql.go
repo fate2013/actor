@@ -24,7 +24,7 @@ type MysqlPoller struct {
 }
 
 func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
-	bc *ConfigBreaker) *MysqlPoller {
+	query *ConfigMysqlQuery, bc *ConfigBreaker) *MysqlPoller {
 	this := new(MysqlPoller)
 	this.interval = interval
 	this.stopChan = make(chan bool)
@@ -50,19 +50,19 @@ func NewMysqlPoller(interval time.Duration, my *ConfigMysqlInstance,
 	}
 	log.Debug("mysql connected: %s", my.DSN())
 
-	this.jobQueryStmt, err = this.mysql.Prepare(JOB_QUERY)
+	this.jobQueryStmt, err = this.mysql.Prepare(query.Job)
 	if err != nil {
 		log.Critical("db prepare err: %s", err.Error())
 		return nil
 	}
 
-	this.marchQueryStmt, err = this.mysql.Prepare(MARCH_QUERY)
+	this.marchQueryStmt, err = this.mysql.Prepare(query.March)
 	if err != nil {
 		log.Critical("db prepare err: %s", err.Error())
 		return nil
 	}
 
-	this.pveQueryStmt, err = this.mysql.Prepare(PVE_QUERY)
+	this.pveQueryStmt, err = this.mysql.Prepare(query.Pve)
 	if err != nil {
 		log.Critical("db prepare err: %s", err.Error())
 		return nil

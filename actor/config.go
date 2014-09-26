@@ -80,6 +80,7 @@ type ConfigMysql struct {
 	IoTimeout      time.Duration
 	SlowThreshold  time.Duration // TODO not used yet
 
+	Query   ConfigMysqlQuery
 	Breaker ConfigBreaker
 
 	Servers map[string]*ConfigMysqlInstance // key is pool
@@ -89,7 +90,14 @@ func (this *ConfigMysql) loadConfig(cf *conf.Conf) {
 	this.ConnectTimeout = time.Duration(cf.Int("connect_timeout", 4)) * time.Second
 	this.IoTimeout = time.Duration(cf.Int("io_timeout", 30)) * time.Second
 	this.SlowThreshold = time.Duration(cf.Int("slow_threshold", 5)) * time.Second
-	section, err := cf.Section("breaker")
+
+	section, err := cf.Section("query")
+	if err != nil {
+		panic(err)
+	}
+	this.Query.loadConfig(section)
+
+	section, err = cf.Section("breaker")
 	if err == nil {
 		this.Breaker.loadConfig(section)
 	}
@@ -118,6 +126,23 @@ type ConfigBreaker struct {
 func (this *ConfigBreaker) loadConfig(cf *conf.Conf) {
 	this.FailureAllowance = uint(cf.Int("failure_allowance", 5))
 	this.RetryTimeout = time.Second * time.Duration(cf.Int("retry_timeout", 10))
+}
+
+type ConfigMysqlQuery struct {
+	Job   string
+	March string
+	Pve   string
+}
+
+func (this *ConfigMysqlQuery) loadConfig(cf *conf.Conf) {
+	this.Job = cf.String("job", "")
+	this.March = cf.String("march", "")
+	this.Pve = cf.String("pve", "")
+	if this.Job == "" ||
+		this.March == "" ||
+		this.Pve == "" {
+		panic("empty mysql query")
+	}
 }
 
 type ConfigMysqlInstance struct {
