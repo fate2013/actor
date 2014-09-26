@@ -4,7 +4,7 @@ DragonServer
 ### TODO
 *   simulate mysql shutdown
 *   WHERE UNIX_TIMESTAMP(time_end) index hit
-
+*   worker throttle
 
 
 [MySQL] 2014/09/24 09:29:15 packets.go:30: read tcp 192.168.42.106:3306: operation timed out
