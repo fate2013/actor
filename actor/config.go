@@ -52,6 +52,8 @@ type ConfigWorker struct {
 	DryRun           bool
 	Timeout          time.Duration
 	MaxFlightEntries int
+	MaxRetryEntries  int
+	MaxRetries       int // for a given Wakeable, how many retries at most
 
 	// if use php as worker
 	Job   string
@@ -66,6 +68,8 @@ func (this *ConfigWorker) loadConfig(cf *conf.Conf) {
 	this.DryRun = cf.Bool("dry_run", true)
 	this.Timeout = time.Duration(cf.Int("timeout", 5)) * time.Second
 	this.MaxFlightEntries = cf.Int("max_flight_entries", 100000)
+	this.MaxRetryEntries = cf.Int("max_retry_enties", 10000)
+	this.MaxRetries = cf.Int("max_retries", 100)
 	this.Job = cf.String("job", "")
 	this.March = cf.String("march", "")
 	this.Pve = cf.String("pve", "")

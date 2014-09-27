@@ -22,9 +22,12 @@ type PhpWorker struct {
 func NewPhpWorker(config *ConfigWorker) *PhpWorker {
 	this := new(PhpWorker)
 	this.config = config
-	this.jobFlight = NewFlight(config.MaxFlightEntries)
-	this.marchFlight = NewFlight(config.MaxFlightEntries)
-	this.pveFlight = NewFlight(config.MaxFlightEntries)
+	this.jobFlight = NewFlight(config.MaxFlightEntries,
+		this.config.MaxRetryEntries, this.config.MaxRetries)
+	this.marchFlight = NewFlight(config.MaxFlightEntries,
+		this.config.MaxRetryEntries, this.config.MaxRetries)
+	this.pveFlight = NewFlight(config.MaxFlightEntries,
+		this.config.MaxRetryEntries, this.config.MaxRetries)
 	this.latency = metrics.NewHistogram(
 		metrics.NewExpDecaySample(1028, 0.015))
 	metrics.Register("latency.php", this.latency)
@@ -55,6 +58,15 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 	case *Job:
 		url = fmt.Sprintf(this.config.Job, params)
 		flightContainer = this.jobFlight
+	}
+
+	ok, firstTimeFail := flightContainer.CanPass(flightKey)
+	if !ok {
+		if firstTimeFail {
+			log.Warn("max retries reached: %+v", w)
+		}
+
+		return
 	}
 
 	if !flightContainer.Takeoff(flightKey) {
