@@ -1,6 +1,7 @@
 package actor
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/cookieo9/go-misc/slice"
@@ -8,14 +9,13 @@ import (
 )
 
 type March struct {
-	Uid     int64 `json:"uid"`
-	MarchId int64 `json:"march_id"`
-
-	Type    string    `json:"type"`
-	State   string    `json:"-"`
-	X1      int16     `json:"-"`
-	Y1      int16     `json:"-"`
-	EndTime time.Time `json:"-"`
+	Uid     int64          `json:"uid"`
+	MarchId int64          `json:"march_id"`
+	Type    sql.NullString `json:"type"`
+	State   string         `json:"-"`
+	X1      int16          `json:"-"`
+	Y1      int16          `json:"-"`
+	EndTime time.Time      `json:"-"`
 }
 
 func (this *March) GeoHash() int {
