@@ -7,6 +7,7 @@ import (
 
 type Scheduler struct {
 	interval time.Duration
+	stopCh   chan bool
 
 	// Poller -> WakeableChannel -> Worker
 	backlog chan Wakeable
@@ -19,6 +20,7 @@ func NewScheduler(interval time.Duration, backlog int,
 	workerConf *ConfigWorker) *Scheduler {
 	this := new(Scheduler)
 	this.interval = interval
+	this.stopCh = make(chan bool)
 	this.backlog = make(chan Wakeable, backlog)
 	this.pollers = make(map[string]Poller)
 	this.worker = NewPhpWorker(workerConf)
@@ -37,6 +39,8 @@ func (this *Scheduler) Stop() {
 	for _, p := range this.pollers {
 		p.Stop()
 	}
+
+	close(this.stopCh)
 }
 
 func (this *Scheduler) Run(myconf *ConfigMysql) {
@@ -74,6 +78,11 @@ func (this *Scheduler) runWorker() {
 			}
 
 			go this.worker.Wake(w)
+
+		case <-this.stopCh:
+			log.Info("scheduler stopped")
+			return
+
 		}
 	}
 }
