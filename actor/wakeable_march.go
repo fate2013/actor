@@ -46,8 +46,8 @@ func (this *March) DueTime() time.Time {
 }
 
 func (this March) String() string {
-	return fmt.Sprintf("March{uid:%d, mid:%d, type:%v, state:%s, (%d, %d), due:%s}",
-		this.Uid, this.MarchId, this.Type, this.State, this.X1, this.Y1, this.EndTime)
+	return fmt.Sprintf("March{uid:%d, mid:%d, type:%s, state:%s, (%d, %d), due:%s}",
+		this.Uid, this.MarchId, this.Type.String, this.State, this.X1, this.Y1, this.EndTime)
 }
 
 // FIXME not used yet
