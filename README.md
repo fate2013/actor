@@ -67,3 +67,30 @@ player: client, server, actor, batch scripts,
 The common objective in RTS games is to eliminate other players through military superiority.
 Players first instruct workers to gather resources, then use those resources to build more workers 
 and structures that can create military units. These are then sent to battle the enemy in real-time.
+
+
+this record leads to deadloop, php always returns marching, never change it
+
+                   uid: 43
+              march_id: 70
+               city_id: 43
+               opp_uid: 16
+              world_id: 1
+                  type: NULL
+               start_x: 20
+               start_y: 28
+                 end_x: 22
+                 end_y: 22
+            start_time: 2014-09-26 23:09:38
+              end_time: 2014-09-26 23:09:44
+                 speed: 1
+          start_troops: {"cavalry_t1":"1"}
+                troops: {"cavalry_t1":"1"}
+      opp_start_troops: []
+            opp_troops: []
+troops_sentto_hospital: []
+             resources: []
+                 ctime: 2014-09-26 23:09:38
+                 mtime: 2014-09-26 23:09:39
+                 state: marching
+            battle_log: []
