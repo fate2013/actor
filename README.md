@@ -1,7 +1,7 @@
 DragonServer
 ============
 
-RTS game scheduler to handle the following challanges:
+RTS game non-instant scheduler to handle the following challanges:
 * concurrency isolation
 * scheduling of delayed jobs
 
