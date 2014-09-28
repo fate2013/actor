@@ -33,6 +33,8 @@ Non-instant events inclues:
 ### Benefits of introducing actor
 *   actor make N-1 concurrency problem into 2-1 user problem
     - so that in php, we can lock only attacker/attackee uid
+*   N-N combat problem is also solved
+    with help of php lock
 *   the only instant multiple user action problem is: teleport(with help of DB integrity it gets solved)
     - it has problem because of (instant/job conflicts)
     - imagine the scenario
