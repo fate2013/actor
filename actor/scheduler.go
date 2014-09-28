@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+// serial scheduler
+// TODO what if HealTroop job and opponent march arrives at the same time for a player?
 type Scheduler struct {
 	interval time.Duration
 	stopCh   chan bool
