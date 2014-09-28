@@ -7,6 +7,15 @@ RTS game non-instant scheduler to handle the following challanges:
 
 Non-instant events inclues:
 * Job
+  - quest
+  - construction
+  - heal troops
+  - train troop
+  - troop boost
+  - vip
+  - upkeep reduce
+  - research
+  - resource boost
 * March
 * PVEMarch
 
@@ -18,34 +27,10 @@ Non-instant events inclues:
 *   combat is atomic(always A@B)
     - combat must lock attacker & attackee
 
-### Terms
-*   hit
-    - a scheduling interval: 1s
-
-### TODO
-*   simulate mysql shutdown
-    - done! golang mysql driver with breaker will handle this
-*   WHERE UNIX_TIMESTAMP(time_end) index hit
-    - need to optimize DB index
-*   worker throttle
-    - we can't have toooo many callbacks concurrently, use channel for throttle, easy...
-*   FlightKey
-    - Job flight is Job row or (uid, jobId)?
-    - what if call back a Job but next wakeup turn the job status changed?
-*   merge Job and March for a given player due time same into 1 callback
-    - e,g. a HealTroop Job and attachee march arrives at the same time, which first run?
-    - do we really need this?
-    - maybe we dont care about this if we lock player correctly
-*   handles NULL column
-    - march.type done if it's NULL, what about others?
-    - maybe we should let DB handle this
-    - but mysql enum datatype can't handle this automatically
-
 ### Benefits of introducing actor
 *   actor make multiple user concurrency problem into 2-1 user problem
 *   the only instant multiple user problem is: teleport(with help of DB integrity it gets solved)
     - it has problem because of (instant vs job conflicts)
-
 
 ### Problems
 *   server push lost and out-of-order
@@ -135,3 +120,23 @@ critical setions solved by actor:
 wakes: [March{uid:78, mid:110, type:attack, state:marching, (41, 47), due:2014-09-28 08:17:11 +0000 UTC} March{uid:78, mid:110, type:attack, state:marching, (41, 47), due:2014-09-28 08:17:11 +0000 UTC} March{uid:78, mid:110, type:attack, state:marching, (41, 47), due:2014-09-28 08:17:11 +0000 UTC} March{uid:78, mid:110, type:attack, state:marching, (41, 47), due:2014-09-28 08:17:11 +0000 UTC}]
 
 PDDL
+
+### TODO
+*   simulate mysql shutdown
+    - done! golang mysql driver with breaker will handle this
+*   WHERE UNIX_TIMESTAMP(time_end) index hit
+    - need to optimize DB index
+*   worker throttle
+    - we can't have toooo many callbacks concurrently, use channel for throttle, easy...
+*   FlightKey
+    - Job flight is Job row or (uid, jobId)?
+    - what if call back a Job but next wakeup turn the job status changed?
+*   merge Job and March for a given player due time same into 1 callback
+    - e,g. a HealTroop Job and attachee march arrives at the same time, which first run?
+    - do we really need this?
+    - maybe we dont care about this if we lock player correctly
+*   handles NULL column
+    - march.type done if it's NULL, what about others?
+    - maybe we should let DB handle this
+    - but mysql enum datatype can't handle this automatically
+
