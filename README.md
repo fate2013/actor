@@ -41,16 +41,16 @@ Non-instant events inclues:
     - with help of DB integrity, it gets solved
     - imagine the scenario
 
-### Problems
-*   server push lost and out-of-order
-*   race condition between instant action and job based action
-
 ### Lock, lock what?
 *   just user lock: current user(instant action)
 *   attacker and attachee
 *   any action may fail because of the mutex lock
     - job/march fail: actor will retry after 1s
     - instant action fail: client will popup dialog to inform user: user decide when to retry
+
+### Problems
+*   server push lost and out-of-order
+*   race condition between instant action and job based action
 
 A gathering, 2s left, then B attack A, push is late,so A loadMarch to server, but at this
 moment, A might go home or arrive home. Then the push arrives, how client handle this push?
