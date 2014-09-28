@@ -5,9 +5,13 @@ RTS game scheduler to handle the following challanges:
 * concurrency isolation
 * scheduling of delayed jobs
 
+### Terms
+*   hit
+    - a scheduling interval: 1s
+
 ### TODO
 *   simulate mysql shutdown
-    - done, golang mysql driver with breaker will handle this
+    - done! golang mysql driver with breaker will handle this
 *   WHERE UNIX_TIMESTAMP(time_end) index hit
     - need to optimize DB index
 *   worker throttle
@@ -16,6 +20,7 @@ RTS game scheduler to handle the following challanges:
     - Job flight is Job row or (uid, jobId)?
     - what if call back a Job but next wakeup turn the job status changed?
 *   merge Job and March for a given player due time same into 1 callback
+    - e,g. a HealTroop Job and attachee march arrives at the same time, which first run?
     - do we really need this?
     - maybe we dont care about this if we lock player correctly
 *   handles NULL column
