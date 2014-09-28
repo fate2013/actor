@@ -5,6 +5,19 @@ RTS game non-instant scheduler to handle the following challanges:
 * concurrency isolation
 * scheduling of delayed jobs
 
+Non-instant events inclues:
+* Job
+* March
+* PVEMarch
+
+### Assumptions
+*   concurrency(time) accuracy is in 1s
+    - there is no absolute order although in real world we can't step into the same rive at the same time
+    - it means if 2-more events happens at the same second, they are concurrent
+    - concurrent events will be serialized by actor or by chance(lock, depends on who accquired the lock first)
+*   combat is atomic(always A@B)
+    - combat must lock attacker & attackee
+
 ### Terms
 *   hit
     - a scheduling interval: 1s
@@ -33,13 +46,6 @@ RTS game non-instant scheduler to handle the following challanges:
 *   the only instant multiple user problem is: teleport(with help of DB integrity it gets solved)
     - it has problem because of (instant vs job conflicts)
 
-### Assumptions
-*   concurrency(time) accuracy is in second
-    - there is no absolute order although in real world we can't step into the same rive at the same time
-    - it means if 2-more events happens at the same second, they are concurrent
-    - concurrent events will be serialized by actor or by chance(lock, depends on who accquired the lock first)
-*   combat is atomic(always A@B)
-    - combat must lock attacker & attackee
 
 ### Problems
 *   server push lost and out-of-order
