@@ -25,7 +25,7 @@ Non-instant events inclues:
     - there is no absolute order although in real world we can't step into the same rive at the same time
     - it means if 2-more events happens at the same second, they are concurrent
     - concurrent events will be serialized by actor or by chance(lock, depends on who accquired the lock first)
-*   combat is atomic(always A@Z instead of A,B,C@Z)
+*   combat is atomic and always between 2 parties(always A@Z instead of A,B,C@Z)
     - combat must lock attacker & attackee
 *   actor simplifies concurrency problem into 1-2 player problem
     - actor side locking
