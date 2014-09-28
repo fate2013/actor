@@ -25,18 +25,20 @@ Non-instant events inclues:
     - there is no absolute order although in real world we can't step into the same rive at the same time
     - it means if 2-more events happens at the same second, they are concurrent
     - concurrent events will be serialized by actor or by chance(lock, depends on who accquired the lock first)
-*   combat is atomic(always A@B)
+*   combat is atomic(always A@Z instead of A,B,C@Z)
     - combat must lock attacker & attackee
 *   actor simplifies concurrency problem into 1-2 player problem
     - actor side locking
+    - actor make concurrent calls into sequential calls
+    - actor is the coordinator
+*   we can use 'divide and conquer' methology to simplify problems
 
 ### Benefits of introducing actor
-*   actor make N-1 concurrency problem into 2-1 user problem
+*   actor make N-N problem -> N-1 -> 2-1 player problem
     - so that in php, we can lock only attacker/attackee uid
-*   N-N combat problem is also solved
-    with help of php lock
-*   the only instant multiple user action problem is: teleport(with help of DB integrity it gets solved)
+*   the only instant multiple user action problem is: teleport
     - it has problem because of (instant/job conflicts)
+    - with help of DB integrity, it gets solved
     - imagine the scenario
 
 ### Problems
