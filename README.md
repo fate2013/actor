@@ -17,6 +17,7 @@ Non-instant events inclues:
   - research
   - resource boost
 * March
+  - each march stage, e,g. arrive, goHome, gathering
 * PVEMarch
 
 ### Assumptions
