@@ -93,7 +93,7 @@ func BenchmarkBreakerSucceed(b *testing.B) {
 
 func BenchmarkFlightTakeoff(b *testing.B) {
 	b.ReportAllocs()
-	f := NewFlight(100000)
+	f := NewFlight(100000, 10000, 10)
 	job := Job{Uid: 534343, JobId: 5677, TimeEnd: time.Now()}
 	for i := 0; i < b.N; i++ {
 		f.Takeoff(job.FlightKey())
@@ -102,7 +102,7 @@ func BenchmarkFlightTakeoff(b *testing.B) {
 
 func BenchmarkFlightLand(b *testing.B) {
 	b.ReportAllocs()
-	f := NewFlight(100000)
+	f := NewFlight(100000, 10000, 10)
 	job := Job{Uid: 534343, JobId: 5677, TimeEnd: time.Now()}
 	for i := 0; i < b.N; i++ {
 		f.Land(job.FlightKey())
@@ -146,4 +146,21 @@ func TestMarchGeoHash(t *testing.T) {
 	x, y := march.DecodeGeoHash(hash)
 	assert.Equal(t, int16(2323), x)
 	assert.Equal(t, int16(343), y)
+}
+
+func TestFlightMaxRetry(t *testing.T) {
+    f := NewFlight(100, 100, 5)
+    ok, firstTimeFail := f.CanPass(8)
+    assert.Equal(t, true, ok)
+    assert.Equal(t, false, firstTimeFail)
+    for i:=1; i<4; i++ {
+        f.CanPass(8)
+    }
+    ok, firstTimeFail = f.CanPass(8)
+    assert.Equal(t, false, ok)
+    assert.Equal(t, true, firstTimeFail)
+
+    ok, firstTimeFail = f.CanPass(8)
+    assert.Equal(t, false, ok)
+    assert.Equal(t, false, firstTimeFail)
 }
