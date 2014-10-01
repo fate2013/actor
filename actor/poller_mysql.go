@@ -107,6 +107,7 @@ func (this *MysqlPoller) poll(typ string, ch chan<- Wakeable) {
 }
 
 func (this *MysqlPoller) fetchWakeables(typ string, dueTime time.Time) (ws []Wakeable) {
+	ws = make([]Wakeable, 0, 100)
 	var stmt *sql.Stmt
 	switch typ {
 	case "job":
