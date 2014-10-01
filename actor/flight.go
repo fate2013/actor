@@ -2,6 +2,7 @@ package actor
 
 import (
 	"github.com/funkygao/golib/cache"
+	log "github.com/funkygao/log4go"
 )
 
 // used as locking Wakeable's
@@ -36,6 +37,15 @@ func (this *Flight) CanPass(key cache.Key) (ok, firstTimeFail bool) {
 
 // return true if accquired the lock
 func (this *Flight) Takeoff(key cache.Key) (success bool) {
+	ok, firstTimeFail := this.CanPass(key)
+	if !ok {
+		if firstTimeFail {
+			log.Warn("max retries reached: %+v", key)
+		}
+
+		return false
+	}
+
 	// FIXME Get and Set is not atomic
 	if _, present := this.lock.Get(key); !present {
 		this.lock.Set(key, true)

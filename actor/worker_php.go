@@ -60,15 +60,6 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 		flightContainer = this.jobFlight
 	}
 
-	ok, firstTimeFail := flightContainer.CanPass(flightKey)
-	if !ok {
-		if firstTimeFail {
-			log.Warn("max retries reached: %+v", w)
-		}
-
-		return
-	}
-
 	if !flightContainer.Takeoff(flightKey) {
 		log.Debug("locked %+v", w)
 		return
