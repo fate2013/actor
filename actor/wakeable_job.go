@@ -32,7 +32,7 @@ func (this *Job) Ignored() bool {
 
 // FIXME (uid, job), ResourceBoost case
 func (this *Job) FlightKey() interface{} {
-	return *this
+	return Key{typ: "job", uid: this.Uid, id: this.JobId}
 }
 
 func (this Job) String() string {

@@ -64,8 +64,8 @@ func (this *Scheduler) Run(myconf *ConfigMysql) {
 func (this *Scheduler) runWorker() {
 	for {
 		select {
-		case w, ok := <-this.backlog:
-			if !ok {
+		case w, open := <-this.backlog:
+			if !open {
 				log.Critical("scheduler chan closed")
 				return
 			}

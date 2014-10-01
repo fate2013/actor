@@ -33,5 +33,5 @@ func (this Pve) String() string {
 }
 
 func (this *Pve) FlightKey() interface{} {
-	return *this
+	return Key{typ: "pve", uid: this.Uid, id: this.MarchId}
 }

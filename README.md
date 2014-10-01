@@ -131,6 +131,7 @@ wakes: [March{uid:78, mid:110, type:attack, state:marching, (41, 47), due:2014-0
 PDDL
 
 ### TODO
+*   can a player send N marches to the same tile?
 *   simulate mysql shutdown
     - done! golang mysql driver with breaker will handle this
 *   WHERE UNIX_TIMESTAMP(time_end) index hit
