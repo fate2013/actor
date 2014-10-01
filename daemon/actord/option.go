@@ -4,6 +4,16 @@ import (
 	"flag"
 )
 
+var (
+	options struct {
+		configFile  string
+		showVersion bool
+		logFile     string
+		logLevel    string
+		lockFile    string
+	}
+)
+
 func parseFlags() {
 	flag.StringVar(&options.lockFile, "lockfile", "actord.lock", "lock file")
 	flag.StringVar(&options.configFile, "conf", "etc/actord.cf", "config file")
