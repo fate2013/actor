@@ -10,7 +10,7 @@
         dry_run: true
         max_flight_entries: 100000
         max_retry_enties: 10000
-        max_retries: 100
+        max_retries: 10
         timeout: 5
         job: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=wakeup&params=%s"
         march: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=play&params=%s"
