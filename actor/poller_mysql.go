@@ -131,8 +131,8 @@ func (this *MysqlPoller) fetchWakeables(typ string, dueTime time.Time) (ws []Wak
 
 	switch typ {
 	case "job":
-		var w Job
 		for rows.Next() {
+			var w Job
 			err = rows.Scan(&w.Uid, &w.JobId, &w.CityId,
 				&w.Type, &w.TimeStart, &w.TimeEnd, &w.Trace)
 			if err != nil {
@@ -144,8 +144,8 @@ func (this *MysqlPoller) fetchWakeables(typ string, dueTime time.Time) (ws []Wak
 		}
 
 	case "march":
-		var w March
 		for rows.Next() {
+			var w March
 			err = rows.Scan(&w.Uid, &w.MarchId, &w.X1, &w.Y1, &w.Type,
 				&w.State, &w.EndTime)
 			if err != nil {
@@ -157,8 +157,8 @@ func (this *MysqlPoller) fetchWakeables(typ string, dueTime time.Time) (ws []Wak
 		}
 
 	case "pve":
-		var w Pve
 		for rows.Next() {
+			var w Pve
 			err = rows.Scan(&w.Uid, &w.MarchId, &w.State, &w.EndTime)
 			if err != nil {
 				log.Error("db scan: %s", err.Error())
