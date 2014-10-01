@@ -34,6 +34,14 @@ func NewPhpWorker(config *ConfigWorker) *PhpWorker {
 	return this
 }
 
+func (this PhpWorker) Flights() map[string]interface{} {
+	return map[string]interface{}{
+		"job":   *this.jobFlight,
+		"march": *this.marchFlight,
+		"pve":   *this.pveFlight,
+	}
+}
+
 func (this *PhpWorker) InFlight() int {
 	return this.jobFlight.Len() + this.marchFlight.Len() + this.pveFlight.Len()
 }

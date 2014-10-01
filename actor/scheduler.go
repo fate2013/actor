@@ -33,6 +33,13 @@ func (this *Scheduler) Outstandings() int {
 	return len(this.backlog)
 }
 
+func (this *Scheduler) Stat() map[string]interface{} {
+	return map[string]interface{}{
+		"worker_flights": this.worker.Flights(),
+		"backlog":        len(this.backlog),
+	}
+}
+
 func (this *Scheduler) InFlight() int {
 	return this.worker.InFlight()
 }

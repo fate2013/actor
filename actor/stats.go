@@ -118,12 +118,12 @@ func (this *StatsRunner) handleHttpQuery(w http.ResponseWriter, req *http.Reques
 	case "ver":
 		output["ver"] = server.BuildID
 
-	case "debug":
+	case "trace":
 		stack := make([]byte, 1<<20)
 		stackSize := runtime.Stack(stack, true)
 		output["callstack"] = string(stack[:stackSize])
 
-	case "stat":
+	case "sys":
 		output["goroutines"] = runtime.NumGoroutine()
 
 		memStats := new(runtime.MemStats)
@@ -133,6 +133,9 @@ func (this *StatsRunner) handleHttpQuery(w http.ResponseWriter, req *http.Reques
 		rusage := syscall.Rusage{}
 		syscall.Getrusage(0, &rusage)
 		output["rusage"] = rusage
+
+	case "stat":
+		output["stats"] = this.scheduler.Stat()
 
 	case "conf":
 		output["conf"] = *this.actor.server.Conf
@@ -145,8 +148,9 @@ func (this *StatsRunner) handleHttpQuery(w http.ResponseWriter, req *http.Reques
 		"/s/ping",
 		"/s/ver",
 		"/s/conf",
+		"s/sys",
 		"/s/stat",
-		"/s/debug",
+		"/s/trace",
 	}
 	if this.actor.config.ProfListenAddr != "" {
 		output["pprof"] = "http://" +
