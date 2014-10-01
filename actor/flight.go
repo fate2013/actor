@@ -40,7 +40,7 @@ func (this *Flight) Takeoff(key cache.Key) (success bool) {
 	ok, firstTimeFail := this.CanPass(key)
 	if !ok {
 		if firstTimeFail {
-			log.Warn("max retries reached: %+v", key)
+			log.Warn("max retries[%d] reached: %+v", this.maxRetries, key)
 		}
 
 		return false
