@@ -55,17 +55,23 @@ func (this *Scheduler) Stop() {
 func (this *Scheduler) Run(myconf *ConfigMysql) {
 	go this.runWorker()
 
+	var err error
+	var pollersN int
 	for pool, my := range myconf.Servers {
-		this.pollers[pool] = NewMysqlPoller(this.interval, myconf.SlowThreshold,
+		this.pollers[pool], err = NewMysqlPoller(this.interval, myconf.SlowThreshold,
 			my, &myconf.Query, &myconf.Breaker)
-		if this.pollers[pool] != nil {
-			log.Debug("started poller[%s]", pool)
-
-			go this.pollers[pool].Poll(this.backlog)
+		if err != nil {
+			log.Error("poller[%s]: %s", pool, err)
+			continue
 		}
+
+		log.Debug("started poller[%s]", pool)
+
+		pollersN++
+		go this.pollers[pool].Poll(this.backlog)
 	}
 
-	log.Info("scheduler started")
+	log.Info("scheduler started with %d pollers", pollersN)
 }
 
 func (this *Scheduler) runWorker() {

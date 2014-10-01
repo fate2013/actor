@@ -26,7 +26,7 @@ type MysqlPoller struct {
 }
 
 func NewMysqlPoller(interval time.Duration, slowQueryThreshold time.Duration,
-	my *ConfigMysqlInstance, query *ConfigMysqlQuery, bc *ConfigBreaker) *MysqlPoller {
+	my *ConfigMysqlInstance, query *ConfigMysqlQuery, bc *ConfigBreaker) (*MysqlPoller, error) {
 	this := new(MysqlPoller)
 	this.interval = interval
 	this.slowQueryThreshold = slowQueryThreshold
@@ -43,36 +43,33 @@ func NewMysqlPoller(interval time.Duration, slowQueryThreshold time.Duration,
 	var err error
 	this.mysql, err = sql.Open("mysql", my.DSN())
 	if err != nil {
-		log.Critical("open mysql[%+v] failed: %s", *my, err)
-		return nil
+		return nil, err
 	}
 
 	err = this.mysql.Ping()
 	if err != nil {
-		log.Critical("ping mysql[%s]: %s", my.DSN(), err)
-		return nil
+		return nil, err
 	}
+
 	log.Debug("mysql connected: %s", my.DSN())
 
 	this.jobQueryStmt, err = this.mysql.Prepare(query.Job)
 	if err != nil {
 		log.Critical("db prepare err: %s", err.Error())
-		return nil
+		return nil, err
 	}
 
 	this.marchQueryStmt, err = this.mysql.Prepare(query.March)
 	if err != nil {
-		log.Critical("db prepare err: %s", err.Error())
-		return nil
+		return nil, err
 	}
 
 	this.pveQueryStmt, err = this.mysql.Prepare(query.Pve)
 	if err != nil {
-		log.Critical("db prepare err: %s", err.Error())
-		return nil
+		return nil, err
 	}
 
-	return this
+	return this, nil
 }
 
 func (this *MysqlPoller) Poll(ch chan<- Wakeable) {

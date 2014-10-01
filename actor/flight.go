@@ -52,7 +52,7 @@ func (this *Flight) Takeoff(key cache.Key) (success bool) {
 		return true
 	}
 
-	log.Debug("locked %+v", key)
+	log.Debug("locked %#v", key)
 	return false
 }
 
