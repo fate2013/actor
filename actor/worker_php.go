@@ -36,9 +36,12 @@ func NewPhpWorker(config *ConfigWorker) *PhpWorker {
 
 func (this PhpWorker) Flights() map[string]interface{} {
 	return map[string]interface{}{
-		"job":   *this.jobFlight,
-		"march": *this.marchFlight,
-		"pve":   *this.pveFlight,
+		"job.lock":    this.jobFlight.lock.Len(),
+		"job.retry":   this.jobFlight.retry.Len(),
+		"march.lock":  this.marchFlight.lock.Len(),
+		"march.retry": this.marchFlight.retry.Len(),
+		"pve.lock":    this.pveFlight.lock.Len(),
+		"pve.retry":   this.pveFlight.retry.Len(),
 	}
 }
 
