@@ -75,10 +75,12 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 		return
 	}
 
-	log.Debug("%s", url)
 	if this.config.DryRun {
+        log.Debug("dry run: %s", url)
 		return
 	}
+
+	log.Debug("%s", url)
 
 	t0 := time.Now()
 	res, err := http.Get(url)
