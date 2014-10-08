@@ -21,7 +21,9 @@ func NewFlight(maxLockEntries int, maxRetryEntries int, maxRetries int) *Flight 
 	return this
 }
 
-func (this *Flight) CanPass(key cache.Key) (ok, firstTimeFail bool) {
+// FIXME for March, key is (x, y), if 100 march to the same tile, max retries will
+// be reached early, can refuse to serve the remaining march
+func (this *Flight) canPass(key cache.Key) (ok, firstTimeFail bool) {
 	ok, firstTimeFail = true, false
 	if this.maxRetries == 0 {
 		return
@@ -40,7 +42,7 @@ func (this *Flight) CanPass(key cache.Key) (ok, firstTimeFail bool) {
 
 // return true if accquired the lock
 func (this *Flight) Takeoff(key cache.Key) (success bool) {
-	ok, firstTimeFail := this.CanPass(key)
+	ok, firstTimeFail := this.canPass(key)
 	if !ok {
 		if firstTimeFail {
 			log.Warn("max retries[%d] reached: %+v", this.maxRetries, key)
@@ -61,10 +63,6 @@ func (this *Flight) Takeoff(key cache.Key) (success bool) {
 
 func (this *Flight) Land(key cache.Key) {
 	this.lock.Del(key)
-
-	if this.maxRetries > 0 {
-		this.retry.Decr(key)
-	}
 }
 
 func (this *Flight) Len() int {

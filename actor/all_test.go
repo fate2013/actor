@@ -90,11 +90,11 @@ func BenchmarkBreakerSucceed(b *testing.B) {
 	}
 }
 
-func BenchmarkFlightCanPass(b *testing.B) {
+func BenchmarkFlightcanPass(b *testing.B) {
 	b.ReportAllocs()
 	f := NewFlight(100000, 100000, 10)
 	for i := 0; i < b.N; i++ {
-		f.CanPass(90)
+		f.canPass(90)
 	}
 }
 
@@ -157,21 +157,21 @@ func TestMarchGeoHash(t *testing.T) {
 
 func TestFlightMaxRetry(t *testing.T) {
 	f := NewFlight(100, 100, 5)
-	ok, firstTimeFail := f.CanPass(8)
+	ok, firstTimeFail := f.canPass(8)
 	assert.Equal(t, true, ok)
 	assert.Equal(t, false, firstTimeFail)
 	for i := 1; i < 4; i++ {
-		f.CanPass(8)
+		f.canPass(8)
 	}
-	ok, firstTimeFail = f.CanPass(8)
+	ok, firstTimeFail = f.canPass(8)
 	assert.Equal(t, false, ok)
 	assert.Equal(t, true, firstTimeFail)
 
-	ok, firstTimeFail = f.CanPass(8)
+	ok, firstTimeFail = f.canPass(8)
 	assert.Equal(t, false, ok)
 	assert.Equal(t, false, firstTimeFail)
 	for i := 0; i < 100; i++ {
-		ok, firstTimeFail = f.CanPass(8)
+		ok, firstTimeFail = f.canPass(8)
 		assert.Equal(t, false, ok)
 		assert.Equal(t, false, firstTimeFail)
 	}
