@@ -71,6 +71,10 @@ func (this *Scheduler) Run(myconf *ConfigMysql) {
 		go this.pollers[pool].Poll(this.backlog)
 	}
 
+	if pollersN == 0 {
+		panic("Zero poller")
+	}
+
 	log.Info("scheduler started with %d pollers", pollersN)
 }
 
