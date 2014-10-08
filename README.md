@@ -50,6 +50,8 @@ Non-instant events inclues:
 
 ### Problems
 *   server push lost and out-of-order
+    - war event
+    - alliance event
 *   race condition between instant action and job based action
 
 A gathering, 2s left, then B attack A, push is late,so A loadMarch to server, but at this
@@ -131,6 +133,8 @@ wakes: [March{uid:78, mid:110, type:attack, state:marching, (41, 47), due:2014-0
 PDDL
 
 ### TODO
+*   teleport fails need the target tile most recent info
+*   A@t0 build a 5s farm which arrives at php at t3, at t2 A's research timeout, what will happen if opTime/serverTime?
 *   can a player send N marches to the same tile?
 *   simulate mysql shutdown
     - done! golang mysql driver with breaker will handle this
