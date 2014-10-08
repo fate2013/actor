@@ -53,35 +53,48 @@ func NewMysqlPoller(interval time.Duration, slowQueryThreshold time.Duration,
 
 	log.Debug("mysql connected: %s", my.DSN())
 
-	this.jobQueryStmt, err = this.mysql.Prepare(query.Job)
-	if err != nil {
-		log.Critical("db prepare err: %s", err.Error())
-		return nil, err
+	if query.Job != "" {
+		this.jobQueryStmt, err = this.mysql.Prepare(query.Job)
+		if err != nil {
+			log.Critical("db prepare err: %s", err.Error())
+			return nil, err
+		}
 	}
 
-	this.marchQueryStmt, err = this.mysql.Prepare(query.March)
-	if err != nil {
-		return nil, err
+	if query.March != "" {
+		this.marchQueryStmt, err = this.mysql.Prepare(query.March)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	this.pveQueryStmt, err = this.mysql.Prepare(query.Pve)
-	if err != nil {
-		return nil, err
+	if query.Pve != "" {
+		this.pveQueryStmt, err = this.mysql.Prepare(query.Pve)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return this, nil
 }
 
 func (this *MysqlPoller) Poll(ch chan<- Wakeable) {
-	go this.poll("job", ch)
-	go this.poll("march", ch)
-	go this.poll("pve", ch)
+	if this.jobQueryStmt != nil {
+		go this.poll("job", ch)
+		defer this.jobQueryStmt.Close()
+	}
+
+	if this.marchQueryStmt != nil {
+		go this.poll("march", ch)
+		defer this.marchQueryStmt.Close()
+	}
+
+	if this.pveQueryStmt != nil {
+		go this.poll("pve", ch)
+		defer this.pveQueryStmt.Close()
+	}
 
 	<-this.stopChan
-
-	this.jobQueryStmt.Close()
-	this.marchQueryStmt.Close()
-	this.pveQueryStmt.Close()
 }
 
 func (this *MysqlPoller) poll(typ string, ch chan<- Wakeable) {
