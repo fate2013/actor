@@ -23,6 +23,9 @@ func NewFlight(maxLockEntries int, maxRetryEntries int, maxRetries int) *Flight 
 
 func (this *Flight) CanPass(key cache.Key) (ok, firstTimeFail bool) {
 	ok, firstTimeFail = true, false
+	if this.maxRetries == 0 {
+		return
+	}
 	retried := this.retry.Inc(key)
 	if retried >= this.maxRetries {
 		ok = false
