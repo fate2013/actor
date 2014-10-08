@@ -1,6 +1,22 @@
 DragonServer
 ============
 
+### Install
+
+    install golang and setup GOPATH
+    e,g.
+    export GOPATH=~/gopkg
+
+    go get github.com/funkygao/dragon
+    cd $GOPATH/src/github.com/funkygao/dragon
+    go get github.com/funkygao/golib
+    go get github.com/funkygao/log4go
+    go get github.com/cookieo9/go-misc/slice
+    ./build.sh
+    cd etc
+    cp actord.cf.sample actord.cf
+    ./daemon/actord/actord
+
 RTS game non-instant scheduler to handle the following challanges:
 * concurrency isolation
 * scheduling of delayed jobs
