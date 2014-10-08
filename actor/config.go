@@ -144,8 +144,8 @@ func (this *ConfigMysqlQuery) loadConfig(cf *conf.Conf) {
 	this.Job = cf.String("job", "")
 	this.March = cf.String("march", "")
 	this.Pve = cf.String("pve", "")
-	if this.Job == "" ||
-		this.March == "" ||
+	if this.Job == "" &&
+		this.March == "" &&
 		this.Pve == "" {
 		panic("empty mysql query")
 	}
