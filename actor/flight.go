@@ -61,6 +61,10 @@ func (this *Flight) Takeoff(key cache.Key) (success bool) {
 
 func (this *Flight) Land(key cache.Key) {
 	this.lock.Del(key)
+
+	if this.maxRetries > 0 {
+		this.retry.Decr(key)
+	}
 }
 
 func (this *Flight) Len() int {
