@@ -3,7 +3,7 @@ DragonServer
 
 ### Install
 
-    install golang and setup GOPATH
+    install golang 64amd and setup GOPATH
     e,g.
     export GOPATH=~/gopkg
 
@@ -13,8 +13,7 @@ DragonServer
     go get github.com/funkygao/log4go
     go get github.com/cookieo9/go-misc/slice
     ./build.sh
-    cd etc
-    cp actord.cf.sample actord.cf
+    cp etc/actord.cf.sample etc/actord.cf
     ./daemon/actord/actord
 
 RTS game non-instant scheduler to handle the following challanges:
