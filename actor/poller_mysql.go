@@ -108,7 +108,7 @@ func (this *MysqlPoller) poll(typ string, ch chan<- Wakeable) {
 			continue
 		}
 
-		log.Debug("wakes[%s]: %+v", typ, ws)
+		log.Debug("wakes[%s]%d: %+v", typ, len(ws), ws)
 
 		for _, w := range ws {
 			ch <- w
