@@ -12,6 +12,7 @@ DragonServer
     go get github.com/funkygao/golib
     go get github.com/funkygao/log4go
     go get github.com/cookieo9/go-misc/slice
+    edit
     ./build.sh
     cp etc/actord.cf.sample etc/actord.cf
     ./daemon/actord/actord
