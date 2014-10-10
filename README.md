@@ -12,9 +12,12 @@ DragonServer
     go get github.com/funkygao/golib
     go get github.com/funkygao/log4go
     go get github.com/cookieo9/go-misc/slice
-    edit
+    go get github.com/funkygao/jsconf
+    go get github.com/funkygao/metrics
+    go get github.com/go-sql-driver/mysql
+    go get github.com/gorilla/mux
     ./build.sh
-    cp etc/actord.cf.sample etc/actord.cf
+    cp etc/actord.cf.sample etc/actord.cf (change the address to your own)
     ./daemon/actord/actord
 
 RTS game non-instant scheduler to handle the following challanges:
