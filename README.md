@@ -3,19 +3,20 @@ DragonServer
 
 ### Install
 
-    install golang 64amd and setup GOPATH
+    install golang amd64 and setup GOPATH
     e,g.
     export GOPATH=~/gopkg
 
     go get github.com/funkygao/dragon
     cd $GOPATH/src/github.com/funkygao/dragon
-    go get github.com/funkygao/golib
-    go get github.com/funkygao/log4go
-    go get github.com/cookieo9/go-misc/slice
-    go get github.com/funkygao/jsconf
-    go get github.com/funkygao/metrics
-    go get github.com/go-sql-driver/mysql
-    go get github.com/gorilla/mux
+    go get ./... # install all dependencies
+    #go get github.com/funkygao/golib
+    #go get github.com/funkygao/log4go
+    #go get github.com/cookieo9/go-misc/slice
+    #go get github.com/funkygao/jsconf
+    #go get github.com/funkygao/metrics
+    #go get github.com/go-sql-driver/mysql
+    #go get github.com/gorilla/mux
     ./build.sh
     cp etc/actord.cf.sample etc/actord.cf (change the address to your own)
     ./daemon/actord/actord
