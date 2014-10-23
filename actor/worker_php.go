@@ -76,7 +76,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 	}
 
 	if this.config.DryRun {
-        log.Debug("dry run: %s", url)
+		log.Debug("dry run: %s", url)
 		return
 	}
 
@@ -87,7 +87,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 	if err != nil {
 		log.Error("http: %s", err.Error())
 
-		flightContainer.Land(flightKey)
+		flightContainer.Land(flightKey, false)
 		return
 	}
 
@@ -95,25 +95,28 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 
 	defer func() {
 		res.Body.Close()
-		flightContainer.Land(flightKey)
 	}()
 
 	payload, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		log.Error("http: %s", err.Error())
+		flightContainer.Land(flightKey, false)
 		return
 	}
 
 	if res.StatusCode != http.StatusOK {
 		log.Error("unexpected php status: %s", res.Status)
+		flightContainer.Land(flightKey, false)
 		return
 	}
 
 	if payload[0] == '{' {
 		// php.Application json payload means Exception thrown
 		log.Error("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), w)
+		flightContainer.Land(flightKey, false)
 	} else {
 		log.Debug("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), w)
+		flightContainer.Land(flightKey, true)
 	}
 
 	return

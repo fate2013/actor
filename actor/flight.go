@@ -61,8 +61,12 @@ func (this *Flight) Takeoff(key cache.Key) (success bool) {
 	return false
 }
 
-func (this *Flight) Land(key cache.Key) {
+func (this *Flight) Land(key cache.Key, ok bool) {
 	this.lock.Del(key)
+	if this.maxRetries > 0 && ok {
+		this.retry.Set(key, 0) // reset the counter
+	}
+
 }
 
 func (this *Flight) Len() int {
