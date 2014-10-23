@@ -60,6 +60,7 @@ func (this *StatsRunner) Run() {
 		sysTime      int64
 		userCpuUtil  float64
 		sysCpuUtil   float64
+		nsInMs       uint64 = 1000 * 1000
 	)
 	for _ = range ticker.C {
 		runtime.ReadMemStats(ms)
@@ -74,13 +75,19 @@ func (this *StatsRunner) Run() {
 		lastUserTime = userTime
 		lastSysTime = sysTime
 
-		log.Info("ver:%s, elapsed:%s, backlog:%d, flight:%d, goroutine:%d, mem:%s, cpu:%3.2f%%us,%3.2f%%sy",
+		log.Info("ver:%s, elapsed:%s, backlog:%d, flight:%d, go:%d, gc:%dms/%d=%d, heap:{%s, %s, %s, %s} cpu:%3.2f%%us,%3.2f%%sy",
 			server.BuildID,
 			time.Since(this.actor.server.StartedAt),
 			this.scheduler.Outstandings(),
 			this.scheduler.InFlight(),
 			runtime.NumGoroutine(),
-			gofmt.ByteSize(ms.Alloc),
+			ms.PauseTotalNs/nsInMs,
+			ms.NumGC,
+			ms.PauseTotalNs/(nsInMs*uint64(ms.NumGC))+1,
+			gofmt.ByteSize(ms.HeapSys),      // bytes it has asked the operating system for
+			gofmt.ByteSize(ms.HeapAlloc),    // bytes currently allocated in the heap
+			gofmt.ByteSize(ms.HeapIdle),     // bytes in the heap that are unused
+			gofmt.ByteSize(ms.HeapReleased), // bytes returned to the operating system, 5m for scavenger
 			userCpuUtil,
 			sysCpuUtil)
 	}
