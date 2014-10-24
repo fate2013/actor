@@ -7,7 +7,7 @@ import (
 
 // used as locking Wakeable's
 type Flight struct {
-	lock *cache.LruCache
+	items *cache.LruCache
 
 	maxRetries int
 	retry      *cache.LruCache
@@ -15,7 +15,7 @@ type Flight struct {
 
 func NewFlight(maxLockEntries int, maxRetryEntries int, maxRetries int) *Flight {
 	this := new(Flight)
-	this.lock = cache.NewLruCache(maxLockEntries)
+	this.items = cache.NewLruCache(maxLockEntries)
 	this.maxRetries = maxRetries
 	this.retry = cache.NewLruCache(maxRetryEntries)
 	return this
@@ -52,8 +52,8 @@ func (this *Flight) Takeoff(key cache.Key) (success bool) {
 	}
 
 	// FIXME Get and Set is not atomic
-	if _, present := this.lock.Get(key); !present {
-		this.lock.Set(key, true)
+	if _, present := this.items.Get(key); !present {
+		this.items.Set(key, true)
 		return true
 	}
 
@@ -62,7 +62,7 @@ func (this *Flight) Takeoff(key cache.Key) (success bool) {
 }
 
 func (this *Flight) Land(key cache.Key, ok bool) {
-	this.lock.Del(key)
+	this.items.Del(key)
 	if this.maxRetries > 0 && ok {
 		this.retry.Set(key, 0) // reset the counter
 	}
@@ -70,12 +70,12 @@ func (this *Flight) Land(key cache.Key, ok bool) {
 }
 
 func (this *Flight) Flying(key cache.Key) bool {
-	if _, present := this.lock.Get(key); present {
+	if _, present := this.items.Get(key); present {
 		return true
 	}
 	return false
 }
 
 func (this *Flight) Len() int {
-	return this.lock.Len()
+	return this.items.Len()
 }
