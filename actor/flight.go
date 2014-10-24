@@ -69,6 +69,13 @@ func (this *Flight) Land(key cache.Key, ok bool) {
 
 }
 
+func (this *Flight) Flying(key cache.Key) bool {
+	if _, present := this.lock.Get(key); present {
+		return true
+	}
+	return false
+}
+
 func (this *Flight) Len() int {
 	return this.lock.Len()
 }
