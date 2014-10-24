@@ -28,6 +28,13 @@ DragonServer
     cp etc/actord.cf.sample etc/actord.cf (change the address to your own)
     ./daemon/actord/actord
 
+### TODO
+
+* Job may race with March/PVEMarch
+
+
+### Introduction
+
 RTS game non-instant scheduler to handle the following challanges:
 * concurrency isolation
 * scheduling of delayed jobs
