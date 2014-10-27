@@ -18,14 +18,7 @@ DragonServer
     cd $GOPATH/src/github.com/funkygao/dragon
 
     # install all dependencies
-    go get ./... # install all dependencies
-    #go get github.com/funkygao/golib
-    #go get github.com/funkygao/log4go
-    #go get github.com/cookieo9/go-misc/slice
-    #go get github.com/funkygao/jsconf
-    #go get github.com/funkygao/metrics
-    #go get github.com/go-sql-driver/mysql
-    #go get github.com/gorilla/mux
+    go get ./... 
 
     # build the executable
     ./build.sh
