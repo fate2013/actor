@@ -16,6 +16,8 @@ DragonServer
 
     go get github.com/funkygao/dragon
     cd $GOPATH/src/github.com/funkygao/dragon
+
+    # install all dependencies
     go get ./... # install all dependencies
     #go get github.com/funkygao/golib
     #go get github.com/funkygao/log4go
@@ -24,8 +26,14 @@ DragonServer
     #go get github.com/funkygao/metrics
     #go get github.com/go-sql-driver/mysql
     #go get github.com/gorilla/mux
+
+    # build the executable
     ./build.sh
+
+    # create a config file
     cp etc/actord.cf.sample etc/actord.cf (change the address to your own)
+
+    # startup the daemon
     ./daemon/actord/actord
 
 ### TODO
