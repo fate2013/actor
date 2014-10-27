@@ -10,10 +10,13 @@ actor
     
 ### Install
 
-    install golang amd64 and setup GOPATH
-    e,g.
+    # install golang amd64 
+    https://golang.org/dl/
+
+    # setup GOPATH env
     export GOPATH=~/gopkg
 
+    # install actor package
     go get github.com/funkygao/dragon
     cd $GOPATH/src/github.com/funkygao/dragon
 
