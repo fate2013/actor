@@ -2,6 +2,6 @@ package actor
 
 type Worker interface {
 	Wake(w Wakeable) (retry bool)
-	InFlight() int
+	FlightCount() int
 	Flights() map[string]interface{}
 }

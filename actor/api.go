@@ -7,9 +7,7 @@ import (
 )
 
 type ApiRunner struct {
-	jobFlight   *Flight
-	marchFlight *Flight
-	pveFlight   *Flight
+	userFlight *Flight
 }
 
 func (this *ApiRunner) Run() {

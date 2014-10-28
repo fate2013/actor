@@ -34,8 +34,8 @@ func (this *March) Marshal() []byte {
 	return b
 }
 
-func (this *March) FlightKey() interface{} {
-	return this.GeoHash()
+func (this *March) GetUid() int64 {
+	return this.Uid
 }
 
 func (this *March) Ignored() bool {

@@ -79,7 +79,7 @@ func (this *StatsRunner) Run() {
 			server.BuildID,
 			time.Since(this.actor.server.StartedAt),
 			this.scheduler.Outstandings(),
-			this.scheduler.InFlight(),
+			this.scheduler.FlightCount(),
 			runtime.NumGoroutine(),
 			ms.PauseTotalNs/nsInMs,
 			ms.NumGC,
