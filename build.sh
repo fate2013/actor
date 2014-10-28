@@ -9,7 +9,7 @@ fi
 
 cd daemon/actord
 ID=$(git rev-parse HEAD | cut -c1-7)
-go build -ldflags "-X github.com/funkygao/golib/server.BuildID $ID -w"
+go build -ldflags "-X github.com/funkygao/golib/server.VERSION 0.1.2b -X github.com/funkygao/golib/server.BuildID $ID -w"
 #go build -race -v -ldflags "-X github.com/funkygao/golib/server.BuildID $ID -w"
 
 #---------
