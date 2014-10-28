@@ -9,5 +9,5 @@ type Wakeable interface {
 	DueTime() time.Time
 	Marshal() []byte
 	Ignored() bool
-	GetUid() int64
+	GetUid() int64 // each Wakeable has a uid
 }
