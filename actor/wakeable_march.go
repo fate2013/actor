@@ -20,12 +20,12 @@ type March struct {
 }
 
 func (this *March) GeoHash() int {
-	return int(this.X1)<<11 | int(this.Y1)
+	return int(this.X1)<<GEOHASH_SHIFT | int(this.Y1)
 }
 
 func (this *March) DecodeGeoHash(hash int) (x, y int16) {
-	x = int16(hash >> 11)
-	y = int16(((1 << 11) - 1) & hash)
+	x = int16(hash >> GEOHASH_SHIFT)
+	y = int16(((1 << GEOHASH_SHIFT) - 1) & hash)
 	return
 }
 
@@ -39,7 +39,7 @@ func (this *March) FlightKey() interface{} {
 }
 
 func (this *March) Ignored() bool {
-	return this.State == "done" || this.State == "encamping"
+	return this.State == MARCH_DONE || this.State == MARCH_ENCAMP
 }
 
 func (this *March) DueTime() time.Time {
