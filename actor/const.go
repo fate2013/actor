@@ -5,6 +5,11 @@ const (
 )
 
 const (
+	API_OP_LOCK   = "lock"
+	API_OP_UNLOCK = "unlock"
+)
+
+const (
 	MARCH_MARCHING = "marching"
 	MARCH_ENCAMP   = "encamping"
 	MARCH_GATHER   = "gathering"
