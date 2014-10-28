@@ -31,17 +31,23 @@ func NewPhpWorker(config *ConfigWorker) *PhpWorker {
 	this.latency = metrics.NewHistogram(
 		metrics.NewExpDecaySample(1028, 0.015))
 	metrics.Register("latency.php", this.latency)
+
+	api := ApiRunner{
+		jobFlight:   this.jobFlight,
+		marchFlight: this.marchFlight,
+		pveFlight:   this.pveFlight}
+	api.Run()
 	return this
 }
 
 func (this PhpWorker) Flights() map[string]interface{} {
 	return map[string]interface{}{
 		"job.items":   this.jobFlight.items.Len(),
-		"job.retry":   this.jobFlight.retry.Len(),
+		"job.retry":   this.jobFlight.retries.Len(),
 		"march.items": this.marchFlight.items.Len(),
-		"march.retry": this.marchFlight.retry.Len(),
+		"march.retry": this.marchFlight.retries.Len(),
 		"pve.items":   this.pveFlight.items.Len(),
-		"pve.retry":   this.pveFlight.retry.Len(),
+		"pve.retry":   this.pveFlight.retries.Len(),
 	}
 }
 

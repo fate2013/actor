@@ -10,14 +10,14 @@ type Flight struct {
 	items *cache.LruCache
 
 	maxRetries int
-	retry      *cache.LruCache
+	retries    *cache.LruCache
 }
 
 func NewFlight(maxLockEntries int, maxRetryEntries int, maxRetries int) *Flight {
 	this := new(Flight)
 	this.items = cache.NewLruCache(maxLockEntries)
 	this.maxRetries = maxRetries
-	this.retry = cache.NewLruCache(maxRetryEntries)
+	this.retries = cache.NewLruCache(maxRetryEntries)
 	return this
 }
 
@@ -28,7 +28,7 @@ func (this *Flight) canPass(key cache.Key) (ok, firstTimeFail bool) {
 	if this.maxRetries == 0 {
 		return
 	}
-	retried := this.retry.Inc(key)
+	retried := this.retries.Inc(key)
 	if retried >= this.maxRetries {
 		ok = false
 
@@ -57,16 +57,15 @@ func (this *Flight) Takeoff(key cache.Key) (success bool) {
 		return true
 	}
 
-	log.Debug("locked %#v", key)
+	log.Debug("already locked: %#v", key)
 	return false
 }
 
 func (this *Flight) Land(key cache.Key, ok bool) {
 	this.items.Del(key)
 	if this.maxRetries > 0 && ok {
-		this.retry.Set(key, 0) // reset the counter
+		this.retries.Set(key, 0) // reset the counter
 	}
-
 }
 
 func (this *Flight) Flying(key cache.Key) bool {
