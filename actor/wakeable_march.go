@@ -12,6 +12,7 @@ type March struct {
 	Uid     int64          `json:"uid"`
 	MarchId int64          `json:"march_id"`
 	Type    sql.NullString `json:"type"`
+	OppUid  sql.NullInt64  `json:"-"`
 	State   string         `json:"-"`
 	X1      int16          `json:"-"`
 	Y1      int16          `json:"-"`
