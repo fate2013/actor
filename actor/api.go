@@ -4,6 +4,7 @@ import (
 	"github.com/funkygao/golib/server"
 	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
 )
 
 type ApiRunner struct {
@@ -24,15 +25,20 @@ func (this *ApiRunner) handleHttpQuery(w http.ResponseWriter, req *http.Request,
 	var (
 		vars   = mux.Vars(req)
 		op     = vars["op"] // lock | unlock
-		uid    = vars["uid"]
 		output = make(map[string]interface{})
 	)
 
+	uid, err := strconv.Atoi(vars["uid"])
+	if err != nil {
+		return nil, err
+	}
+
 	switch op {
 	case API_OP_LOCK:
+		output["ok"] = this.userFlight.Takeoff(int64(uid))
 	case API_OP_UNLOCK:
+		this.userFlight.Land(int64(uid), true)
+		output["ok"] = true
 	}
-	output["uid"] = uid
-	output["ok"] = 1
 	return output, nil
 }
