@@ -40,8 +40,8 @@ func (this *Scheduler) Stat() map[string]interface{} {
 	}
 }
 
-func (this *Scheduler) InFlight() int {
-	return this.worker.InFlight()
+func (this *Scheduler) FlightCount() int {
+	return this.worker.FlightCount()
 }
 
 func (this *Scheduler) Stop() {
