@@ -8,14 +8,17 @@ import (
 // used as locking Wakeable's
 // TODO add auto expire for a lock
 type Flight struct {
+	debug bool
+
 	items *cache.LruCache
 
 	maxRetries int
 	retries    *cache.LruCache
 }
 
-func NewFlight(maxLockEntries int, maxRetryEntries int, maxRetries int) *Flight {
+func NewFlight(maxLockEntries int, maxRetryEntries int, maxRetries int, debug bool) *Flight {
 	this := new(Flight)
+	this.debug = debug
 	this.items = cache.NewLruCache(maxLockEntries)
 	this.maxRetries = maxRetries
 	this.retries = cache.NewLruCache(maxRetryEntries)
@@ -55,25 +58,24 @@ func (this *Flight) Takeoff(key cache.Key) (success bool) {
 	// FIXME Get and Set is not atomic
 	if _, present := this.items.Get(key); !present {
 		this.items.Set(key, true)
+		if this.debug {
+			log.Debug("locking[%#v]", key)
+		}
 		return true
 	}
 
-	log.Debug("already locked: %#v", key)
+	log.Warn("already locked: %#v", key)
 	return false
 }
 
 func (this *Flight) Land(key cache.Key, ok bool) {
 	this.items.Del(key)
+	if this.debug {
+		log.Debug("unlock[%#v] %v", key, ok)
+	}
 	if this.maxRetries > 0 && ok {
 		this.retries.Set(key, 0) // reset the counter
 	}
-}
-
-func (this *Flight) Flying(key cache.Key) bool {
-	if _, present := this.items.Get(key); present {
-		return true
-	}
-	return false
 }
 
 func (this *Flight) Len() int {

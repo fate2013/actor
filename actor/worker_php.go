@@ -22,9 +22,9 @@ func NewPhpWorker(config *ConfigWorker) *PhpWorker {
 	this := new(PhpWorker)
 	this.config = config
 	this.userFlight = NewFlight(config.MaxFlightEntries,
-		this.config.MaxRetryEntries, this.config.MaxRetries)
+		this.config.MaxRetryEntries, this.config.MaxRetries, config.DebugLocking)
 	this.tileFlight = NewFlight(config.MaxFlightEntries,
-		this.config.MaxRetryEntries, this.config.MaxRetries)
+		this.config.MaxRetryEntries, this.config.MaxRetries, config.DebugLocking)
 	this.latency = metrics.NewHistogram(
 		metrics.NewExpDecaySample(1028, 0.015))
 	metrics.Register("latency.php", this.latency)
