@@ -55,13 +55,10 @@ type ConfigWorker struct {
 	MaxFlightEntries int
 	LockExpires      time.Duration
 
-	// if use php as worker
+	// if use php as worker, it's callback url template
 	Job   string
 	March string
 	Pve   string
-
-	// if use MQ as worker
-	MqAddr string
 }
 
 func (this *ConfigWorker) loadConfig(cf *conf.Conf) {
@@ -73,10 +70,6 @@ func (this *ConfigWorker) loadConfig(cf *conf.Conf) {
 	this.Job = cf.String("job", "")
 	this.March = cf.String("march", "")
 	this.Pve = cf.String("pve", "")
-	this.MqAddr = cf.String("mq_addr", "")
-	if this.MqAddr == "" && this.Job == "" {
-		panic("empty worker addr")
-	}
 
 	log.Debug("worker config: %+v", *this)
 }
