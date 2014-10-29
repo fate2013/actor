@@ -37,9 +37,7 @@ func NewPhpWorker(config *ConfigWorker) *PhpWorker {
 func (this PhpWorker) Flights() map[string]interface{} {
 	return map[string]interface{}{
 		"user.items": this.userFlight.items.Len(),
-		"user.retry": this.userFlight.retries.Len(),
 		"tile.items": this.tileFlight.items.Len(),
-		"tile.retry": this.tileFlight.retries.Len(),
 	}
 }
 
