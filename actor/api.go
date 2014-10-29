@@ -38,7 +38,7 @@ func (this *ApiRunner) handleHttpQuery(w http.ResponseWriter, req *http.Request,
 		output["ok"] = this.userFlight.Takeoff(int64(uid))
 
 	case API_OP_UNLOCK:
-		this.userFlight.Land(int64(uid), true)
+		this.userFlight.Land(int64(uid))
 		output["ok"] = true
 
 	default:
