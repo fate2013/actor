@@ -41,6 +41,8 @@ actor
 
 ### Introduction
 
+RTS: synchronization is king
+
 RTS game non-instant scheduler to handle the following challanges:
 * concurrency isolation
 * scheduling of delayed jobs
