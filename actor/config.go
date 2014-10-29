@@ -53,8 +53,6 @@ type ConfigWorker struct {
 	DebugLocking     bool
 	Timeout          time.Duration
 	MaxFlightEntries int
-	MaxRetryEntries  int
-	MaxRetries       int // for a given Wakeable, how many retries at most
 	LockExpires      time.Duration
 
 	// if use php as worker
@@ -72,8 +70,6 @@ func (this *ConfigWorker) loadConfig(cf *conf.Conf) {
 	this.Timeout = time.Duration(cf.Int("timeout", 5)) * time.Second
 	this.MaxFlightEntries = cf.Int("max_flight_entries", 100000)
 	this.LockExpires = cf.Duration("lock_expires", time.Second*30)
-	this.MaxRetryEntries = cf.Int("max_retry_enties", 10000)
-	this.MaxRetries = cf.Int("max_retries", 100)
 	this.Job = cf.String("job", "")
 	this.March = cf.String("march", "")
 	this.Pve = cf.String("pve", "")
