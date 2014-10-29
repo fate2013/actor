@@ -6,6 +6,7 @@ import (
 )
 
 // used as locking Wakeable's
+// TODO add auto expire for a lock
 type Flight struct {
 	items *cache.LruCache
 
