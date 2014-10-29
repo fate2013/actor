@@ -3,20 +3,24 @@ package actor
 import (
 	"github.com/funkygao/golib/cache"
 	log "github.com/funkygao/log4go"
+	"sync"
 	"time"
 )
 
 // used as locking Wakeable's
 // TODO add auto expire for a lock
 type Flight struct {
-	debug bool
+	debug   bool
+	expires time.Duration
 
-	items *cache.LruCache
+	mutex sync.Mutex
+	items *cache.LruCache // key: ctime
 }
 
-func NewFlight(maxLockEntries int, maxRetryEntries int, maxRetries int, debug bool) *Flight {
+func NewFlight(maxLockEntries int, debug bool, expires time.Duration) *Flight {
 	this := new(Flight)
 	this.debug = debug
+	this.expires = expires
 	this.items = cache.NewLruCache(maxLockEntries)
 
 	return this
@@ -24,12 +28,25 @@ func NewFlight(maxLockEntries int, maxRetryEntries int, maxRetries int, debug bo
 
 // return true if accquired the lock
 func (this *Flight) Takeoff(key cache.Key) (success bool) {
-	// FIXME Get and Set is not atomic
-	if _, present := this.items.Get(key); !present {
+	this.mutex.Lock()
+	defer this.mutex.Unlock()
+
+	ctime, present := this.items.Get(key)
+	if !present {
 		this.items.Set(key, time.Now())
+
 		if this.debug {
 			log.Debug("locking[%#v]", key)
 		}
+
+		return true
+	}
+
+	// present, check expires
+	if time.Since(ctime.(time.Time)) > this.expires {
+		log.Warn("expires[%+v]", key)
+
+		this.items.Del(key)
 		return true
 	}
 
@@ -37,7 +54,7 @@ func (this *Flight) Takeoff(key cache.Key) (success bool) {
 	return false
 }
 
-func (this *Flight) Land(key cache.Key, ok bool) {
+func (this *Flight) Land(key cache.Key) {
 	this.items.Del(key)
 	if this.debug {
 		log.Debug("unlock[%#v]", key)
