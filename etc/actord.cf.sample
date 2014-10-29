@@ -15,7 +15,6 @@
         job: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=wakeup&params=%s"
         march: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=play&params=%s"
         pve: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=pve&params=%s"
-        //mq_addr: "127.0.0.1:11300"
     }
 
     mysql: {
