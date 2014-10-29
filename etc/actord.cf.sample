@@ -8,6 +8,7 @@
 
     worker: {
         dry_run: false
+        debug_locking: false
         max_flight_entries: 100000
         max_retry_enties: 10000
         max_retries: 10
