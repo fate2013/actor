@@ -71,7 +71,7 @@ func (this *Flight) Takeoff(key cache.Key) (success bool) {
 func (this *Flight) Land(key cache.Key, ok bool) {
 	this.items.Del(key)
 	if this.debug {
-		log.Debug("unlock[%#v] %v", key, ok)
+		log.Debug("unlock[%#v]", key)
 	}
 	if this.maxRetries > 0 && ok {
 		this.retries.Set(key, 0) // reset the counter

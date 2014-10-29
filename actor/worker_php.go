@@ -59,8 +59,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 
 	case *March:
 		url = fmt.Sprintf(this.config.March, params)
-		if !this.tileFlight.Takeoff(w.FlightKey()) {
-			log.Debug("tile locked (%d, %d)", w.X1, w.Y1)
+		if !this.tileFlight.Takeoff(w.TileKey()) {
 			return
 		}
 
@@ -69,7 +68,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 		if w.OppUid.Valid &&
 			w.OppUid.Int64 > 0 &&
 			!this.userFlight.Takeoff(w.OppUid.Int64) {
-			log.Debug("attackee[%d] already locked", w.OppUid.Int64)
+			this.tileFlight.Land(w.TileKey(), false)
 			return
 		}
 
@@ -79,7 +78,13 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 
 	// FIXME atomic for both tile and user flight
 	if !this.userFlight.Takeoff(w.GetUid()) {
-		log.Debug("user[%d] locked", w.GetUid())
+		if m, ok := w.(*March); ok {
+			this.tileFlight.Land(m.TileKey(), false)
+
+			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
+				this.userFlight.Land(m.OppUid.Int64, false)
+			}
+		}
 		return
 	}
 
@@ -97,7 +102,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 
 		this.userFlight.Land(w.GetUid(), false)
 		if m, ok := w.(*March); ok {
-			this.tileFlight.Land(m.FlightKey(), false)
+			this.tileFlight.Land(m.TileKey(), false)
 			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
 				this.userFlight.Land(m.OppUid.Int64, false)
 			}
@@ -117,7 +122,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 		log.Error("http: %s", err.Error())
 		this.userFlight.Land(w.GetUid(), false)
 		if m, ok := w.(*March); ok {
-			this.tileFlight.Land(m.FlightKey(), false)
+			this.tileFlight.Land(m.TileKey(), false)
 			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
 				this.userFlight.Land(m.OppUid.Int64, false)
 			}
@@ -129,7 +134,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 		log.Error("unexpected php status: %s", res.Status)
 		this.userFlight.Land(w.GetUid(), false)
 		if m, ok := w.(*March); ok {
-			this.tileFlight.Land(m.FlightKey(), false)
+			this.tileFlight.Land(m.TileKey(), false)
 			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
 				this.userFlight.Land(m.OppUid.Int64, false)
 			}
@@ -142,7 +147,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 		log.Error("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), w)
 		this.userFlight.Land(w.GetUid(), false)
 		if m, ok := w.(*March); ok {
-			this.tileFlight.Land(m.FlightKey(), false)
+			this.tileFlight.Land(m.TileKey(), false)
 			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
 				this.userFlight.Land(m.OppUid.Int64, false)
 			}
@@ -151,7 +156,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 		log.Debug("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), w)
 		this.userFlight.Land(w.GetUid(), true)
 		if m, ok := w.(*March); ok {
-			this.tileFlight.Land(m.FlightKey(), true)
+			this.tileFlight.Land(m.TileKey(), true)
 			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
 				this.userFlight.Land(m.OppUid.Int64, true)
 			}
