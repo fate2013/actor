@@ -97,7 +97,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 
 		this.userFlight.Land(w.GetUid(), false)
 		if m, ok := w.(*March); ok {
-			this.tileFlight.Land(m.GeoHash(), false)
+			this.tileFlight.Land(m.FlightKey(), false)
 			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
 				this.userFlight.Land(m.OppUid.Int64, false)
 			}
@@ -117,7 +117,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 		log.Error("http: %s", err.Error())
 		this.userFlight.Land(w.GetUid(), false)
 		if m, ok := w.(*March); ok {
-			this.tileFlight.Land(m.GeoHash(), false)
+			this.tileFlight.Land(m.FlightKey(), false)
 			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
 				this.userFlight.Land(m.OppUid.Int64, false)
 			}
@@ -129,7 +129,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 		log.Error("unexpected php status: %s", res.Status)
 		this.userFlight.Land(w.GetUid(), false)
 		if m, ok := w.(*March); ok {
-			this.tileFlight.Land(m.GeoHash(), false)
+			this.tileFlight.Land(m.FlightKey(), false)
 			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
 				this.userFlight.Land(m.OppUid.Int64, false)
 			}
@@ -142,7 +142,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 		log.Error("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), w)
 		this.userFlight.Land(w.GetUid(), false)
 		if m, ok := w.(*March); ok {
-			this.tileFlight.Land(m.GeoHash(), false)
+			this.tileFlight.Land(m.FlightKey(), false)
 			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
 				this.userFlight.Land(m.OppUid.Int64, false)
 			}
@@ -151,7 +151,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 		log.Debug("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), w)
 		this.userFlight.Land(w.GetUid(), true)
 		if m, ok := w.(*March); ok {
-			this.tileFlight.Land(m.GeoHash(), true)
+			this.tileFlight.Land(m.FlightKey(), true)
 			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
 				this.userFlight.Land(m.OppUid.Int64, true)
 			}
