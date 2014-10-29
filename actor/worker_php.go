@@ -5,6 +5,7 @@ import (
 	log "github.com/funkygao/log4go"
 	"github.com/funkygao/metrics"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"time"
 )
@@ -45,12 +46,24 @@ func (this *PhpWorker) FlightCount() int {
 	return this.userFlight.Len() + this.tileFlight.Len()
 }
 
-// TODO retry n times before give up, otherwise will reschedule after 1s
 func (this *PhpWorker) Wake(w Wakeable) {
-	this.tryWake(w)
+	maxRetries := 3
+	base := 50
+	for i := 0; i < maxRetries; i++ {
+		ok := this.tryWake(w)
+		if ok {
+			return
+		}
+
+		waitMs := (maxRetries-i)*base + rand.Intn(base) + 10
+		log.Warn("wake failed[%+v], waiting %dms", w, waitMs)
+		time.Sleep(time.Millisecond * time.Duration(waitMs))
+	}
+
+	log.Warn("give up waking[%+v] after %d retries, await being rescheduled...", w, maxRetries)
 }
 
-func (this *PhpWorker) tryWake(w Wakeable) {
+func (this *PhpWorker) tryWake(w Wakeable) (ok bool) {
 	var (
 		params = string(w.Marshal())
 		url    string
@@ -93,6 +106,7 @@ func (this *PhpWorker) tryWake(w Wakeable) {
 	// FIXME dry run didn't release lock correctly
 	if this.config.DryRun {
 		log.Debug("dry run: %s", url)
+		ok = true
 		return
 	}
 
@@ -135,6 +149,7 @@ func (this *PhpWorker) tryWake(w Wakeable) {
 		log.Error("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), w)
 	} else {
 		log.Debug("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), w)
+		ok = true
 	}
 
 	this.userFlight.Land(w.GetUid())
@@ -145,4 +160,6 @@ func (this *PhpWorker) tryWake(w Wakeable) {
 			this.userFlight.Land(m.OppUid.Int64)
 		}
 	}
+
+	return
 }
