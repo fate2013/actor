@@ -1,15 +1,15 @@
 /*
-   statsRunner
+   StatsRunner
      |
-   actor --- schduler --- pollers --- mysql farm
+   Actor --- Schduler --- Pollers --- mysql farm
                |            |
-               |            V channel of Wakeable's
+               |            V backlog(channel of Wakeables)
                |            |
              worker --------+
                |
-          Wake | Wakeable
+               | go Wake(Wakeable) with retries in case of lock conflict
                V
-    -------------------------------------------------------- http | mq | ?
+    -------------------------------------------------------------------- 
                |        |       |
               php      php     php
 
