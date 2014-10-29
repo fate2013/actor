@@ -35,7 +35,7 @@ func NewMysqlPoller(interval time.Duration, slowQueryThreshold time.Duration,
 
 	this.latency = metrics.NewHistogram(
 		metrics.NewExpDecaySample(1028, 0.015))
-	metrics.Register("latency.db", this.latency)
+	metrics.Register("latency.mysql", this.latency)
 
 	this.breaker = &breaker.Consecutive{
 		FailureAllowance: bc.FailureAllowance,
