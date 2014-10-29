@@ -27,7 +27,7 @@ func (this *March) GeoHash() int {
 	return int(this.X1)<<GEOHASH_SHIFT | int(this.Y1)
 }
 
-func (this *March) FlightKey() tile {
+func (this *March) TileKey() tile {
 	return tile{geohash: this.GeoHash()}
 }
 
