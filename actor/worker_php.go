@@ -14,8 +14,8 @@ type PhpWorker struct {
 
 	latency metrics.Histogram
 
-	userFlight *Flight
-	tileFlight *Flight
+	userFlight *Flight // key is uid
+	tileFlight *Flight // key is geohash
 }
 
 func NewPhpWorker(config *ConfigWorker) *PhpWorker {
@@ -59,7 +59,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 
 	case *March:
 		url = fmt.Sprintf(this.config.March, params)
-		if !this.tileFlight.Takeoff(w.GeoHash()) {
+		if !this.tileFlight.Takeoff(w.FlightKey()) {
 			log.Debug("tile locked (%d, %d)", w.X1, w.Y1)
 			return
 		}
@@ -69,7 +69,7 @@ func (this *PhpWorker) Wake(w Wakeable) (retry bool) {
 		if w.OppUid.Valid &&
 			w.OppUid.Int64 > 0 &&
 			!this.userFlight.Takeoff(w.OppUid.Int64) {
-			log.Debug("attackee[%d] locked", w.OppUid.Int64)
+			log.Debug("attackee[%d] already locked", w.OppUid.Int64)
 			return
 		}
 
