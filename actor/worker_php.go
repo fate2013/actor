@@ -56,7 +56,7 @@ func (this *PhpWorker) Wake(w Wakeable) {
 		}
 
 		waitMs := (maxRetries-i)*base + rand.Intn(base) + 10
-		log.Warn("wake failed[%+v], waiting %dms", w, waitMs)
+		log.Warn("retry after %dms: %+v", waitMs, w)
 		time.Sleep(time.Millisecond * time.Duration(waitMs))
 	}
 

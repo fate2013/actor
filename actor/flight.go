@@ -36,28 +36,29 @@ func (this *Flight) Takeoff(key cache.Key) (success bool) {
 		this.items.Set(key, time.Now())
 
 		if this.debug {
-			log.Debug("locking[%#v]", key)
+			log.Debug("locking: %#v", key)
 		}
 
 		return true
 	}
 
 	// present, check expires
-	if time.Since(ctime.(time.Time)) > this.expires {
-		log.Warn("expires[%+v]", key)
+	if this.expires > 0 && time.Since(ctime.(time.Time)) > this.expires {
+		log.Warn("expires[%+v]: %s", key, time.Since(ctime.(time.Time)))
 
-		this.items.Del(key)
+		// refresh the lock
+		this.items.Set(key, time.Now())
 		return true
 	}
 
-	log.Warn("already locked: %#v", key)
+	log.Warn("in flight: %#v", key)
 	return false
 }
 
 func (this *Flight) Land(key cache.Key) {
 	this.items.Del(key)
 	if this.debug {
-		log.Debug("unlock[%#v]", key)
+		log.Debug("unlock: %#v", key)
 	}
 }
 
