@@ -36,7 +36,7 @@ func (this *Flight) Takeoff(key cache.Key) (success bool) {
 		this.items.Set(key, time.Now())
 
 		if this.debug {
-			log.Debug("locking: %#v", key)
+			log.Debug("locking: %+v", key)
 		}
 
 		return true
@@ -51,14 +51,14 @@ func (this *Flight) Takeoff(key cache.Key) (success bool) {
 		return true
 	}
 
-	log.Warn("in flight: %#v", key)
+	log.Warn("in flight: %+v", key)
 	return false
 }
 
 func (this *Flight) Land(key cache.Key) {
 	this.items.Del(key)
 	if this.debug {
-		log.Debug("unlock: %#v", key)
+		log.Debug("unlock: %+v", key)
 	}
 }
 

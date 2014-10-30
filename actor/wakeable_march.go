@@ -8,10 +8,7 @@ import (
 	"time"
 )
 
-type tile struct {
-	geohash int
-}
-
+// TODO add K1
 type March struct {
 	Uid     int64          `json:"uid"`
 	MarchId int64          `json:"march_id"`
@@ -27,8 +24,8 @@ func (this *March) GeoHash() int {
 	return int(this.X1)<<GEOHASH_SHIFT | int(this.Y1)
 }
 
-func (this *March) TileKey() tile {
-	return tile{geohash: this.GeoHash()}
+func (this *March) TileKey() Tile {
+	return Tile{Geohash: this.GeoHash()}
 }
 
 func (this *March) DecodeGeoHash(hash int) (x, y int16) {

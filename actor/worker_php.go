@@ -84,19 +84,19 @@ func (this *PhpWorker) tryWake(w Wakeable) (ok bool) {
 		// FIXME not atomic
 		if w.OppUid.Valid &&
 			w.OppUid.Int64 > 0 &&
-			!this.userFlight.Takeoff(w.OppUid.Int64) {
+			!this.userFlight.Takeoff(User{Uid: w.OppUid.Int64}) {
 			this.tileFlight.Land(w.TileKey())
 			return
 		}
 	}
 
 	// FIXME atomic for both tile and user flight
-	if !this.userFlight.Takeoff(w.GetUid()) {
+	if !this.userFlight.Takeoff(User{Uid: w.GetUid()}) {
 		if m, ok := w.(*March); ok {
 			this.tileFlight.Land(m.TileKey())
 
 			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
-				this.userFlight.Land(m.OppUid.Int64)
+				this.userFlight.Land(User{Uid: m.OppUid.Int64})
 			}
 		}
 
@@ -117,12 +117,12 @@ func (this *PhpWorker) tryWake(w Wakeable) (ok bool) {
 	if err != nil {
 		log.Error("http: %s", err.Error())
 
-		this.userFlight.Land(w.GetUid())
+		this.userFlight.Land(User{Uid: w.GetUid()})
 
 		if m, ok := w.(*March); ok {
 			this.tileFlight.Land(m.TileKey())
 			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
-				this.userFlight.Land(m.OppUid.Int64)
+				this.userFlight.Land(User{Uid: m.OppUid.Int64})
 			}
 		}
 
@@ -152,12 +152,12 @@ func (this *PhpWorker) tryWake(w Wakeable) (ok bool) {
 		ok = true
 	}
 
-	this.userFlight.Land(w.GetUid())
+	this.userFlight.Land(User{Uid: w.GetUid()})
 
 	if m, ok := w.(*March); ok {
 		this.tileFlight.Land(m.TileKey())
 		if m.OppUid.Valid && m.OppUid.Int64 > 0 {
-			this.userFlight.Land(m.OppUid.Int64)
+			this.userFlight.Land(User{Uid: m.OppUid.Int64})
 		}
 	}
 
