@@ -26,7 +26,7 @@ actor
     # build the executable
     ./build.sh
 
-    # create a config file
+    # create a custom config file based upon sample
     cp etc/actord.cf.sample etc/actord.cf (change the address to your own)
 
     # startup the daemon
