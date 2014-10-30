@@ -5,11 +5,11 @@
                |            |
                |            V backlog(channel of Wakeables)
                |            |
-             worker --------+
+             Worker --------+
                |
                | go Wake(Wakeable) with retries in case of lock conflict
                V
-    --------------------------------------------------------------------
+    -------------------------------------------------------------------- callback
                |        |       |
               php      php     php
 
