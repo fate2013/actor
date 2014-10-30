@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/cookieo9/go-misc/slice"
 	"time"
 )
 
@@ -24,14 +23,14 @@ func (this *March) GeoHash() int {
 	return int(this.X1)<<GEOHASH_SHIFT | int(this.Y1)
 }
 
-func (this *March) TileKey() Tile {
-	return Tile{Geohash: this.GeoHash()}
-}
-
 func (this *March) DecodeGeoHash(hash int) (x, y int16) {
 	x = int16(hash >> GEOHASH_SHIFT)
 	y = int16(((1 << GEOHASH_SHIFT) - 1) & hash)
 	return
+}
+
+func (this *March) TileKey() Tile {
+	return Tile{Geohash: this.GeoHash()}
 }
 
 func (this *March) Marshal() []byte {
@@ -54,14 +53,4 @@ func (this *March) DueTime() time.Time {
 func (this March) String() string {
 	return fmt.Sprintf("March{uid:%d, mid:%d, type:%s, state:%s, (%d, %d), due:%s}",
 		this.Uid, this.MarchId, this.Type.String, this.State, this.X1, this.Y1, this.EndTime)
-}
-
-// FIXME not used yet
-type MarchGroup []March
-
-func (this *MarchGroup) sortByDestination() {
-	byDestination := func(m1, m2 interface{}) bool {
-		return m1.(March).X1 < m2.(March).X1
-	}
-	slice.Sort(this, byDestination)
 }
