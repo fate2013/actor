@@ -1,6 +1,7 @@
 package actor
 
 import (
+	"github.com/funkygao/golib/cache"
 	"github.com/funkygao/golib/server"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -8,12 +9,23 @@ import (
 )
 
 type ApiRunner struct {
+	listenAddr string
+
 	userFlight *Flight
+	tileFlight *Flight
+}
+
+func NewApiRunner(listenAddr string, userFlight, tileFlight *Flight) *ApiRunner {
+	this := new(ApiRunner)
+	this.listenAddr = listenAddr
+	this.userFlight = userFlight
+	this.tileFlight = tileFlight
+	return this
 }
 
 func (this *ApiRunner) Run() {
-	server.LaunchHttpServ(":9898", "") // TODO
-	server.RegisterHttpApi("/{op}/{uid}",
+	server.LaunchHttpServ(this.listenAddr, "")
+	server.RegisterHttpApi("/{op}/{type}/{id}",
 		func(w http.ResponseWriter, req *http.Request,
 			params map[string]interface{}) (interface{}, error) {
 			return this.handleHttpQuery(w, req, params)
@@ -23,27 +35,52 @@ func (this *ApiRunner) Run() {
 func (this *ApiRunner) handleHttpQuery(w http.ResponseWriter, req *http.Request,
 	params map[string]interface{}) (interface{}, error) {
 	var (
-		vars   = mux.Vars(req)
-		op     = vars["op"] // lock | unlock
+		vars = mux.Vars(req)
+		op   = vars["op"]   // lock | unlock
+		typ  = vars["type"] // user | tile
+
 		output = make(map[string]interface{})
+		key    cache.Key
+		flight *Flight
 	)
 
-	uid, err := strconv.Atoi(vars["uid"])
-	if err != nil {
-		return nil, err
+	switch typ {
+	case API_TYPE_USER:
+		uid, err := strconv.Atoi(vars["id"])
+		if err != nil {
+			return nil, err
+		}
+
+		flight = this.userFlight
+		key = User{Uid: int64(uid)}
+
+	case API_TYPE_TILE:
+		geohash, err := strconv.Atoi(vars["id"])
+		if err != nil {
+			return nil, err
+		}
+
+		flight = this.tileFlight
+		key = Tile{Geohash: geohash}
+
+	default:
+		output["ok"] = false
+		output["msg"] = "invalid type"
+		return output, nil
 	}
 
 	switch op {
 	case API_OP_LOCK:
-		output["ok"] = this.userFlight.Takeoff(User{Uid: int64(uid)})
+		output["ok"] = flight.Takeoff(key)
 
 	case API_OP_UNLOCK:
-		this.userFlight.Land(User{Uid: int64(uid)})
+		flight.Land(key)
 		output["ok"] = true
 
 	default:
 		output["ok"] = false
 		output["msg"] = "invalid operation"
 	}
+
 	return output, nil
 }

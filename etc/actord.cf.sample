@@ -1,5 +1,6 @@
 {
-    rest_listen_addr: ":9010"
+    api_listen_addr: ":9898"
+    stats_listen_addr: ":9010"
     prof_listen_addr: ":9011"
     sched_interval: 1
     stats_interval: 600

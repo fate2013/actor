@@ -8,7 +8,8 @@ import (
 )
 
 type ActorConfig struct {
-	RestListenAddr   string
+	ApiListenAddr    string
+	StatsListenAddr  string
 	ProfListenAddr   string
 	MetricsLogfile   string
 	SchedulerBacklog int
@@ -21,7 +22,8 @@ type ActorConfig struct {
 }
 
 func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
-	this.RestListenAddr = cf.String("rest_listen_addr", "")
+	this.ApiListenAddr = cf.String("api_listen_addr", ":9898")
+	this.StatsListenAddr = cf.String("stats_listen_addr", "127.0.0.1:9010")
 	this.ProfListenAddr = cf.String("prof_listen_addr", "")
 	this.MetricsLogfile = cf.String("metrics_logfile", "")
 	this.SchedulerBacklog = cf.Int("sched_backlog", 10000)
