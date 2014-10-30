@@ -32,9 +32,7 @@ actor
     # startup the daemon
     ./daemon/actord/actord
 
-### Introduction
-
-#### actor is:
+### actor IS
 
 * external scheduler for delayed jobs
   - PvP march
@@ -43,14 +41,12 @@ actor
 
 * serializer for concurrent updates
   - lock maintainer and issuer with retry mechanism
-  - concurrent events will be serialized by actor or by chance
   - actor make concurrent calls into sequential calls
 
 * coodinator
-  - everything that may lead to race condition and concurrent update will be decided by actor
+  - everything that may lead to race condition and concurrent updates will be decided by actor
 
-#### TODO
-
+### TODO
 * March may need K
 * alliance lock
 * pprof may influnce performance
@@ -58,8 +54,6 @@ actor
   - I'd rather kill actor instead of mysqld
   - what about distributed mysql instances?
 * teleport
-
-### TODO
 *   Write/Read timeout and check N in loop
 *   can a player send N marches to the same tile?
 *   simulate mysql shutdown
