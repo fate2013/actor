@@ -18,6 +18,8 @@ actor
 
     # install actor package
     go get github.com/funkygao/dragon
+
+    # change dir to actor package
     cd $GOPATH/src/github.com/funkygao/dragon
 
     # install all dependencies
