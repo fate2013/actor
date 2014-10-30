@@ -7,6 +7,8 @@ const (
 const (
 	API_OP_LOCK   = "lock"
 	API_OP_UNLOCK = "unlock"
+	API_TYPE_USER = "user"
+	API_TYPE_TILE = "tile"
 )
 
 const (

@@ -19,7 +19,7 @@ type PhpWorker struct {
 	tileFlight *Flight // key is geohash
 }
 
-func NewPhpWorker(config *ConfigWorker) *PhpWorker {
+func NewPhpWorker(apiListenAddr string, config *ConfigWorker) *PhpWorker {
 	this := new(PhpWorker)
 	this.config = config
 	this.userFlight = NewFlight(config.MaxFlightEntries,
@@ -30,7 +30,7 @@ func NewPhpWorker(config *ConfigWorker) *PhpWorker {
 		metrics.NewExpDecaySample(1028, 0.015))
 	metrics.Register("latency.php", this.latency)
 
-	api := ApiRunner{userFlight: this.userFlight}
+	api := NewApiRunner(apiListenAddr, this.userFlight, this.tileFlight)
 	api.Run()
 	return this
 }

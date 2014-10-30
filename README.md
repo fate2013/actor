@@ -34,10 +34,9 @@ actor
 
 ### TODO
 
-* Job may race with March/PVEMarch
-* Delayed Job race with player instant actions
-* 
-
+* March may need K
+* pprof may influnce performance
+* alliance lock
 
 ### Introduction
 

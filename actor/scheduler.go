@@ -6,7 +6,6 @@ import (
 )
 
 // serial scheduler
-// TODO what if HealTroop job and opponent march arrives at the same time for a player?
 type Scheduler struct {
 	interval time.Duration
 	stopCh   chan bool
@@ -18,14 +17,14 @@ type Scheduler struct {
 	worker  Worker
 }
 
-func NewScheduler(interval time.Duration, backlog int,
-	workerConf *ConfigWorker) *Scheduler {
+func NewScheduler(interval time.Duration, backlogSize int,
+	workerConf *ConfigWorker, apiListenAddr string) *Scheduler {
 	this := new(Scheduler)
 	this.interval = interval
 	this.stopCh = make(chan bool)
-	this.backlog = make(chan Wakeable, backlog)
+	this.backlog = make(chan Wakeable, backlogSize)
 	this.pollers = make(map[string]Poller)
-	this.worker = NewPhpWorker(workerConf)
+	this.worker = NewPhpWorker(apiListenAddr, workerConf)
 	return this
 }
 
