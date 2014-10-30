@@ -28,8 +28,8 @@ func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
 	this.MetricsLogfile = cf.String("metrics_logfile", "")
 	this.SchedulerBacklog = cf.Int("sched_backlog", 10000)
 
-	this.ScheduleInterval = time.Duration(cf.Int("sched_interval", 1)) * time.Second
-	this.ConsoleStatsInterval = time.Duration(cf.Int("stats_interval", 60*10)) * time.Second
+	this.ScheduleInterval = cf.Duration("sched_interval", time.Second)
+	this.ConsoleStatsInterval = cf.Duration("stats_interval", time.Minute*10)
 
 	this.MysqlConfig = new(ConfigMysql)
 	var section *conf.Conf
