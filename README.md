@@ -42,7 +42,7 @@ actor
   - Job
 
 * serializer for concurrent updates
-  - lock maintainer and issuer with retry mechanism
+  - lock maintainer/issuer with retry mechanism
   - actor make concurrent calls into sequential calls
 
 * coodinator
