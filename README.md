@@ -11,7 +11,7 @@ actor
 ### Install
 
     # install golang amd64 
-    https://golang.org/dl/
+    open https://golang.org/dl/
 
     # setup GOPATH env
     export GOPATH=~/gopkg
