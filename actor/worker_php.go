@@ -49,6 +49,7 @@ func (this *PhpWorker) FlightCount() int {
 func (this *PhpWorker) Wake(w Wakeable) {
 	maxRetries := 3
 	base := 50
+	totalWaitMs := 0
 	for i := 0; i < maxRetries; i++ {
 		ok := this.tryWake(w)
 		if ok {
@@ -56,11 +57,12 @@ func (this *PhpWorker) Wake(w Wakeable) {
 		}
 
 		waitMs := (maxRetries-i)*base + rand.Intn(base) + 10
-		log.Warn("retry after %dms: %+v", waitMs, w)
+		totalWaitMs += waitMs
+		log.Warn("retry[%d] after %dms: %+v", i, waitMs, w)
 		time.Sleep(time.Millisecond * time.Duration(waitMs))
 	}
 
-	log.Warn("give up waking[%+v] after %d retries, await being rescheduled...", w, maxRetries)
+	log.Warn("Quit after %dms: %+v", totalWaitMs, w)
 }
 
 func (this *PhpWorker) tryWake(w Wakeable) (ok bool) {
