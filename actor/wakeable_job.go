@@ -35,6 +35,6 @@ func (this *Job) GetUid() int64 {
 }
 
 func (this Job) String() string {
-	return fmt.Sprintf("Job{uid:%d, jid:%d, type:%d, due:%s}",
-		this.Uid, this.JobId, this.Type, this.TimeEnd)
+	return fmt.Sprintf("Job{uid:%d, jid:%d, type:%d}",
+		this.Uid, this.JobId, this.Type)
 }
