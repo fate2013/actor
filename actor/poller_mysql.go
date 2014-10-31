@@ -108,7 +108,12 @@ func (this *MysqlPoller) poll(typ string, ch chan<- Wakeable) {
 			continue
 		}
 
-		log.Debug("wakes[%s]^%d: %+v", typ, len(ws), ws)
+		// TODO put into config
+		if len(ws) > 20 {
+			log.Warn("wakes[%s]^%d: %+v", typ, len(ws), ws)
+		} else {
+			log.Debug("wakes[%s]^%d: %+v", typ, len(ws), ws)
+		}
 
 		for _, w := range ws {
 			ch <- w
