@@ -10,8 +10,9 @@ import (
 )
 
 type MysqlPoller struct {
-	interval           time.Duration
-	slowQueryThreshold time.Duration
+	interval             time.Duration
+	slowQueryThreshold   time.Duration
+	manyWakeupsThreshold int
 
 	stopChan chan bool
 
@@ -25,11 +26,13 @@ type MysqlPoller struct {
 	latency metrics.Histogram
 }
 
-func NewMysqlPoller(interval time.Duration, slowQueryThreshold time.Duration,
+func NewMysqlPoller(interval time.Duration,
+	slowQueryThreshold time.Duration, manyWakeupsThreshold int,
 	my *ConfigMysqlInstance, query *ConfigMysqlQuery, bc *ConfigBreaker) (*MysqlPoller, error) {
 	this := new(MysqlPoller)
 	this.interval = interval
 	this.slowQueryThreshold = slowQueryThreshold
+	this.manyWakeupsThreshold = manyWakeupsThreshold
 
 	this.stopChan = make(chan bool)
 
@@ -108,9 +111,8 @@ func (this *MysqlPoller) poll(typ string, ch chan<- Wakeable) {
 			continue
 		}
 
-		// TODO put into config
-		if len(ws) > 20 {
-			log.Warn("wakes[%s]^%d: %+v", typ, len(ws), ws)
+		if len(ws) > this.manyWakeupsThreshold {
+			log.Warn("many wakes[%s]^%d: %+v", typ, len(ws), ws)
 		} else {
 			log.Debug("wakes[%s]^%d: %+v", typ, len(ws), ws)
 		}

@@ -21,6 +21,7 @@
     mysql: {
         connect_timeout: "4s"
         slow_threshold: "1s"
+        many_wakeups_threshold: 300
 
         breaker: {
             failure_allowance: 5
