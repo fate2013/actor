@@ -47,15 +47,17 @@ func (this *PhpWorker) FlightCount() int {
 }
 
 func (this *PhpWorker) Wake(w Wakeable) {
-	maxRetries := 3
-	base := 50
-	totalWaitMs := 0
-	var waitMs int
+	var (
+		maxRetries  = 3
+		randbaseMs  = 50
+		totalWaitMs = 0
+		waitMs      int
+	)
 	for i := 0; i < maxRetries; i++ {
 		ok := this.tryWake(w)
 		if ok {
 			elapsed := time.Since(w.DueTime())
-			if elapsed.Seconds() > 1 {
+			if elapsed.Seconds() > 2 {
 				log.Info("late after %s ok: %+v", elapsed, w)
 			} else if i > 0 {
 				// ever retried
@@ -65,7 +67,7 @@ func (this *PhpWorker) Wake(w Wakeable) {
 			return
 		}
 
-		waitMs = (maxRetries-i)*base + rand.Intn(base) + 10
+		waitMs = (maxRetries-i)*randbaseMs + rand.Intn(randbaseMs) + 10
 		totalWaitMs += waitMs
 		log.Debug("retry[%d] after %dms: %+v", i+1, waitMs, w)
 		time.Sleep(time.Millisecond * time.Duration(waitMs))
@@ -74,7 +76,7 @@ func (this *PhpWorker) Wake(w Wakeable) {
 	log.Warn("Quit after %dms: %+v", totalWaitMs, w)
 }
 
-func (this *PhpWorker) tryWake(w Wakeable) (ok bool) {
+func (this *PhpWorker) tryWake(w Wakeable) (success bool) {
 	var (
 		params = string(w.Marshal())
 		url    string
@@ -114,10 +116,19 @@ func (this *PhpWorker) tryWake(w Wakeable) (ok bool) {
 		return
 	}
 
-	// FIXME dry run didn't release lock correctly
 	if this.config.DryRun {
 		log.Debug("dry run: %s", url)
-		ok = true
+
+		this.userFlight.Land(User{Uid: w.GetUid()})
+
+		if m, ok := w.(*March); ok {
+			this.tileFlight.Land(m.TileKey())
+			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
+				this.userFlight.Land(User{Uid: m.OppUid.Int64})
+			}
+		}
+
+		success = true
 		return
 	}
 
@@ -164,7 +175,7 @@ func (this *PhpWorker) tryWake(w Wakeable) (ok bool) {
 		log.Debug("payload:%s, %+v %d %s",
 			string(payload), w,
 			res.StatusCode, time.Since(t0))
-		ok = true
+		success = true
 	}
 
 	this.userFlight.Land(User{Uid: w.GetUid()})

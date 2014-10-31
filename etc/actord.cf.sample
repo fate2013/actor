@@ -19,9 +19,8 @@
     }
 
     mysql: {
-        connect_timeout: 4
-        io_timeout: 30
-        slow_threshold: 1
+        connect_timeout: "4s"
+        slow_threshold: "1s"
 
         breaker: {
             failure_allowance: 5

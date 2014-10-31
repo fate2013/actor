@@ -78,8 +78,7 @@ func (this *ConfigWorker) loadConfig(cf *conf.Conf) {
 
 type ConfigMysql struct {
 	ConnectTimeout time.Duration
-	IoTimeout      time.Duration
-	SlowThreshold  time.Duration // TODO not used yet
+	SlowThreshold  time.Duration
 
 	Query   ConfigMysqlQuery
 	Breaker ConfigBreaker
@@ -88,9 +87,8 @@ type ConfigMysql struct {
 }
 
 func (this *ConfigMysql) loadConfig(cf *conf.Conf) {
-	this.ConnectTimeout = time.Duration(cf.Int("connect_timeout", 4)) * time.Second
-	this.IoTimeout = time.Duration(cf.Int("io_timeout", 30)) * time.Second
-	this.SlowThreshold = time.Duration(cf.Int("slow_threshold", 5)) * time.Second
+	this.ConnectTimeout = cf.Duration("connect_timeout", 4*time.Second)
+	this.SlowThreshold = cf.Duration("slow_threshold", 1*time.Second)
 
 	section, err := cf.Section("query")
 	if err != nil {
@@ -111,7 +109,6 @@ func (this *ConfigMysql) loadConfig(cf *conf.Conf) {
 
 		server := new(ConfigMysqlInstance)
 		server.ConnectTimeout = this.ConnectTimeout
-		server.IoTimeout = this.IoTimeout
 		server.loadConfig(section)
 		this.Servers[server.Pool] = server
 	}
@@ -148,7 +145,6 @@ func (this *ConfigMysqlQuery) loadConfig(cf *conf.Conf) {
 
 type ConfigMysqlInstance struct {
 	ConnectTimeout time.Duration
-	IoTimeout      time.Duration // TODO not used yet
 
 	Pool    string
 	Host    string

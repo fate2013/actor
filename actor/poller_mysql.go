@@ -208,7 +208,7 @@ func (this *MysqlPoller) Query(stmt *sql.Stmt,
 
 	elapsed := time.Since(t0)
 	if elapsed > this.slowQueryThreshold {
-		log.Warn("slow query:%v, %+v", elapsed, *stmt)
+		log.Warn("slow query:%s, %+v", elapsed, *stmt)
 	}
 
 	return
