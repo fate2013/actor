@@ -57,7 +57,8 @@ func (this *Scheduler) Run(myconf *ConfigMysql) {
 	var err error
 	var pollersN int
 	for pool, my := range myconf.Servers {
-		this.pollers[pool], err = NewMysqlPoller(this.interval, myconf.SlowThreshold,
+		this.pollers[pool], err = NewMysqlPoller(this.interval,
+			myconf.SlowThreshold, myconf.ManyWakeupsThreshold,
 			my, &myconf.Query, &myconf.Breaker)
 		if err != nil {
 			log.Error("poller[%s]: %s", pool, err)

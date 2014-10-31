@@ -77,8 +77,9 @@ func (this *ConfigWorker) loadConfig(cf *conf.Conf) {
 }
 
 type ConfigMysql struct {
-	ConnectTimeout time.Duration // part of DSN
-	SlowThreshold  time.Duration
+	ConnectTimeout       time.Duration // part of DSN
+	SlowThreshold        time.Duration
+	ManyWakeupsThreshold int // will log.warn if exceeded
 
 	Query   ConfigMysqlQuery
 	Breaker ConfigBreaker
@@ -89,6 +90,7 @@ type ConfigMysql struct {
 func (this *ConfigMysql) loadConfig(cf *conf.Conf) {
 	this.ConnectTimeout = cf.Duration("connect_timeout", 4*time.Second)
 	this.SlowThreshold = cf.Duration("slow_threshold", 1*time.Second)
+	this.ManyWakeupsThreshold = cf.Int("many_wakeups_threshold", 200)
 
 	section, err := cf.Section("query")
 	if err != nil {
