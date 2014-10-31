@@ -54,10 +54,14 @@ func (this *PhpWorker) Wake(w Wakeable) {
 	for i := 0; i < maxRetries; i++ {
 		ok := this.tryWake(w)
 		if ok {
-			if i > 0 {
+			elapsed := time.Since(w.DueTime())
+			if elapsed.Seconds() > 1 {
+				log.Info("late after %s ok: %+v", elapsed, w)
+			} else if i > 0 {
 				// ever retried
 				log.Info("retry[%d] after %dms ok: %+v", i+1, waitMs, w)
 			}
+
 			return
 		}
 

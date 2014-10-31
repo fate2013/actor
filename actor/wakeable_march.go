@@ -51,7 +51,7 @@ func (this *March) DueTime() time.Time {
 }
 
 func (this March) String() string {
-	return fmt.Sprintf("March{uid:%d, opp:%d, mid:%d, type:%s, state:%s, (%d, %d), due:%s}",
+	return fmt.Sprintf("March{uid:%d, opp:%d, mid:%d, type:%s, state:%s, (%d, %d)}",
 		this.Uid, this.OppUid.Int64,
-		this.MarchId, this.Type.String, this.State, this.X1, this.Y1, this.EndTime)
+		this.MarchId, this.Type.String, this.State, this.X1, this.Y1)
 }

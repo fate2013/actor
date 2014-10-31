@@ -32,6 +32,6 @@ func (this *Pve) GetUid() int64 {
 }
 
 func (this Pve) String() string {
-	return fmt.Sprintf("Pve{uid:%d, mid:%d, state:%s, due:%s}",
-		this.Uid, this.MarchId, this.State, this.EndTime)
+	return fmt.Sprintf("Pve{uid:%d, mid:%d, state:%s}",
+		this.Uid, this.MarchId, this.State)
 }
