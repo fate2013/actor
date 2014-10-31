@@ -77,7 +77,7 @@ func (this *ConfigWorker) loadConfig(cf *conf.Conf) {
 }
 
 type ConfigMysql struct {
-	ConnectTimeout time.Duration
+	ConnectTimeout time.Duration // part of DSN
 	SlowThreshold  time.Duration
 
 	Query   ConfigMysqlQuery

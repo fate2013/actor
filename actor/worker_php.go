@@ -6,6 +6,7 @@ import (
 	"github.com/funkygao/metrics"
 	"io/ioutil"
 	"math/rand"
+	"net"
 	"net/http"
 	"time"
 )
@@ -76,6 +77,16 @@ func (this *PhpWorker) Wake(w Wakeable) {
 	log.Warn("Quit after %dms: %+v", totalWaitMs, w)
 }
 
+func (this *PhpWorker) dialTimeout(network, addr string) (net.Conn, error) {
+	return net.DialTimeout(network, addr, this.config.Timeout)
+}
+
+// callback with timeout
+func (this *PhpWorker) callPhp(url string) (resp *http.Response, err error) {
+	client := http.Client{Transport: &http.Transport{Dial: this.dialTimeout}}
+	return client.Get(url)
+}
+
 func (this *PhpWorker) tryWake(w Wakeable) (success bool) {
 	var (
 		params = string(w.Marshal())
@@ -135,7 +146,7 @@ func (this *PhpWorker) tryWake(w Wakeable) (success bool) {
 	log.Debug("%s", url)
 
 	t0 := time.Now()
-	res, err := http.Get(url)
+	res, err := this.callPhp(url)
 	if err != nil {
 		log.Error("http: %s", err.Error())
 
