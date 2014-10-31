@@ -3,6 +3,7 @@ package actor
 import (
 	"github.com/funkygao/golib/cache"
 	"github.com/funkygao/golib/server"
+	log "github.com/funkygao/log4go"
 	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
@@ -25,7 +26,7 @@ func NewApiRunner(listenAddr string, userFlight, tileFlight *Flight) *ApiRunner 
 
 func (this *ApiRunner) Run() {
 	server.LaunchHttpServ(this.listenAddr, "")
-	server.RegisterHttpApi("/{op}/{type}/{id}",
+	server.RegisterHttpApi("/{reason}/{op}/{type}/{id}",
 		func(w http.ResponseWriter, req *http.Request,
 			params map[string]interface{}) (interface{}, error) {
 			return this.handleHttpQuery(w, req, params)
@@ -35,9 +36,10 @@ func (this *ApiRunner) Run() {
 func (this *ApiRunner) handleHttpQuery(w http.ResponseWriter, req *http.Request,
 	params map[string]interface{}) (interface{}, error) {
 	var (
-		vars = mux.Vars(req)
-		op   = vars["op"]   // lock | unlock
-		typ  = vars["type"] // user | tile
+		vars   = mux.Vars(req)
+		reason = vars["reason"]
+		op     = vars["op"]   // lock | unlock
+		typ    = vars["type"] // user | tile
 
 		output = make(map[string]interface{})
 		key    cache.Key
@@ -80,6 +82,12 @@ func (this *ApiRunner) handleHttpQuery(w http.ResponseWriter, req *http.Request,
 	default:
 		output["ok"] = false
 		output["msg"] = "invalid operation"
+	}
+
+	if output["ok"].(bool) {
+		log.Debug("%s %s %s ok: %+v", req.RemoteAddr, reason, op, key)
+	} else {
+		log.Warn("%s %s %s fail: %+v", req.RemoteAddr, reason, op, key)
 	}
 
 	return output, nil
