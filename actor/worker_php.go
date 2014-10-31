@@ -146,9 +146,13 @@ func (this *PhpWorker) tryWake(w Wakeable) (ok bool) {
 
 	if payload[0] == '{' {
 		// php.Application json payload means Exception thrown
-		log.Error("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), w)
+		log.Error("payload:%s, %+v %d %s",
+			string(payload), w,
+			res.StatusCode, time.Since(t0))
 	} else {
-		log.Debug("payload: %s, elapsed: %v, %+v", string(payload), time.Since(t0), w)
+		log.Debug("payload:%s, %+v %d %s",
+			string(payload), w,
+			res.StatusCode, time.Since(t0))
 		ok = true
 	}
 

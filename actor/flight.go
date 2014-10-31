@@ -50,7 +50,7 @@ func (this *Flight) Takeoff(key cache.Key) (success bool) {
 		return true
 	}
 
-	log.Warn("in flight: %+v", key)
+	log.Debug("in flight: %+v", key)
 	return false
 }
 

@@ -49,6 +49,7 @@ actor
   - everything that may lead to race condition and concurrent updates will be decided by actor
 
 ### TODO
+* test lock expiry
 * March may need K
 * alliance lock
 * pprof may influnce performance
