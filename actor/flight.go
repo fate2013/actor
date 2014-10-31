@@ -13,7 +13,7 @@ type Flight struct {
 	expires time.Duration
 
 	mutex sync.Mutex
-	items *cache.LruCache // key: ctime
+	items *cache.LruCache // key: mtime
 }
 
 func NewFlight(maxLockEntries int, debug bool, expires time.Duration) *Flight {
