@@ -49,6 +49,8 @@ actor
   - everything that may lead to race condition and concurrent updates will be decided by actor
 
 ### TODO
+
+* test callback php timeout
 * test lock expiry
 * March may need K
 * alliance lock

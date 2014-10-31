@@ -66,7 +66,7 @@ type ConfigWorker struct {
 func (this *ConfigWorker) loadConfig(cf *conf.Conf) {
 	this.DryRun = cf.Bool("dry_run", true)
 	this.DebugLocking = cf.Bool("debug_locking", false)
-	this.Timeout = time.Duration(cf.Int("timeout", 5)) * time.Second
+	this.Timeout = cf.Duration("timeout", 5*time.Second)
 	this.MaxFlightEntries = cf.Int("max_flight_entries", 100000)
 	this.LockExpires = cf.Duration("lock_expires", time.Second*30)
 	this.Job = cf.String("job", "")
