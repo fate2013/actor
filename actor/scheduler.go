@@ -91,8 +91,9 @@ func (this *Scheduler) runWorker() {
 				continue
 			}
 
-			if time.Since(w.DueTime()).Seconds() > this.interval.Seconds() {
-				log.Warn("late for %+v", w)
+			elapsed := time.Since(w.DueTime())
+			if elapsed.Seconds() > this.interval.Seconds() {
+				log.Warn("late %s for %+v", elapsed, w)
 			}
 
 			go this.worker.Wake(w)
