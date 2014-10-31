@@ -9,10 +9,10 @@
 
     worker: {
         dry_run: false
+        timeout: "5s"
         debug_locking: false
         max_flight_entries: 100000
         lock_expires: "10s"
-        timeout: 5
         job: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=wakeup&params=%s"
         march: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=play&params=%s"
         pve: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=pve&params=%s"
