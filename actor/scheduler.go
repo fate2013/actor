@@ -93,7 +93,7 @@ func (this *Scheduler) runWorker() {
 			}
 
 			elapsed := time.Since(w.DueTime())
-			if elapsed.Seconds() > this.interval.Seconds() {
+			if elapsed.Seconds() > this.interval.Seconds()+1 {
 				log.Debug("late %s for %+v", elapsed, w)
 			}
 
