@@ -50,6 +50,8 @@ actor
 
 ### TODO
 
+* auto reload config without restart actord
+* lockTile is not needed
 * test callback php timeout
 * test lock expiry
 * March may need K
