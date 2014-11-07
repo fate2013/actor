@@ -25,7 +25,7 @@
 
         breaker: {
             failure_allowance: 5
-            retry_timeout: 10
+            retry_timeout: "10s"
         }
 
         query: {
