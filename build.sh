@@ -7,10 +7,12 @@ if [[ $1 = "-loc" ]]; then
     exit
 fi
 
-cd daemon/actord
+VER=0.1.0rc
 ID=$(git rev-parse HEAD | cut -c1-7)
-go build -ldflags "-X github.com/funkygao/golib/server.VERSION 0.1.2b -X github.com/funkygao/golib/server.BuildID $ID -w"
-#go build -race -v -ldflags "-X github.com/funkygao/golib/server.BuildID $ID -w"
+
+cd daemon/actord
+go build -ldflags "-X github.com/funkygao/golib/server.VERSION $VER -X github.com/funkygao/golib/server.BuildID $ID -w"
+#go build -race -v -ldflags "-X github.com/funkygao/golib/server.VERSION $VER -X github.com/funkygao/golib/server.BuildID $ID -w"
 
 #---------
 # show ver
