@@ -54,6 +54,10 @@ func NewMysqlPoller(interval time.Duration,
 		return nil, err
 	}
 
+	// TODO config
+	this.mysql.SetMaxIdleConns(3)
+	this.mysql.SetMaxOpenConns(3)
+
 	log.Debug("mysql connected: %s", my.DSN())
 
 	if query.Job != "" {

@@ -50,6 +50,7 @@ actor
 
 ### TODO
 
+* mysql ping within mysql max idle time, my.cf wait_timeout show variables like '%timeout%'
 * metrics of php request handling
 * test callback php timeout
 * test lock expiry
