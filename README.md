@@ -50,6 +50,7 @@ actor
 
 ### TODO
 
+* metrics of php request handling
 * test callback php timeout
 * test lock expiry
 * March may need K
