@@ -1,5 +1,5 @@
 {
-    api_listen_addr: ":9898"
+    http_api_listen_addr: ":9898"
     stats_listen_addr: "127.0.0.1:9010"
     prof_listen_addr: "127.0.0.1:9011"
     sched_interval: "1s"

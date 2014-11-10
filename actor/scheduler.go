@@ -18,13 +18,13 @@ type Scheduler struct {
 }
 
 func NewScheduler(interval time.Duration, backlogSize int,
-	workerConf *ConfigWorker, apiListenAddr string) *Scheduler {
+	workerConf *ConfigWorker, httpApiListenAddr string) *Scheduler {
 	this := new(Scheduler)
 	this.interval = interval
 	this.stopCh = make(chan bool)
 	this.backlog = make(chan Wakeable, backlogSize)
 	this.pollers = make(map[string]Poller)
-	this.worker = NewPhpWorker(apiListenAddr, workerConf)
+	this.worker = NewPhpWorker(httpApiListenAddr, workerConf)
 	return this
 }
 
