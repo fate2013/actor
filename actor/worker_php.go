@@ -31,7 +31,7 @@ func NewPhpWorker(apiListenAddr string, config *ConfigWorker) *PhpWorker {
 		metrics.NewExpDecaySample(1028, 0.015))
 	metrics.Register("latency.php", this.latency)
 
-	api := NewApiRunner(apiListenAddr, this.userFlight, this.tileFlight)
+	api := NewHttpApiRunner(apiListenAddr, this.userFlight, this.tileFlight)
 	api.Run()
 	return this
 }

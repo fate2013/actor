@@ -9,22 +9,22 @@ import (
 	"strconv"
 )
 
-type ApiRunner struct {
+type HttpApiRunner struct {
 	listenAddr string
 
 	userFlight *Flight
 	tileFlight *Flight
 }
 
-func NewApiRunner(listenAddr string, userFlight, tileFlight *Flight) *ApiRunner {
-	this := new(ApiRunner)
+func NewHttpApiRunner(listenAddr string, userFlight, tileFlight *Flight) *HttpApiRunner {
+	this := new(HttpApiRunner)
 	this.listenAddr = listenAddr
 	this.userFlight = userFlight
 	this.tileFlight = tileFlight
 	return this
 }
 
-func (this *ApiRunner) Run() {
+func (this *HttpApiRunner) Run() {
 	server.LaunchHttpServ(this.listenAddr, "")
 	server.RegisterHttpApi("/{reason}/{op}/{type}/{id}",
 		func(w http.ResponseWriter, req *http.Request,
@@ -33,7 +33,7 @@ func (this *ApiRunner) Run() {
 		}).Methods("GET")
 }
 
-func (this *ApiRunner) handleHttpQuery(w http.ResponseWriter, req *http.Request,
+func (this *HttpApiRunner) handleHttpQuery(w http.ResponseWriter, req *http.Request,
 	params map[string]interface{}) (interface{}, error) {
 	var (
 		vars   = mux.Vars(req)
