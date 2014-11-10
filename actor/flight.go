@@ -3,76 +3,65 @@ package actor
 import (
 	"github.com/funkygao/golib/cache"
 	log "github.com/funkygao/log4go"
+	"sync"
+	"time"
 )
 
 // used as locking Wakeable's
 type Flight struct {
-	items *cache.LruCache
+	debug   bool
+	expires time.Duration
 
-	maxRetries int
-	retries    *cache.LruCache
+	mutex sync.Mutex
+	items *cache.LruCache // key: mtime
 }
 
-func NewFlight(maxLockEntries int, maxRetryEntries int, maxRetries int) *Flight {
+func NewFlight(maxLockEntries int, debug bool, expires time.Duration) *Flight {
 	this := new(Flight)
+	this.debug = debug
+	this.expires = expires
 	this.items = cache.NewLruCache(maxLockEntries)
-	this.maxRetries = maxRetries
-	this.retries = cache.NewLruCache(maxRetryEntries)
+
 	return this
-}
-
-// FIXME for March, key is (x, y), if 100 march to the same tile, max retries will
-// be reached early, can refuse to serve the remaining march
-func (this *Flight) canPass(key cache.Key) (ok, firstTimeFail bool) {
-	ok, firstTimeFail = true, false
-	if this.maxRetries == 0 {
-		return
-	}
-	retried := this.retries.Inc(key)
-	if retried >= this.maxRetries {
-		ok = false
-
-		if retried == this.maxRetries {
-			firstTimeFail = true
-		}
-	}
-
-	return
 }
 
 // return true if accquired the lock
 func (this *Flight) Takeoff(key cache.Key) (success bool) {
-	ok, firstTimeFail := this.canPass(key)
-	if !ok {
-		if firstTimeFail {
-			log.Warn("max retries[%d] reached: %+v", this.maxRetries, key)
+	this.mutex.Lock()
+	defer this.mutex.Unlock()
+
+	ctime, present := this.items.Get(key)
+	if !present {
+		this.items.Set(key, time.Now())
+
+		if this.debug {
+			log.Debug("locking: %+v", key)
 		}
 
-		return false
-	}
-
-	// FIXME Get and Set is not atomic
-	if _, present := this.items.Get(key); !present {
-		this.items.Set(key, true)
 		return true
 	}
 
-	log.Debug("already locked: %#v", key)
+	// present, check expires
+	if this.expires > 0 && time.Since(ctime.(time.Time)) > this.expires {
+		log.Warn("expires[%+v]: %s", key, time.Since(ctime.(time.Time)))
+
+		// refresh the lock
+		this.items.Set(key, time.Now())
+		return true
+	}
+
+	if this.debug {
+		log.Debug("in flight: %+v", key)
+	}
+
 	return false
 }
 
-func (this *Flight) Land(key cache.Key, ok bool) {
+func (this *Flight) Land(key cache.Key) {
 	this.items.Del(key)
-	if this.maxRetries > 0 && ok {
-		this.retries.Set(key, 0) // reset the counter
+	if this.debug {
+		log.Debug("unlock: %+v", key)
 	}
-}
-
-func (this *Flight) Flying(key cache.Key) bool {
-	if _, present := this.items.Get(key); present {
-		return true
-	}
-	return false
 }
 
 func (this *Flight) Len() int {

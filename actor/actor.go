@@ -1,15 +1,15 @@
 /*
-   statsRunner
+   StatsRunner
      |
-   actor --- schduler --- pollers --- mysql farm
+   Actor --- Schduler --- Pollers --- mysql farm
                |            |
-               |            V channel of Wakeable's
+               |            V backlog(channel of Wakeables)
                |            |
-             worker --------+
+             Worker --------+
                |
-          Wake | Wakeable
+               | go Wake(Wakeable) with retries in case of lock conflict
                V
-    -------------------------------------------------------- http | mq | ?
+    -------------------------------------------------------------------- callback
                |        |       |
               php      php     php
 
@@ -38,7 +38,8 @@ func New(server *server.Server) (this *Actor) {
 	}
 
 	this.scheduler = NewScheduler(this.config.ScheduleInterval,
-		this.config.SchedulerBacklog, this.config.WorkerConfig)
+		this.config.SchedulerBacklog, this.config.WorkerConfig,
+		this.config.ApiListenAddr)
 	this.statsRunner = NewStatsRunner(this, this.scheduler)
 
 	return

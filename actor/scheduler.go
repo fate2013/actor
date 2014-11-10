@@ -6,7 +6,6 @@ import (
 )
 
 // serial scheduler
-// TODO what if HealTroop job and opponent march arrives at the same time for a player?
 type Scheduler struct {
 	interval time.Duration
 	stopCh   chan bool
@@ -18,14 +17,14 @@ type Scheduler struct {
 	worker  Worker
 }
 
-func NewScheduler(interval time.Duration, backlog int,
-	workerConf *ConfigWorker) *Scheduler {
+func NewScheduler(interval time.Duration, backlogSize int,
+	workerConf *ConfigWorker, apiListenAddr string) *Scheduler {
 	this := new(Scheduler)
 	this.interval = interval
 	this.stopCh = make(chan bool)
-	this.backlog = make(chan Wakeable, backlog)
+	this.backlog = make(chan Wakeable, backlogSize)
 	this.pollers = make(map[string]Poller)
-	this.worker = NewPhpWorker(workerConf)
+	this.worker = NewPhpWorker(apiListenAddr, workerConf)
 	return this
 }
 
@@ -40,8 +39,8 @@ func (this *Scheduler) Stat() map[string]interface{} {
 	}
 }
 
-func (this *Scheduler) InFlight() int {
-	return this.worker.InFlight()
+func (this *Scheduler) FlightCount() int {
+	return this.worker.FlightCount()
 }
 
 func (this *Scheduler) Stop() {
@@ -58,7 +57,8 @@ func (this *Scheduler) Run(myconf *ConfigMysql) {
 	var err error
 	var pollersN int
 	for pool, my := range myconf.Servers {
-		this.pollers[pool], err = NewMysqlPoller(this.interval, myconf.SlowThreshold,
+		this.pollers[pool], err = NewMysqlPoller(this.interval,
+			myconf.SlowThreshold, myconf.ManyWakeupsThreshold,
 			my, &myconf.Query, &myconf.Breaker)
 		if err != nil {
 			log.Error("poller[%s]: %s", pool, err)
@@ -92,8 +92,9 @@ func (this *Scheduler) runWorker() {
 				continue
 			}
 
-			if time.Since(w.DueTime()).Seconds() > this.interval.Seconds() {
-				log.Warn("late for %+v", w)
+			elapsed := time.Since(w.DueTime())
+			if elapsed.Seconds() > this.interval.Seconds()+1 {
+				log.Debug("late %s for %+v", elapsed, w)
 			}
 
 			go this.worker.Wake(w)

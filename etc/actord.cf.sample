@@ -1,27 +1,27 @@
 {
-    rest_listen_addr: ":9010"
-    prof_listen_addr: ":9011"
-    sched_interval: 1
-    stats_interval: 600
+    api_listen_addr: ":9898"
+    stats_listen_addr: "127.0.0.1:9010"
+    prof_listen_addr: "127.0.0.1:9011"
+    sched_interval: "1s"
+    stats_interval: "10m"
     sched_backlog: 5000
     metrics_logfile: "metrics.log"
 
     worker: {
         dry_run: false
+        timeout: "5s"
+        debug_locking: false
         max_flight_entries: 100000
-        max_retry_enties: 10000
-        max_retries: 10
-        timeout: 5
+        lock_expires: "10s"
         job: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=wakeup&params=%s"
         march: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=play&params=%s"
         pve: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=pve&params=%s"
-        //mq_addr: "127.0.0.1:11300"
     }
 
     mysql: {
-        connect_timeout: 4
-        io_timeout: 30
-        slow_threshold: 1
+        connect_timeout: "4s"
+        slow_threshold: "1s"
+        many_wakeups_threshold: 300
 
         breaker: {
             failure_allowance: 5

@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/cookieo9/go-misc/slice"
 	"time"
 )
 
+// TODO add K1
 type March struct {
 	Uid     int64          `json:"uid"`
 	MarchId int64          `json:"march_id"`
@@ -29,13 +29,17 @@ func (this *March) DecodeGeoHash(hash int) (x, y int16) {
 	return
 }
 
+func (this *March) TileKey() Tile {
+	return Tile{Geohash: this.GeoHash()}
+}
+
 func (this *March) Marshal() []byte {
 	b, _ := json.Marshal(*this)
 	return b
 }
 
-func (this *March) FlightKey() interface{} {
-	return this.GeoHash()
+func (this *March) GetUid() int64 {
+	return this.Uid
 }
 
 func (this *March) Ignored() bool {
@@ -47,16 +51,7 @@ func (this *March) DueTime() time.Time {
 }
 
 func (this March) String() string {
-	return fmt.Sprintf("March{uid:%d, mid:%d, type:%s, state:%s, (%d, %d), due:%s}",
-		this.Uid, this.MarchId, this.Type.String, this.State, this.X1, this.Y1, this.EndTime)
-}
-
-// FIXME not used yet
-type MarchGroup []March
-
-func (this *MarchGroup) sortByDestination() {
-	byDestination := func(m1, m2 interface{}) bool {
-		return m1.(March).X1 < m2.(March).X1
-	}
-	slice.Sort(this, byDestination)
+	return fmt.Sprintf("March{uid:%d, opp:%d, mid:%d, type:%s, state:%s, (%d, %d)}",
+		this.Uid, this.OppUid.Int64,
+		this.MarchId, this.Type.String, this.State, this.X1, this.Y1)
 }

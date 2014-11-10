@@ -8,7 +8,8 @@ import (
 )
 
 type ActorConfig struct {
-	RestListenAddr   string
+	ApiListenAddr    string
+	StatsListenAddr  string
 	ProfListenAddr   string
 	MetricsLogfile   string
 	SchedulerBacklog int
@@ -21,13 +22,14 @@ type ActorConfig struct {
 }
 
 func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
-	this.RestListenAddr = cf.String("rest_listen_addr", "")
+	this.ApiListenAddr = cf.String("api_listen_addr", ":9898")
+	this.StatsListenAddr = cf.String("stats_listen_addr", "127.0.0.1:9010")
 	this.ProfListenAddr = cf.String("prof_listen_addr", "")
 	this.MetricsLogfile = cf.String("metrics_logfile", "")
 	this.SchedulerBacklog = cf.Int("sched_backlog", 10000)
 
-	this.ScheduleInterval = time.Duration(cf.Int("sched_interval", 1)) * time.Second
-	this.ConsoleStatsInterval = time.Duration(cf.Int("stats_interval", 60*10)) * time.Second
+	this.ScheduleInterval = cf.Duration("sched_interval", time.Second)
+	this.ConsoleStatsInterval = cf.Duration("stats_interval", time.Minute*10)
 
 	this.MysqlConfig = new(ConfigMysql)
 	var section *conf.Conf
@@ -50,41 +52,34 @@ func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
 
 type ConfigWorker struct {
 	DryRun           bool
+	DebugLocking     bool
 	Timeout          time.Duration
 	MaxFlightEntries int
-	MaxRetryEntries  int
-	MaxRetries       int // for a given Wakeable, how many retries at most
+	LockExpires      time.Duration
 
-	// if use php as worker
+	// if use php as worker, it's callback url template
 	Job   string
 	March string
 	Pve   string
-
-	// if use MQ as worker
-	MqAddr string
 }
 
 func (this *ConfigWorker) loadConfig(cf *conf.Conf) {
 	this.DryRun = cf.Bool("dry_run", true)
-	this.Timeout = time.Duration(cf.Int("timeout", 5)) * time.Second
+	this.DebugLocking = cf.Bool("debug_locking", false)
+	this.Timeout = cf.Duration("timeout", 5*time.Second)
 	this.MaxFlightEntries = cf.Int("max_flight_entries", 100000)
-	this.MaxRetryEntries = cf.Int("max_retry_enties", 10000)
-	this.MaxRetries = cf.Int("max_retries", 100)
+	this.LockExpires = cf.Duration("lock_expires", time.Second*30)
 	this.Job = cf.String("job", "")
 	this.March = cf.String("march", "")
 	this.Pve = cf.String("pve", "")
-	this.MqAddr = cf.String("mq_addr", "")
-	if this.MqAddr == "" && this.Job == "" {
-		panic("empty worker addr")
-	}
 
 	log.Debug("worker config: %+v", *this)
 }
 
 type ConfigMysql struct {
-	ConnectTimeout time.Duration
-	IoTimeout      time.Duration
-	SlowThreshold  time.Duration // TODO not used yet
+	ConnectTimeout       time.Duration // part of DSN
+	SlowThreshold        time.Duration
+	ManyWakeupsThreshold int // will log.warn if exceeded
 
 	Query   ConfigMysqlQuery
 	Breaker ConfigBreaker
@@ -93,9 +88,9 @@ type ConfigMysql struct {
 }
 
 func (this *ConfigMysql) loadConfig(cf *conf.Conf) {
-	this.ConnectTimeout = time.Duration(cf.Int("connect_timeout", 4)) * time.Second
-	this.IoTimeout = time.Duration(cf.Int("io_timeout", 30)) * time.Second
-	this.SlowThreshold = time.Duration(cf.Int("slow_threshold", 5)) * time.Second
+	this.ConnectTimeout = cf.Duration("connect_timeout", 4*time.Second)
+	this.SlowThreshold = cf.Duration("slow_threshold", 1*time.Second)
+	this.ManyWakeupsThreshold = cf.Int("many_wakeups_threshold", 200)
 
 	section, err := cf.Section("query")
 	if err != nil {
@@ -116,7 +111,6 @@ func (this *ConfigMysql) loadConfig(cf *conf.Conf) {
 
 		server := new(ConfigMysqlInstance)
 		server.ConnectTimeout = this.ConnectTimeout
-		server.IoTimeout = this.IoTimeout
 		server.loadConfig(section)
 		this.Servers[server.Pool] = server
 	}
@@ -153,7 +147,6 @@ func (this *ConfigMysqlQuery) loadConfig(cf *conf.Conf) {
 
 type ConfigMysqlInstance struct {
 	ConnectTimeout time.Duration
-	IoTimeout      time.Duration // TODO not used yet
 
 	Pool    string
 	Host    string

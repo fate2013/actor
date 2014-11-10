@@ -10,8 +10,9 @@ import (
 )
 
 type MysqlPoller struct {
-	interval           time.Duration
-	slowQueryThreshold time.Duration
+	interval             time.Duration
+	slowQueryThreshold   time.Duration
+	manyWakeupsThreshold int
 
 	stopChan chan bool
 
@@ -25,17 +26,19 @@ type MysqlPoller struct {
 	latency metrics.Histogram
 }
 
-func NewMysqlPoller(interval time.Duration, slowQueryThreshold time.Duration,
+func NewMysqlPoller(interval time.Duration,
+	slowQueryThreshold time.Duration, manyWakeupsThreshold int,
 	my *ConfigMysqlInstance, query *ConfigMysqlQuery, bc *ConfigBreaker) (*MysqlPoller, error) {
 	this := new(MysqlPoller)
 	this.interval = interval
 	this.slowQueryThreshold = slowQueryThreshold
+	this.manyWakeupsThreshold = manyWakeupsThreshold
 
 	this.stopChan = make(chan bool)
 
 	this.latency = metrics.NewHistogram(
 		metrics.NewExpDecaySample(1028, 0.015))
-	metrics.Register("latency.db", this.latency)
+	metrics.Register("latency.mysql", this.latency)
 
 	this.breaker = &breaker.Consecutive{
 		FailureAllowance: bc.FailureAllowance,
@@ -108,7 +111,11 @@ func (this *MysqlPoller) poll(typ string, ch chan<- Wakeable) {
 			continue
 		}
 
-		log.Debug("wakes[%s]^%d: %+v", typ, len(ws), ws)
+		if len(ws) > this.manyWakeupsThreshold {
+			log.Warn("many wakes[%s]^%d: %+v", typ, len(ws), ws)
+		} else {
+			log.Debug("wakes[%s]^%d: %+v", typ, len(ws), ws)
+		}
 
 		for _, w := range ws {
 			ch <- w
@@ -203,7 +210,7 @@ func (this *MysqlPoller) Query(stmt *sql.Stmt,
 
 	elapsed := time.Since(t0)
 	if elapsed > this.slowQueryThreshold {
-		log.Warn("slow query:%v, %+v", elapsed, *stmt)
+		log.Warn("slow query:%s, %+v", elapsed, *stmt)
 	}
 
 	return

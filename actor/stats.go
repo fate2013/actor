@@ -79,7 +79,7 @@ func (this *StatsRunner) Run() {
 			server.BuildID,
 			time.Since(this.actor.server.StartedAt),
 			this.scheduler.Outstandings(),
-			this.scheduler.InFlight(),
+			this.scheduler.FlightCount(),
 			runtime.NumGoroutine(),
 			ms.PauseTotalNs/nsInMs,
 			ms.NumGC,
@@ -94,11 +94,11 @@ func (this *StatsRunner) Run() {
 }
 
 func (this *StatsRunner) launchHttpServ() {
-	if this.actor.config.RestListenAddr == "" {
+	if this.actor.config.StatsListenAddr == "" {
 		return
 	}
 
-	server.LaunchHttpServ(this.actor.config.RestListenAddr, this.actor.config.ProfListenAddr)
+	server.LaunchHttpServ(this.actor.config.StatsListenAddr, this.actor.config.ProfListenAddr)
 	server.RegisterHttpApi("/s/{cmd}",
 		func(w http.ResponseWriter, req *http.Request,
 			params map[string]interface{}) (interface{}, error) {

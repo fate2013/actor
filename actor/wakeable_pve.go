@@ -27,11 +27,11 @@ func (this *Pve) DueTime() time.Time {
 	return this.EndTime
 }
 
-func (this Pve) String() string {
-	return fmt.Sprintf("Pve{uid:%d, mid:%d, state:%s, due:%s}",
-		this.Uid, this.MarchId, this.State, this.EndTime)
+func (this *Pve) GetUid() int64 {
+	return this.Uid
 }
 
-func (this *Pve) FlightKey() interface{} {
-	return Key{typ: "pve", uid: this.Uid, id: this.MarchId}
+func (this Pve) String() string {
+	return fmt.Sprintf("Pve{uid:%d, mid:%d, state:%s}",
+		this.Uid, this.MarchId, this.State)
 }
