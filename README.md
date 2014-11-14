@@ -50,6 +50,7 @@ actor
 
 ### TODO
 
+* A encamp，然后1万人同时到，轮流打他，那么这个阶段，A啥也干不了。城外人的锁应该特殊处理
 * mysql ping within mysql max idle time, my.cf wait_timeout show variables like '%timeout%'
 * metrics of php request handling
 * test callback php timeout
