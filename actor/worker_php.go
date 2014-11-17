@@ -106,7 +106,8 @@ func (this *PhpWorker) tryWake(w Wakeable) (success bool) {
 		}
 
 		// FIXME not atomic
-		if !w.IsRally() &&
+		// lock opponent user
+		if !w.IsOpponentSelf() &&
 			w.OppUid.Valid &&
 			w.OppUid.Int64 > 0 &&
 			!this.userFlight.Takeoff(User{Uid: w.OppUid.Int64}) {
@@ -194,7 +195,7 @@ func (this *PhpWorker) tryWake(w Wakeable) (success bool) {
 
 	if m, ok := w.(*March); ok {
 		this.tileFlight.Land(m.TileKey())
-		if !m.IsRally() && m.OppUid.Valid && m.OppUid.Int64 > 0 {
+		if !m.IsOpponentSelf() && m.OppUid.Valid && m.OppUid.Int64 > 0 {
 			this.userFlight.Land(User{Uid: m.OppUid.Int64})
 		}
 	}

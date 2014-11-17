@@ -46,11 +46,9 @@ func (this *March) Ignored() bool {
 	return this.State == MARCH_DONE || this.State == MARCH_ENCAMP
 }
 
-// rally里有自己向自己行军的情况，这时像自己打自己，只锁该uid一次，否则锁失败
-func (this *March) IsRally() bool {
-	return this.Type.Valid &&
-		this.Type.String == "rally" &&
-		this.OppUid.Valid &&
+// rally里有自己向自己行军的情况，这时像自己打自己，只锁该uid一次，否则死锁
+func (this *March) IsOpponentSelf() bool {
+	return this.OppUid.Valid &&
 		this.Uid == this.OppUid.Int64
 }
 

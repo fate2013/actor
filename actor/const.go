@@ -12,6 +12,7 @@ const (
 )
 
 const (
+	MARCH_RALLY  = "rally"
 	MARCH_ENCAMP = "encamping"
 	MARCH_DONE   = "done"
 )
