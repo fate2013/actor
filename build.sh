@@ -7,6 +7,16 @@ if [[ $1 = "-loc" ]]; then
     exit
 fi
 
+ACTOR_HOME=/sgn/app/actor
+if [[ $1 = "-install" ]]; then
+    mkdir -p $ACTOR_HOME/bin $ACTOR_HOME/var $ACTOR_HOME/etc
+    cp -f daemon/actord/actord $ACTOR_HOME/bin/
+    cp -f etc/actord.cf.sample $ACTOR_HOME/etc/actord.cf
+    cp -f etc/actord /etc/init.d/actord
+    echo 'Done'
+    exit
+fi
+
 cd daemon/actord
 ID=$(git rev-parse HEAD | cut -c1-7)
 go build -ldflags "-X github.com/funkygao/golib/server.VERSION 0.1.2b -X github.com/funkygao/golib/server.BuildID $ID -w"
