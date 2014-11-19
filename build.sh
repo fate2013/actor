@@ -7,19 +7,6 @@ if [[ $1 = "-loc" ]]; then
     exit
 fi
 
-VER=0.1.3b
-ID=$(git rev-parse HEAD | cut -c1-7)
-
-cd daemon/actord
-go build -ldflags "-X github.com/funkygao/golib/server.VERSION $VER -X github.com/funkygao/golib/server.BuildID $ID -w"
-#go build -race -v -ldflags "-X github.com/funkygao/golib/server.BuildID $ID -w"
-
-#---------
-# show ver
-#---------
-cd $cwd
-./daemon/actord/actord -version
-
 #-----------------
 # install on linux
 #-----------------
@@ -32,4 +19,17 @@ if [[ $1 = "-install" ]]; then
     echo 'Done'
     exit
 fi
+
+VER=0.1.3b
+ID=$(git rev-parse HEAD | cut -c1-7)
+
+cd daemon/actord
+go build -ldflags "-X github.com/funkygao/golib/server.VERSION $VER -X github.com/funkygao/golib/server.BuildID $ID -w"
+#go build -race -v -ldflags "-X github.com/funkygao/golib/server.BuildID $ID -w"
+
+#---------
+# show ver
+#---------
+cd $cwd
+./daemon/actord/actord -version
 
