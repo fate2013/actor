@@ -10,11 +10,13 @@ var (
 		showVersion bool
 		logFile     string
 		logLevel    string
+		kill        bool
 		lockFile    string
 	}
 )
 
 func parseFlags() {
+	flag.BoolVar(&options.kill, "k", false, "kill actord")
 	flag.StringVar(&options.lockFile, "lockfile", "actord.lock", "lock file")
 	flag.StringVar(&options.configFile, "conf", "etc/actord.cf", "config file")
 	flag.StringVar(&options.logFile, "log", "stdout", "log file")
