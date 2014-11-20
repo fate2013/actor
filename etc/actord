@@ -49,7 +49,7 @@ start() {
     ulimit -n 40960
     ulimit -c unlimited
     ulimit -l unlimited
-    daemon --pidfile PIDFILE "/usr/sbin/daemonize $DAEMON -conf $CONFIGFILE -level trace -log $LOGFILE -lockfile $LOCKFILE"
+    daemon --pidfile PIDFILE "/usr/sbin/daemonize $DAEMON -conf $CONFIGFILE -log $LOGFILE -lockfile $LOCKFILE"
     errcode=$?
     return $errcode
 }
