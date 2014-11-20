@@ -13,9 +13,9 @@
         debug_locking: false
         max_flight_entries: 100000
         lock_expires: "10s"
-        job: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=wakeup&params=%s"
-        march: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=play&params=%s"
-        pve: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=pve&params=%s"
+        job: "http://dw-dev.socialgamenet.com/api/?class=actor&method=wakeup&params=%s"
+        march: "http://dw-dev.socialgamenet.com/api/?class=actor&method=play&params=%s"
+        pve: "http://dw-dev.socialgamenet.com/api/?class=actor&method=pve&params=%s"
     }
 
     mysql: {
