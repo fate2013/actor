@@ -27,7 +27,7 @@ func init() {
 		os.Exit(0)
 	}
 
-	server.SetupLogging(options.logFile, options.logLevel)
+	server.SetupLogging(options.logFile, options.logLevel, options.crashLogFile)
 
 	if options.lockFile != "" {
 		if locking.InstanceLocked(options.lockFile) {
