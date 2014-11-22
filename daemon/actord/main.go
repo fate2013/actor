@@ -6,6 +6,7 @@ import (
 	"github.com/funkygao/golib/locking"
 	"github.com/funkygao/golib/server"
 	"github.com/funkygao/golib/signal"
+	log "github.com/funkygao/log4go"
 	"os"
 	"runtime/debug"
 	"syscall"
@@ -53,6 +54,14 @@ func main() {
 
 		}
 	}()
+
+	log.Info("%s", `
+                _             
+               | |            
+      __ _  ___| |_ ___  _ __ 
+     / _  |/ __| __/ _ \| '__|
+    | (_| | (__| || (_) | |   
+     \__,_|\___|\__\___/|_| `)
 
 	server := server.NewServer("actord")
 	server.LoadConfig(options.configFile)
