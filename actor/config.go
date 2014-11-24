@@ -8,6 +8,8 @@ import (
 )
 
 type ActorConfig struct {
+	EtcdServers       []string
+	EtcdSelfAddr      string
 	HttpApiListenAddr string
 	StatsListenAddr   string
 	ProfListenAddr    string
@@ -22,6 +24,10 @@ type ActorConfig struct {
 }
 
 func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
+	this.EtcdServers = cf.StringList("etcd_servers", nil)
+	if len(this.EtcdServers) > 0 {
+		this.EtcdSelfAddr = cf.String("etcd_self_addr", "")
+	}
 	this.HttpApiListenAddr = cf.String("http_api_listen_addr", ":9898")
 	this.StatsListenAddr = cf.String("stats_listen_addr", "127.0.0.1:9010")
 	this.ProfListenAddr = cf.String("prof_listen_addr", "")

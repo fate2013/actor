@@ -17,6 +17,7 @@
 package actor
 
 import (
+	"github.com/funkygao/etclib"
 	"github.com/funkygao/golib/server"
 )
 
@@ -47,6 +48,16 @@ func New(server *server.Server) (this *Actor) {
 
 func (this *Actor) ServeForever() {
 	go this.scheduler.Run(this.config.MysqlConfig)
+
+	if this.config.EtcdSelfAddr != "" {
+		etclib.Init(this.config.EtcdServers, "dw")
+		etclib.BootActor(this.config.EtcdSelfAddr)
+
+		defer func() {
+			// FIXME it doesn't work for now
+			etclib.ShutdownActor(this.config.EtcdSelfAddr)
+		}()
+	}
 
 	this.statsRunner.Run()
 }
