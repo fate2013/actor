@@ -12,6 +12,10 @@ import (
 	"syscall"
 )
 
+var (
+	actorRunner *actor.Actor
+)
+
 func init() {
 	parseFlags()
 
@@ -20,6 +24,13 @@ func init() {
 	}
 
 	if options.kill {
+		s := server.NewServer("actord")
+		s.LoadConfig(options.configFile)
+		s.Launch()
+
+		actorRunner = actor.New(s)
+		actorRunner.Stop()
+
 		if err := server.KillProcess(options.lockFile); err != nil {
 			fmt.Fprintf(os.Stderr, "stop failed: %s\n", err)
 		}
@@ -63,12 +74,12 @@ func main() {
     | (_| | (__| || (_) | |   
      \__,_|\___|\__\___/|_| `)
 
-	server := server.NewServer("actord")
-	server.LoadConfig(options.configFile)
-	server.Launch()
+	s := server.NewServer("actord")
+	s.LoadConfig(options.configFile)
+	s.Launch()
 
-	actor := actor.New(server)
-	actor.ServeForever()
+	actorRunner = actor.New(s)
+	actorRunner.ServeForever()
 
 	shutdown()
 }

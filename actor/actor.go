@@ -19,6 +19,7 @@ package actor
 import (
 	"github.com/funkygao/etclib"
 	"github.com/funkygao/golib/server"
+	log "github.com/funkygao/log4go"
 )
 
 type Actor struct {
@@ -52,12 +53,20 @@ func (this *Actor) ServeForever() {
 	if this.config.EtcdSelfAddr != "" {
 		etclib.Init(this.config.EtcdServers, "dw")
 		etclib.BootActor(this.config.EtcdSelfAddr)
-
-		defer func() {
-			// FIXME it doesn't work for now
-			etclib.ShutdownActor(this.config.EtcdSelfAddr)
-		}()
 	}
 
 	this.statsRunner.Run()
+}
+
+func (this *Actor) Stop() {
+	if this.config.EtcdSelfAddr != "" {
+		etclib.Init(this.config.EtcdServers, "dw")
+
+		log.Info("shutdown actor node[%s] in etcd", this.config.EtcdSelfAddr)
+		etclib.ShutdownActor(this.config.EtcdSelfAddr)
+	}
+
+	this.statsRunner.stopHttpServ()
+
+	this.scheduler.Stop()
 }

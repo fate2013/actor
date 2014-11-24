@@ -12,7 +12,8 @@ import (
 )
 
 type PhpWorker struct {
-	config *ConfigWorker
+	config        *ConfigWorker
+	apiListenAddr string
 
 	latency metrics.Histogram
 
@@ -23,6 +24,7 @@ type PhpWorker struct {
 func NewPhpWorker(apiListenAddr string, config *ConfigWorker) *PhpWorker {
 	this := new(PhpWorker)
 	this.config = config
+	this.apiListenAddr = apiListenAddr
 	this.userFlight = NewFlight(config.MaxFlightEntries,
 		config.DebugLocking, config.LockExpires)
 	this.tileFlight = NewFlight(config.MaxFlightEntries,
@@ -31,9 +33,12 @@ func NewPhpWorker(apiListenAddr string, config *ConfigWorker) *PhpWorker {
 		metrics.NewExpDecaySample(1028, 0.015))
 	metrics.Register("latency.php", this.latency)
 
-	api := NewHttpApiRunner(apiListenAddr, this.userFlight, this.tileFlight)
-	api.Run()
 	return this
+}
+
+func (this *PhpWorker) Start() {
+	api := NewHttpApiRunner(this.apiListenAddr, this.userFlight, this.tileFlight)
+	api.Run()
 }
 
 func (this PhpWorker) Flights() map[string]interface{} {

@@ -14,10 +14,11 @@ func cleanup() {
 }
 
 func shutdown() {
+	actorRunner.Stop()
+
 	cleanup()
 
 	log.Info("Terminated")
 
 	os.Exit(0)
-
 }

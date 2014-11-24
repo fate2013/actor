@@ -107,6 +107,7 @@ func (this *StatsRunner) launchHttpServ() {
 }
 
 func (this *StatsRunner) stopHttpServ() {
+	log.Info("stats httpd stopped")
 	server.StopHttpServ()
 }
 

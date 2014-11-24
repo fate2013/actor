@@ -52,6 +52,7 @@ func (this *Scheduler) Stop() {
 }
 
 func (this *Scheduler) Run(myconf *ConfigMysql) {
+	this.worker.Start()
 	go this.runWorker()
 
 	var err error
