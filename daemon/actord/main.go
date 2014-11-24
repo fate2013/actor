@@ -28,8 +28,7 @@ func init() {
 		s.LoadConfig(options.configFile)
 		s.Launch()
 
-		actorRunner = actor.New(s)
-		actorRunner.Stop()
+		actor.New(s).Stop()
 
 		if err := server.KillProcess(options.lockFile); err != nil {
 			fmt.Fprintf(os.Stderr, "stop failed: %s\n", err)
