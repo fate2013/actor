@@ -2,8 +2,10 @@ package actor
 
 import (
 	"fmt"
+	"github.com/funkygao/golib/ip"
 	conf "github.com/funkygao/jsconf"
 	log "github.com/funkygao/log4go"
+	"strings"
 	"time"
 )
 
@@ -27,6 +29,11 @@ func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
 	this.EtcdServers = cf.StringList("etcd_servers", nil)
 	if len(this.EtcdServers) > 0 {
 		this.EtcdSelfAddr = cf.String("etcd_self_addr", "")
+		if strings.HasPrefix(this.EtcdSelfAddr, ":") {
+			// automatically get local ip addr
+			myIp := ip.LocalIpv4Addrs()[0]
+			this.EtcdSelfAddr = myIp + this.EtcdSelfAddr
+		}
 	}
 	this.HttpApiListenAddr = cf.String("http_api_listen_addr", ":9898")
 	this.StatsListenAddr = cf.String("stats_listen_addr", "127.0.0.1:9010")
