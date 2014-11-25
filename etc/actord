@@ -33,6 +33,7 @@ DAEMON=$ACTOR_HOME/bin/actord
 PIDFILE=$ACTOR_HOME/var/actord.pid
 CONFIGFILE=$ACTOR_HOME/etc/actord.cf
 LOGFILE=$ACTOR_HOME/var/actord.log
+CRASHLOG=$ACTOR_HOME/panic.dump
 LOCKFILE=$ACTOR_HOME/var/actord.lock
 
 test -f $DAEMON || exit 0
@@ -49,7 +50,7 @@ start() {
     ulimit -n 40960
     ulimit -c unlimited
     ulimit -l unlimited
-    daemon --pidfile PIDFILE "/usr/sbin/daemonize $DAEMON -conf $CONFIGFILE -log $LOGFILE -lockfile $LOCKFILE"
+    daemon --pidfile PIDFILE "/usr/sbin/daemonize $DAEMON -conf $CONFIGFILE -crashlog $CRASHLOG -log $LOGFILE -lockfile $LOCKFILE"
     errcode=$?
     return $errcode
 }
