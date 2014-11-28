@@ -51,7 +51,7 @@ func (this *Actor) ServeForever() {
 	go this.scheduler.Run(this.config.MysqlConfig)
 
 	if this.config.EtcdSelfAddr != "" {
-		etclib.Init(this.config.EtcdServers, "dw")
+		etclib.Dial(this.config.EtcdServers, "dw")
 		etclib.BootActor(this.config.EtcdSelfAddr)
 	}
 
@@ -60,7 +60,7 @@ func (this *Actor) ServeForever() {
 
 func (this *Actor) Stop() {
 	if this.config.EtcdSelfAddr != "" {
-		etclib.Init(this.config.EtcdServers, "dw")
+		etclib.Dial(this.config.EtcdServers, "dw")
 
 		log.Info("shutdown actor node[%s] in etcd", this.config.EtcdSelfAddr)
 		etclib.ShutdownActor(this.config.EtcdSelfAddr)
