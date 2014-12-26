@@ -65,11 +65,16 @@ func (this *Actor) ServeForever() {
 
 func (this *Actor) Stop() {
 	if this.config.EtcdSelfAddr != "" {
-		etclib.Dial(this.config.EtcdServers)
-		err := etclib.Dial(this.config.EtcdServers)
-		if err != nil {
-			log.Error("etcd[%+v]: %s", this.config.EtcdServers, err)
-		} else {
+		if !etclib.IsConnected() {
+			if err := etclib.Dial(this.config.EtcdServers); err != nil {
+				log.Error("etcd[%+v]: %s", this.config.EtcdServers, err)
+
+				etclib.Close()
+			}
+
+		}
+
+		if etclib.IsConnected() {
 			log.Info("shutdown actor node[%s] in etcd", this.config.EtcdSelfAddr)
 
 			etclib.ShutdownService(this.config.EtcdSelfAddr, etclib.SERVICE_ACTOR)
