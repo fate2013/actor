@@ -1,17 +1,19 @@
 /*
-   StatsRunner
-     |
+   StatsRunner          
+     |                             
+     |                             +- beantalkds
+     |                             |
    Actor --- Schduler --- Pollers --- mysql farm
                |            |
-               |            V backlog(channel of Wakeables)
+               |            V backlog(channel of Wakeable)
                |            |
              Worker --------+
                |
                | go Wake(Wakeable) with retries in case of lock conflict
                V
-    -------------------------------------------------------------------- callback
-               |        |       |
-              php      php     php
+    -----------------------------------
+               |        |        |
+              php      pubnub   RTM
 
 */
 package actor

@@ -23,6 +23,9 @@
         pve: "http://dw-dev.socialgamenet.com/api/?class=actor&method=pve&params=%s"
     }
 
+    beanstalk: {
+    }
+
     mysql: {
         connect_timeout: "4s"
         slow_threshold: "1s"

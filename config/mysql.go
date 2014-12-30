@@ -1,93 +1,11 @@
-package actor
+package config
 
 import (
 	"fmt"
-	"github.com/funkygao/golib/ip"
 	conf "github.com/funkygao/jsconf"
 	log "github.com/funkygao/log4go"
-	"strings"
 	"time"
 )
-
-type ActorConfig struct {
-	EtcdServers       []string
-	EtcdSelfAddr      string
-	HttpApiListenAddr string
-	StatsListenAddr   string
-	ProfListenAddr    string
-	MetricsLogfile    string
-	SchedulerBacklog  int
-
-	ScheduleInterval     time.Duration
-	ConsoleStatsInterval time.Duration
-
-	MysqlConfig  *ConfigMysql
-	WorkerConfig *ConfigWorker
-}
-
-func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
-	this.EtcdServers = cf.StringList("etcd_servers", nil)
-	if len(this.EtcdServers) > 0 {
-		this.EtcdSelfAddr = cf.String("etcd_self_addr", "")
-		if strings.HasPrefix(this.EtcdSelfAddr, ":") {
-			// automatically get local ip addr
-			myIp := ip.LocalIpv4Addrs()[0]
-			this.EtcdSelfAddr = myIp + this.EtcdSelfAddr
-		}
-	}
-	this.HttpApiListenAddr = cf.String("http_api_listen_addr", ":9898")
-	this.StatsListenAddr = cf.String("stats_listen_addr", "127.0.0.1:9010")
-	this.ProfListenAddr = cf.String("prof_listen_addr", "")
-	this.MetricsLogfile = cf.String("metrics_logfile", "")
-	this.SchedulerBacklog = cf.Int("sched_backlog", 10000)
-
-	this.ScheduleInterval = cf.Duration("sched_interval", time.Second)
-	this.ConsoleStatsInterval = cf.Duration("stats_interval", time.Minute*10)
-
-	this.MysqlConfig = new(ConfigMysql)
-	var section *conf.Conf
-	section, err = cf.Section("mysql")
-	if err != nil {
-		return
-	}
-	this.MysqlConfig.loadConfig(section)
-
-	this.WorkerConfig = new(ConfigWorker)
-	section, err = cf.Section("worker")
-	if err != nil {
-		return
-	}
-	this.WorkerConfig.loadConfig(section)
-
-	log.Debug("actor config %+v", *this)
-	return
-}
-
-type ConfigWorker struct {
-	DryRun           bool
-	DebugLocking     bool
-	Timeout          time.Duration
-	MaxFlightEntries int
-	LockExpires      time.Duration
-
-	// if use php as worker, it's callback url template
-	Job   string
-	March string
-	Pve   string
-}
-
-func (this *ConfigWorker) loadConfig(cf *conf.Conf) {
-	this.DryRun = cf.Bool("dry_run", true)
-	this.DebugLocking = cf.Bool("debug_locking", false)
-	this.Timeout = cf.Duration("timeout", 5*time.Second)
-	this.MaxFlightEntries = cf.Int("max_flight_entries", 100000)
-	this.LockExpires = cf.Duration("lock_expires", time.Second*30)
-	this.Job = cf.String("job", "")
-	this.March = cf.String("march", "")
-	this.Pve = cf.String("pve", "")
-
-	log.Debug("worker config: %+v", *this)
-}
 
 type ConfigMysql struct {
 	ConnectTimeout       time.Duration // part of DSN
@@ -129,16 +47,6 @@ func (this *ConfigMysql) loadConfig(cf *conf.Conf) {
 	}
 
 	log.Debug("mysql config: %+v", *this)
-}
-
-type ConfigBreaker struct {
-	FailureAllowance uint
-	RetryTimeout     time.Duration
-}
-
-func (this *ConfigBreaker) loadConfig(cf *conf.Conf) {
-	this.FailureAllowance = uint(cf.Int("failure_allowance", 5))
-	this.RetryTimeout = time.Second * time.Duration(cf.Int("retry_timeout", 10))
 }
 
 type ConfigMysqlQuery struct {
