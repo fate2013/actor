@@ -18,13 +18,19 @@ import (
 type StatsRunner struct {
 	actor     *Actor
 	scheduler *Scheduler
+	quit      chan bool
 }
 
 func NewStatsRunner(actor *Actor, scheduler *Scheduler) *StatsRunner {
 	this := new(StatsRunner)
 	this.actor = actor
 	this.scheduler = scheduler
+	this.quit = make(chan bool)
 	return this
+}
+
+func (this *StatsRunner) Stop() {
+	close(this.quit)
 }
 
 func (this *StatsRunner) Run() {
@@ -62,34 +68,42 @@ func (this *StatsRunner) Run() {
 		sysCpuUtil   float64
 		nsInMs       uint64 = 1000 * 1000
 	)
-	for _ = range ticker.C {
-		runtime.ReadMemStats(ms)
 
-		syscall.Getrusage(syscall.RUSAGE_SELF, rusage)
-		syscall.Getrusage(syscall.RUSAGE_SELF, rusage)
-		userTime = rusage.Utime.Sec*1000000000 + int64(rusage.Utime.Usec)
-		sysTime = rusage.Stime.Sec*1000000000 + int64(rusage.Stime.Usec)
-		userCpuUtil = float64(userTime-lastUserTime) * 100 / float64(this.actor.config.ConsoleStatsInterval)
-		sysCpuUtil = float64(sysTime-lastSysTime) * 100 / float64(this.actor.config.ConsoleStatsInterval)
+	for {
+		select {
+		case <-ticker.C:
+			runtime.ReadMemStats(ms)
 
-		lastUserTime = userTime
-		lastSysTime = sysTime
+			syscall.Getrusage(syscall.RUSAGE_SELF, rusage)
+			syscall.Getrusage(syscall.RUSAGE_SELF, rusage)
+			userTime = rusage.Utime.Sec*1000000000 + int64(rusage.Utime.Usec)
+			sysTime = rusage.Stime.Sec*1000000000 + int64(rusage.Stime.Usec)
+			userCpuUtil = float64(userTime-lastUserTime) * 100 / float64(this.actor.config.ConsoleStatsInterval)
+			sysCpuUtil = float64(sysTime-lastSysTime) * 100 / float64(this.actor.config.ConsoleStatsInterval)
 
-		log.Info("ver:%s, elapsed:%s, backlog:%d, go:%d, gc:%dms/%d=%d, heap:{%s, %s, %s, %s} cpu:{%3.2f%%us, %3.2f%%sy}",
-			server.BuildID,
-			time.Since(this.actor.server.StartedAt),
-			this.scheduler.Outstandings(),
-			runtime.NumGoroutine(),
-			ms.PauseTotalNs/nsInMs,
-			ms.NumGC,
-			ms.PauseTotalNs/(nsInMs*uint64(ms.NumGC))+1,
-			gofmt.ByteSize(ms.HeapSys),      // bytes it has asked the operating system for
-			gofmt.ByteSize(ms.HeapAlloc),    // bytes currently allocated in the heap
-			gofmt.ByteSize(ms.HeapIdle),     // bytes in the heap that are unused
-			gofmt.ByteSize(ms.HeapReleased), // bytes returned to the operating system, 5m for scavenger
-			userCpuUtil,
-			sysCpuUtil)
+			lastUserTime = userTime
+			lastSysTime = sysTime
+
+			log.Info("ver:%s, elapsed:%s, backlog:%d, go:%d, gc:%dms/%d=%d, heap:{%s, %s, %s, %s} cpu:{%3.2f%%us, %3.2f%%sy}",
+				server.BuildID,
+				time.Since(this.actor.server.StartedAt),
+				this.scheduler.Outstandings(),
+				runtime.NumGoroutine(),
+				ms.PauseTotalNs/nsInMs,
+				ms.NumGC,
+				ms.PauseTotalNs/(nsInMs*uint64(ms.NumGC))+1,
+				gofmt.ByteSize(ms.HeapSys),      // bytes it has asked the operating system for
+				gofmt.ByteSize(ms.HeapAlloc),    // bytes currently allocated in the heap
+				gofmt.ByteSize(ms.HeapIdle),     // bytes in the heap that are unused
+				gofmt.ByteSize(ms.HeapReleased), // bytes returned to the operating system, 5m for scavenger
+				userCpuUtil,
+				sysCpuUtil)
+
+		case <-this.quit:
+			break
+		}
 	}
+
 }
 
 func (this *StatsRunner) launchHttpServ() {

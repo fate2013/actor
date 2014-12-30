@@ -85,6 +85,7 @@ func (this *Actor) Stop() {
 	}
 
 	this.statsRunner.stopHttpServ()
+	this.statsRunner.Stop()
 
 	this.scheduler.Stop()
 }
