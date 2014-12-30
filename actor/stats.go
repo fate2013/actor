@@ -75,11 +75,10 @@ func (this *StatsRunner) Run() {
 		lastUserTime = userTime
 		lastSysTime = sysTime
 
-		log.Info("ver:%s, elapsed:%s, backlog:%d, flight:%d, go:%d, gc:%dms/%d=%d, heap:{%s, %s, %s, %s} cpu:{%3.2f%%us, %3.2f%%sy}",
+		log.Info("ver:%s, elapsed:%s, backlog:%d, go:%d, gc:%dms/%d=%d, heap:{%s, %s, %s, %s} cpu:{%3.2f%%us, %3.2f%%sy}",
 			server.BuildID,
 			time.Since(this.actor.server.StartedAt),
 			this.scheduler.Outstandings(),
-			this.scheduler.FlightCount(),
 			runtime.NumGoroutine(),
 			ms.PauseTotalNs/nsInMs,
 			ms.NumGC,

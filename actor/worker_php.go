@@ -13,23 +13,14 @@ import (
 )
 
 type PhpWorker struct {
-	config        *config.ConfigWorker
-	apiListenAddr string
+	config *config.ConfigWorker
 
 	latency metrics.Histogram
-
-	userFlight *Flight // key is uid
-	tileFlight *Flight // key is geohash
 }
 
-func NewPhpWorker(apiListenAddr string, config *config.ConfigWorker) *PhpWorker {
+func NewPhpWorker(config *config.ConfigWorker) *PhpWorker {
 	this := new(PhpWorker)
 	this.config = config
-	this.apiListenAddr = apiListenAddr
-	this.userFlight = NewFlight(config.MaxFlightEntries,
-		config.DebugLocking, config.LockExpires)
-	this.tileFlight = NewFlight(config.MaxFlightEntries,
-		config.DebugLocking, config.LockExpires)
 	this.latency = metrics.NewHistogram(
 		metrics.NewExpDecaySample(1028, 0.015))
 	metrics.Register("latency.php", this.latency)
@@ -38,19 +29,7 @@ func NewPhpWorker(apiListenAddr string, config *config.ConfigWorker) *PhpWorker 
 }
 
 func (this *PhpWorker) Start() {
-	api := NewHttpApiRunner(this.apiListenAddr, this.userFlight, this.tileFlight)
-	api.Run()
-}
 
-func (this PhpWorker) Flights() map[string]interface{} {
-	return map[string]interface{}{
-		"user.items": this.userFlight.items.Len(),
-		"tile.items": this.tileFlight.items.Len(),
-	}
-}
-
-func (this *PhpWorker) FlightCount() int {
-	return this.userFlight.Len() + this.tileFlight.Len()
 }
 
 func (this *PhpWorker) Wake(w Wakeable) {
@@ -98,7 +77,7 @@ func (this *PhpWorker) tryWake(w Wakeable) (success bool) {
 		params = string(w.Marshal())
 		url    string
 	)
-	switch w := w.(type) {
+	switch w.(type) {
 	case *Pve:
 		url = fmt.Sprintf(this.config.Pve, params)
 
@@ -107,45 +86,10 @@ func (this *PhpWorker) tryWake(w Wakeable) (success bool) {
 
 	case *March:
 		url = fmt.Sprintf(this.config.March, params)
-		if !this.tileFlight.Takeoff(w.TileKey()) {
-			return
-		}
-
-		// FIXME not atomic
-		// lock opponent user
-		if !w.IsOpponentSelf() &&
-			w.OppUid.Valid &&
-			w.OppUid.Int64 > 0 &&
-			!this.userFlight.Takeoff(User{Uid: w.OppUid.Int64}) {
-			this.tileFlight.Land(w.TileKey())
-			return
-		}
-	}
-
-	// FIXME atomic for both tile and user flight
-	if !this.userFlight.Takeoff(User{Uid: w.GetUid()}) {
-		if m, ok := w.(*March); ok {
-			this.tileFlight.Land(m.TileKey())
-
-			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
-				this.userFlight.Land(User{Uid: m.OppUid.Int64})
-			}
-		}
-
-		return
 	}
 
 	if this.config.DryRun {
 		log.Debug("dry run: %s", url)
-
-		this.userFlight.Land(User{Uid: w.GetUid()})
-
-		if m, ok := w.(*March); ok {
-			this.tileFlight.Land(m.TileKey())
-			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
-				this.userFlight.Land(User{Uid: m.OppUid.Int64})
-			}
-		}
 
 		success = true
 		return
@@ -157,15 +101,6 @@ func (this *PhpWorker) tryWake(w Wakeable) (success bool) {
 	res, err := this.callPhp(url)
 	if err != nil {
 		log.Error("http: %s", err.Error())
-
-		this.userFlight.Land(User{Uid: w.GetUid()})
-
-		if m, ok := w.(*March); ok {
-			this.tileFlight.Land(m.TileKey())
-			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
-				this.userFlight.Land(User{Uid: m.OppUid.Int64})
-			}
-		}
 
 		return
 	}
@@ -195,15 +130,6 @@ func (this *PhpWorker) tryWake(w Wakeable) (success bool) {
 			string(payload), w,
 			res.StatusCode, time.Since(t0))
 		success = true
-	}
-
-	this.userFlight.Land(User{Uid: w.GetUid()})
-
-	if m, ok := w.(*March); ok {
-		this.tileFlight.Land(m.TileKey())
-		if !m.IsOpponentSelf() && m.OppUid.Valid && m.OppUid.Int64 > 0 {
-			this.userFlight.Land(User{Uid: m.OppUid.Int64})
-		}
 	}
 
 	return

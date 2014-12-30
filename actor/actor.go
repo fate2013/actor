@@ -43,8 +43,7 @@ func New(server *server.Server) (this *Actor) {
 	}
 
 	this.scheduler = NewScheduler(this.config.ScheduleInterval,
-		this.config.SchedulerBacklog, &this.config.WorkerConfig,
-		this.config.HttpApiListenAddr)
+		this.config.SchedulerBacklog, &this.config.WorkerConfig)
 	this.statsRunner = NewStatsRunner(this, this.scheduler)
 
 	return

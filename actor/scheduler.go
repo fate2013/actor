@@ -19,13 +19,13 @@ type Scheduler struct {
 }
 
 func NewScheduler(interval time.Duration, backlogSize int,
-	workerConf *config.ConfigWorker, httpApiListenAddr string) *Scheduler {
+	workerConf *config.ConfigWorker) *Scheduler {
 	this := new(Scheduler)
 	this.interval = interval
 	this.stopCh = make(chan bool)
 	this.backlog = make(chan Wakeable, backlogSize)
 	this.pollers = make(map[string]Poller)
-	this.worker = NewPhpWorker(httpApiListenAddr, workerConf)
+	this.worker = NewPhpWorker(workerConf)
 	return this
 }
 
@@ -35,13 +35,8 @@ func (this *Scheduler) Outstandings() int {
 
 func (this *Scheduler) Stat() map[string]interface{} {
 	return map[string]interface{}{
-		"worker_flights": this.worker.Flights(),
-		"backlog":        len(this.backlog),
+		"backlog": this.Outstandings(),
 	}
-}
-
-func (this *Scheduler) FlightCount() int {
-	return this.worker.FlightCount()
 }
 
 func (this *Scheduler) Stop() {
