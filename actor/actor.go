@@ -60,6 +60,8 @@ func (this *Actor) ServeForever() {
 			etclib.BootService(this.config.EtcdSelfAddr, etclib.SERVICE_ACTOR)
 		}
 
+		// TODO watch other actor nodes
+
 	}
 
 	this.statsRunner.Run()
