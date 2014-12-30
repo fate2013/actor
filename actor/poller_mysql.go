@@ -2,6 +2,7 @@ package actor
 
 import (
 	"database/sql"
+	"github.com/funkygao/actor/config"
 	"github.com/funkygao/golib/breaker"
 	log "github.com/funkygao/log4go"
 	"github.com/funkygao/metrics"
@@ -28,7 +29,7 @@ type MysqlPoller struct {
 
 func NewMysqlPoller(interval time.Duration,
 	slowQueryThreshold time.Duration, manyWakeupsThreshold int,
-	my *ConfigMysqlInstance, query *ConfigMysqlQuery, bc *ConfigBreaker) (*MysqlPoller, error) {
+	my *config.ConfigMysqlInstance, query *config.ConfigMysqlQuery, bc *config.ConfigBreaker) (*MysqlPoller, error) {
 	this := new(MysqlPoller)
 	this.interval = interval
 	this.slowQueryThreshold = slowQueryThreshold

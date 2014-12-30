@@ -2,6 +2,7 @@ package actor
 
 import (
 	"fmt"
+	"github.com/funkygao/actor/config"
 	log "github.com/funkygao/log4go"
 	"github.com/funkygao/metrics"
 	"io/ioutil"
@@ -12,7 +13,7 @@ import (
 )
 
 type PhpWorker struct {
-	config        *ConfigWorker
+	config        *config.ConfigWorker
 	apiListenAddr string
 
 	latency metrics.Histogram
@@ -21,7 +22,7 @@ type PhpWorker struct {
 	tileFlight *Flight // key is geohash
 }
 
-func NewPhpWorker(apiListenAddr string, config *ConfigWorker) *PhpWorker {
+func NewPhpWorker(apiListenAddr string, config *config.ConfigWorker) *PhpWorker {
 	this := new(PhpWorker)
 	this.config = config
 	this.apiListenAddr = apiListenAddr

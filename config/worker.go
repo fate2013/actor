@@ -2,7 +2,6 @@ package config
 
 import (
 	conf "github.com/funkygao/jsconf"
-	log "github.com/funkygao/log4go"
 	"time"
 )
 
@@ -28,6 +27,4 @@ func (this *ConfigWorker) loadConfig(cf *conf.Conf) {
 	this.Job = cf.String("job", "")
 	this.March = cf.String("march", "")
 	this.Pve = cf.String("pve", "")
-
-	log.Debug("worker config: %+v", *this)
 }

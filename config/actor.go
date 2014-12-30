@@ -20,8 +20,9 @@ type ActorConfig struct {
 	ScheduleInterval     time.Duration
 	ConsoleStatsInterval time.Duration
 
-	MysqlConfig  *ConfigMysql
-	WorkerConfig *ConfigWorker
+	MysqlConfig     ConfigMysql
+	BeanstalkConfig ConfigBeanstalk
+	WorkerConfig    ConfigWorker
 }
 
 func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
@@ -43,7 +44,7 @@ func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
 	this.ScheduleInterval = cf.Duration("sched_interval", time.Second)
 	this.ConsoleStatsInterval = cf.Duration("stats_interval", time.Minute*10)
 
-	this.MysqlConfig = new(ConfigMysql)
+	this.MysqlConfig = ConfigMysql{}
 	var section *conf.Conf
 	section, err = cf.Section("mysql")
 	if err != nil {
@@ -51,7 +52,14 @@ func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
 	}
 	this.MysqlConfig.loadConfig(section)
 
-	this.WorkerConfig = new(ConfigWorker)
+	this.BeanstalkConfig = ConfigBeanstalk{}
+	section, err = cf.Section("beanstalk")
+	if err != nil {
+		return err
+	}
+	this.BeanstalkConfig.loadConfig(section)
+
+	this.WorkerConfig = ConfigWorker{}
 	section, err = cf.Section("worker")
 	if err != nil {
 		return

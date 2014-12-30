@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	conf "github.com/funkygao/jsconf"
-	log "github.com/funkygao/log4go"
 	"time"
 )
 
@@ -46,7 +45,6 @@ func (this *ConfigMysql) loadConfig(cf *conf.Conf) {
 		this.Servers[server.Pool] = server
 	}
 
-	log.Debug("mysql config: %+v", *this)
 }
 
 type ConfigMysqlQuery struct {

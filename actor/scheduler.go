@@ -1,6 +1,7 @@
 package actor
 
 import (
+	"github.com/funkygao/actor/config"
 	log "github.com/funkygao/log4go"
 	"time"
 )
@@ -18,7 +19,7 @@ type Scheduler struct {
 }
 
 func NewScheduler(interval time.Duration, backlogSize int,
-	workerConf *ConfigWorker, httpApiListenAddr string) *Scheduler {
+	workerConf *config.ConfigWorker, httpApiListenAddr string) *Scheduler {
 	this := new(Scheduler)
 	this.interval = interval
 	this.stopCh = make(chan bool)
@@ -51,7 +52,7 @@ func (this *Scheduler) Stop() {
 	close(this.stopCh)
 }
 
-func (this *Scheduler) Run(myconf *ConfigMysql) {
+func (this *Scheduler) Run(myconf *config.ConfigMysql) {
 	this.worker.Start()
 	go this.runWorker()
 
