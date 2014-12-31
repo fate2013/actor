@@ -20,9 +20,10 @@ type ActorConfig struct {
 	ScheduleInterval     time.Duration
 	ConsoleStatsInterval time.Duration
 
-	MysqlConfig     ConfigMysql
-	BeanstalkConfig ConfigBeanstalk
-	WorkerConfig    ConfigWorker
+	Mysql     ConfigMysql
+	Beanstalk ConfigBeanstalk
+	Worker    ConfigWorker
+	Pubnub    ConfigPubnub
 }
 
 func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
@@ -44,27 +45,34 @@ func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
 	this.ScheduleInterval = cf.Duration("sched_interval", time.Second)
 	this.ConsoleStatsInterval = cf.Duration("stats_interval", time.Minute*10)
 
-	this.MysqlConfig = ConfigMysql{}
+	this.Mysql = ConfigMysql{}
 	var section *conf.Conf
 	section, err = cf.Section("mysql")
 	if err != nil {
 		return
 	}
-	this.MysqlConfig.loadConfig(section)
+	this.Mysql.loadConfig(section)
 
-	this.BeanstalkConfig = ConfigBeanstalk{}
+	this.Beanstalk = ConfigBeanstalk{}
 	section, err = cf.Section("beanstalk")
 	if err != nil {
 		return err
 	}
-	this.BeanstalkConfig.loadConfig(section)
+	this.Beanstalk.loadConfig(section)
 
-	this.WorkerConfig = ConfigWorker{}
+	this.Worker = ConfigWorker{}
 	section, err = cf.Section("worker")
 	if err != nil {
 		return
 	}
-	this.WorkerConfig.loadConfig(section)
+	this.Worker.loadConfig(section)
+
+	this.Pubnub = ConfigPubnub{}
+	section, err = cf.Section("pubnub")
+	if err != nil {
+		return
+	}
+	this.Pubnub.loadConfig(section)
 
 	log.Debug("actor config %+v", *this)
 	return

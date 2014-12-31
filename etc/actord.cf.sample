@@ -26,6 +26,14 @@
     beanstalk: {
     }
 
+    pubnub: {
+        publish_key: ""
+        subscribe_key: ""
+        secret_key: ""
+        cipher: ""
+        use_ssl: false
+    }
+
     mysql: {
         connect_timeout: "4s"
         slow_threshold: "1s"
