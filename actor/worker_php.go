@@ -105,9 +105,7 @@ func (this *PhpWorker) tryWake(w Wakeable) (success bool) {
 		return
 	}
 
-	defer func() {
-		res.Body.Close()
-	}()
+	defer res.Body.Close()
 
 	this.latency.Update(time.Since(t0).Nanoseconds() / 1e6)
 
