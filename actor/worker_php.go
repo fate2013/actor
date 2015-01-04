@@ -12,14 +12,14 @@ import (
 	"time"
 )
 
-type PhpWorker struct {
+type WorkerPhp struct {
 	config *config.ConfigWorkerPhp
 
 	latency metrics.Histogram
 }
 
-func NewPhpWorker(config *config.ConfigWorkerPhp) *PhpWorker {
-	this := new(PhpWorker)
+func NewPhpWorker(config *config.ConfigWorkerPhp) *WorkerPhp {
+	this := new(WorkerPhp)
 	this.config = config
 	this.latency = metrics.NewHistogram(
 		metrics.NewExpDecaySample(1028, 0.015))
@@ -28,11 +28,11 @@ func NewPhpWorker(config *config.ConfigWorkerPhp) *PhpWorker {
 	return this
 }
 
-func (this *PhpWorker) Start() {
+func (this *WorkerPhp) Start() {
 
 }
 
-func (this *PhpWorker) Wake(w Wakeable) {
+func (this *WorkerPhp) Wake(w Wakeable) {
 	var (
 		maxRetries  = 3
 		randbaseMs  = 50
@@ -62,17 +62,17 @@ func (this *PhpWorker) Wake(w Wakeable) {
 	log.Warn("Quit after %dms: %+v", totalWaitMs, w)
 }
 
-func (this *PhpWorker) dialTimeout(network, addr string) (net.Conn, error) {
+func (this *WorkerPhp) dialTimeout(network, addr string) (net.Conn, error) {
 	return net.DialTimeout(network, addr, this.config.Timeout)
 }
 
 // callback with timeout
-func (this *PhpWorker) callPhp(url string) (resp *http.Response, err error) {
+func (this *WorkerPhp) callPhp(url string) (resp *http.Response, err error) {
 	client := http.Client{Transport: &http.Transport{Dial: this.dialTimeout}}
 	return client.Get(url)
 }
 
-func (this *PhpWorker) tryWake(w Wakeable) (success bool) {
+func (this *WorkerPhp) tryWake(w Wakeable) (success bool) {
 	var (
 		params = string(w.Marshal())
 		url    string

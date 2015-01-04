@@ -30,7 +30,8 @@ type Actor struct {
 	config *config.ConfigActor
 
 	statsRunner *StatsRunner
-	scheduler   *Scheduler
+
+	scheduler *Scheduler
 }
 
 func New(server *server.Server) (this *Actor) {
@@ -74,7 +75,6 @@ func (this *Actor) Stop() {
 
 				etclib.Close()
 			}
-
 		}
 
 		if etclib.IsConnected() {

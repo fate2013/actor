@@ -29,7 +29,8 @@ type MysqlPoller struct {
 
 func NewMysqlPoller(interval time.Duration,
 	slowQueryThreshold time.Duration, manyWakeupsThreshold int,
-	my *config.ConfigMysqlInstance, query *config.ConfigMysqlQuery, bc *config.ConfigBreaker) (*MysqlPoller, error) {
+	my *config.ConfigMysqlInstance, query *config.ConfigMysqlQuery,
+	bc *config.ConfigBreaker) (*MysqlPoller, error) {
 	this := new(MysqlPoller)
 	this.interval = interval
 	this.slowQueryThreshold = slowQueryThreshold
@@ -88,24 +89,24 @@ func NewMysqlPoller(interval time.Duration,
 
 func (this *MysqlPoller) Poll(ch chan<- Wakeable) {
 	if this.jobQueryStmt != nil {
-		go this.poll("job", ch)
+		go this.doPoll("job", ch)
 		defer this.jobQueryStmt.Close()
 	}
 
 	if this.marchQueryStmt != nil {
-		go this.poll("march", ch)
+		go this.doPoll("march", ch)
 		defer this.marchQueryStmt.Close()
 	}
 
 	if this.pveQueryStmt != nil {
-		go this.poll("pve", ch)
+		go this.doPoll("pve", ch)
 		defer this.pveQueryStmt.Close()
 	}
 
 	<-this.stopChan
 }
 
-func (this *MysqlPoller) poll(typ string, ch chan<- Wakeable) {
+func (this *MysqlPoller) doPoll(typ string, ch chan<- Wakeable) {
 	ticker := time.NewTicker(this.interval)
 	defer ticker.Stop()
 

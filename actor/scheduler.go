@@ -10,14 +10,16 @@ import (
 type Scheduler struct {
 	config *config.ConfigActor
 
-	interval time.Duration
-	stopCh   chan bool
+	stopCh chan bool
 
 	// Poller -> WakeableChannel -> Worker
 	backlog chan Wakeable
 
-	pollers map[string]Poller // key is db pool name
-	worker  Worker
+	mysqlPollers     map[string]Poller // key is db pool name
+	beanstalkPollers map[string]Poller // key is tube
+
+	phpWorker Worker
+	pnbWorker Worker
 }
 
 func NewScheduler(cf *config.ConfigActor) *Scheduler {
@@ -25,8 +27,13 @@ func NewScheduler(cf *config.ConfigActor) *Scheduler {
 	this.config = cf
 	this.stopCh = make(chan bool)
 	this.backlog = make(chan Wakeable, cf.SchedulerBacklog)
-	this.pollers = make(map[string]Poller)
-	this.worker = NewPhpWorker(&cf.Worker.Php)
+
+	this.mysqlPollers = make(map[string]Poller)
+	this.beanstalkPollers = make(map[string]Poller)
+
+	this.phpWorker = NewPhpWorker(&cf.Worker.Php)
+	this.pnbWorker = NewPnbWorker(&cf.Worker.Pnb)
+
 	return this
 }
 
@@ -41,7 +48,10 @@ func (this *Scheduler) Stat() map[string]interface{} {
 }
 
 func (this *Scheduler) Stop() {
-	for _, p := range this.pollers {
+	for _, p := range this.beanstalkPollers {
+		p.Stop()
+	}
+	for _, p := range this.mysqlPollers {
 		p.Stop()
 	}
 
@@ -49,13 +59,15 @@ func (this *Scheduler) Stop() {
 }
 
 func (this *Scheduler) Run() {
-	this.worker.Start()
+	this.phpWorker.Start()
+	this.pnbWorker.Start()
+
 	go this.runWorker()
 
 	var err error
 	var pollersN int
 	for pool, my := range this.config.Poller.Mysql.Servers {
-		this.pollers[pool], err = NewMysqlPoller(
+		this.mysqlPollers[pool], err = NewMysqlPoller(
 			this.config.ScheduleInterval,
 			this.config.Poller.Mysql.SlowThreshold,
 			this.config.Poller.Mysql.ManyWakeupsThreshold,
@@ -67,17 +79,28 @@ func (this *Scheduler) Run() {
 			continue
 		}
 
-		log.Debug("started poller[%s]", pool)
+		log.Info("Started poller[mysql]: %s", pool)
 
 		pollersN++
-		go this.pollers[pool].Poll(this.backlog)
+		go this.mysqlPollers[pool].Poll(this.backlog)
+	}
+
+	for tube, beanstalk := range this.config.Poller.Beanstalk.Servers {
+		this.beanstalkPollers[tube], err = NewBeanstalkdPoller(beanstalk.ServerAddr)
+		if err != nil {
+			log.Error("poller[%s]: %s", tube, err)
+			continue
+		}
+
+		log.Info("Started poller[beanstalk]: %s", tube)
+
+		pollersN++
+		go this.beanstalkPollers[tube].Poll(this.backlog)
 	}
 
 	if pollersN == 0 {
 		panic("Zero poller")
 	}
-
-	log.Info("scheduler started with %d pollers", pollersN)
 }
 
 func (this *Scheduler) runWorker() {
@@ -99,7 +122,13 @@ func (this *Scheduler) runWorker() {
 				log.Debug("late %s for %+v", elapsed, w)
 			}
 
-			go this.worker.Wake(w)
+			if _, ok := w.(*Push); ok {
+				// pnb worker
+				go this.pnbWorker.Wake(w)
+			} else {
+				// php worker
+				go this.phpWorker.Wake(w)
+			}
 
 		case <-this.stopCh:
 			log.Info("scheduler stopped")
