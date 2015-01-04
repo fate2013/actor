@@ -48,7 +48,7 @@ func (this *ConfigActor) LoadConfig(cf *conf.Conf) (err error) {
 	if err != nil {
 		return
 	}
-	this.Poller.loadConfig(cf)
+	this.Poller.loadConfig(section)
 
 	section, err = cf.Section("worker")
 	if err != nil {

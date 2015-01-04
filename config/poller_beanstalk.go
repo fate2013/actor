@@ -9,5 +9,8 @@ type ConfigBeanstalk struct {
 }
 
 func (this *ConfigBeanstalk) loadConfig(cf *conf.Conf) {
-
+	section, err := cf.Section("breaker")
+	if err == nil {
+		this.Breaker.loadConfig(section)
+	}
 }

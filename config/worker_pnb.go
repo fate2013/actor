@@ -1,4 +1,21 @@
 package config
 
+import (
+	conf "github.com/funkygao/jsconf"
+)
+
 type ConfigWorkerPnb struct {
+	PublishKey   string
+	SubscribeKey string
+	SecretKey    string
+	CipherKey    string
+	UseSsl       bool
+}
+
+func (this *ConfigWorkerPnb) loadConfig(cf *conf.Conf) {
+	this.PublishKey = cf.String("publish_key", "")
+	this.SubscribeKey = cf.String("subscribe_key", "")
+	this.SecretKey = cf.String("secret_key", "")
+	this.CipherKey = cf.String("cipher_key", "")
+	this.UseSsl = cf.Bool("use_ssl", false)
 }

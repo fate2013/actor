@@ -14,6 +14,7 @@
 
     poller: {
         beanstalk: {
+            workers: 8
         }
 
         mysql: {
@@ -58,6 +59,11 @@
         }
 
         pnb: {
+            publish_key: ""
+            subscribe_key: ""
+            secret_key: ""
+            cipher_key: ""
+            use_ssl: false
         }
     }
 
