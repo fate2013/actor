@@ -11,14 +11,17 @@ type ConfigPoller struct {
 
 func (this *ConfigPoller) loadConfig(cf *conf.Conf) {
 	section, err := cf.Section("mysql")
-	if err != nil {
-		panic(err)
+	if err == nil {
+		this.Mysql.loadConfig(section)
 	}
-	this.Mysql.loadConfig(section)
 
 	section, err = cf.Section("beanstalk")
-	if err != nil {
-		panic(err)
+	if err == nil {
+		this.Beanstalk.loadConfig(section)
 	}
-	this.Beanstalk.loadConfig(section)
+
+	if len(this.Mysql.Servers)+len(this.Beanstalk.Servers) == 0 {
+		panic("Zero poller in config")
+	}
+
 }

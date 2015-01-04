@@ -35,7 +35,6 @@ func NewScheduler(cf *config.ConfigActor) *Scheduler {
 	this.pnbWorker = NewPnbWorker(&cf.Worker.Pnb)
 
 	var err error
-	var pollersN int
 	for pool, my := range this.config.Poller.Mysql.Servers {
 		this.mysqlPollers[pool], err = NewMysqlPoller(
 			this.config.ScheduleInterval,
@@ -51,7 +50,6 @@ func NewScheduler(cf *config.ConfigActor) *Scheduler {
 
 		log.Info("Started poller[mysql]: %s", pool)
 
-		pollersN++
 		go this.mysqlPollers[pool].Poll(this.backlog)
 	}
 
@@ -64,12 +62,7 @@ func NewScheduler(cf *config.ConfigActor) *Scheduler {
 
 		log.Info("Started poller[beanstalk]: %s", tube)
 
-		pollersN++
 		go this.beanstalkPollers[tube].Poll(this.backlog)
-	}
-
-	if pollersN == 0 {
-		panic("Zero poller")
 	}
 
 	return this
