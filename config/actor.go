@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type ActorConfig struct {
+type ConfigActor struct {
 	EtcdServers       []string
 	EtcdSelfAddr      string
 	HttpApiListenAddr string
@@ -20,12 +20,11 @@ type ActorConfig struct {
 	ScheduleInterval     time.Duration
 	ConsoleStatsInterval time.Duration
 
-	MysqlConfig     ConfigMysql
-	BeanstalkConfig ConfigBeanstalk
-	WorkerConfig    ConfigWorker
+	Poller ConfigPoller
+	Worker ConfigWorker
 }
 
-func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
+func (this *ConfigActor) LoadConfig(cf *conf.Conf) (err error) {
 	this.EtcdServers = cf.StringList("etcd_servers", nil)
 	if len(this.EtcdServers) > 0 {
 		this.EtcdSelfAddr = cf.String("etcd_self_addr", "")
@@ -44,27 +43,18 @@ func (this *ActorConfig) LoadConfig(cf *conf.Conf) (err error) {
 	this.ScheduleInterval = cf.Duration("sched_interval", time.Second)
 	this.ConsoleStatsInterval = cf.Duration("stats_interval", time.Minute*10)
 
-	this.MysqlConfig = ConfigMysql{}
 	var section *conf.Conf
-	section, err = cf.Section("mysql")
+	section, err = cf.Section("poller")
 	if err != nil {
 		return
 	}
-	this.MysqlConfig.loadConfig(section)
+	this.Poller.loadConfig(cf)
 
-	this.BeanstalkConfig = ConfigBeanstalk{}
-	section, err = cf.Section("beanstalk")
-	if err != nil {
-		return err
-	}
-	this.BeanstalkConfig.loadConfig(section)
-
-	this.WorkerConfig = ConfigWorker{}
 	section, err = cf.Section("worker")
 	if err != nil {
 		return
 	}
-	this.WorkerConfig.loadConfig(section)
+	this.Worker.loadConfig(section)
 
 	log.Debug("actor config %+v", *this)
 	return
