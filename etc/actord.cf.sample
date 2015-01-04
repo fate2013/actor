@@ -22,10 +22,18 @@
             slow_threshold: "1s"
             many_wakeups_threshold: 300
 
-            breaker: {
-                failure_allowance: 5
-                retry_timeout: 10
-            }
+    pubnub: {
+        publish_key: ""
+        subscribe_key: ""
+        secret_key: ""
+        cipher: ""
+        use_ssl: false
+    }
+
+    mysql: {
+        connect_timeout: "4s"
+        slow_threshold: "1s"
+        many_wakeups_threshold: 300
 
             query: {
                 job: "SELECT uid,job_id,city_id,event_type,time_start,time_end,trace FROM Job WHERE unix_timestamp(time_end)<=? ORDER BY time_end ASC"
