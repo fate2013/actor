@@ -8,10 +8,10 @@
     stats_listen_addr: "127.0.0.1:9010"
     prof_listen_addr: "127.0.0.1:9011"
     metrics_logfile: "metrics.log"
+    stats_interval: "10m"
 
     // scheduler
     sched_interval: "1s"
-    stats_interval: "10m"
     sched_backlog: 5000
 
     poller: {
@@ -19,6 +19,14 @@
             servers: [
                 {
                     tube: "war"
+                    server: "127.0.0.1:11300"
+                }
+                {
+                    tube: "user"
+                    server: "127.0.0.1:11300"
+                }
+                {
+                    tube: "mail"
                     server: "127.0.0.1:11300"
                 }
             ]

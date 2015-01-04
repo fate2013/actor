@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-// serial scheduler
 type Scheduler struct {
 	config *config.ConfigActor
 

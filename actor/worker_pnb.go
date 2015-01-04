@@ -37,6 +37,7 @@ func (this *WorkerPnb) Wake(w Wakeable) {
 	this.backlog <- push // TODO timeout
 }
 
+// TODO how to get channel and msg body from beanstalk msg
 func (this *WorkerPnb) doPublish(push *Push) {
 	pnb := messaging.NewPubnub(this.config.PublishKey,
 		this.config.SubscribeKey, this.config.SecretKey,
