@@ -13,12 +13,12 @@ import (
 )
 
 type PhpWorker struct {
-	config *config.ConfigWorker
+	config *config.ConfigWorkerPhp
 
 	latency metrics.Histogram
 }
 
-func NewPhpWorker(config *config.ConfigWorker) *PhpWorker {
+func NewPhpWorker(config *config.ConfigWorkerPhp) *PhpWorker {
 	this := new(PhpWorker)
 	this.config = config
 	this.latency = metrics.NewHistogram(

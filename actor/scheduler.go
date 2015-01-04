@@ -8,6 +8,8 @@ import (
 
 // serial scheduler
 type Scheduler struct {
+	config *config.ConfigActor
+
 	interval time.Duration
 	stopCh   chan bool
 
@@ -18,14 +20,13 @@ type Scheduler struct {
 	worker  Worker
 }
 
-func NewScheduler(interval time.Duration, backlogSize int,
-	workerConf *config.ConfigWorker) *Scheduler {
+func NewScheduler(cf *config.ConfigActor) *Scheduler {
 	this := new(Scheduler)
-	this.interval = interval
+	this.config = cf
 	this.stopCh = make(chan bool)
-	this.backlog = make(chan Wakeable, backlogSize)
+	this.backlog = make(chan Wakeable, cf.SchedulerBacklog)
 	this.pollers = make(map[string]Poller)
-	this.worker = NewPhpWorker(workerConf)
+	this.worker = NewPhpWorker(&cf.Worker.Php)
 	return this
 }
 
@@ -47,16 +48,20 @@ func (this *Scheduler) Stop() {
 	close(this.stopCh)
 }
 
-func (this *Scheduler) Run(myconf *config.ConfigMysql) {
+func (this *Scheduler) Run() {
 	this.worker.Start()
 	go this.runWorker()
 
 	var err error
 	var pollersN int
-	for pool, my := range myconf.Servers {
-		this.pollers[pool], err = NewMysqlPoller(this.interval,
-			myconf.SlowThreshold, myconf.ManyWakeupsThreshold,
-			my, &myconf.Query, &myconf.Breaker)
+	for pool, my := range this.config.Poller.Mysql.Servers {
+		this.pollers[pool], err = NewMysqlPoller(
+			this.config.ScheduleInterval,
+			this.config.Poller.Mysql.SlowThreshold,
+			this.config.Poller.Mysql.ManyWakeupsThreshold,
+			my,
+			&this.config.Poller.Mysql.Query,
+			&this.config.Poller.Mysql.Breaker)
 		if err != nil {
 			log.Error("poller[%s]: %s", pool, err)
 			continue
@@ -90,7 +95,7 @@ func (this *Scheduler) runWorker() {
 			}
 
 			elapsed := time.Since(w.DueTime())
-			if elapsed.Seconds() > this.interval.Seconds()+1 {
+			if elapsed.Seconds() > this.config.ScheduleInterval.Seconds()+1 {
 				log.Debug("late %s for %+v", elapsed, w)
 			}
 

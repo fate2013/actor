@@ -12,45 +12,53 @@
     sched_backlog: 5000
     metrics_logfile: "metrics.log"
 
-    worker: {
-        dry_run: false
-        timeout: "5s"
-        debug_locking: false
-        max_flight_entries: 100000
-        lock_expires: "10s"
-        job: "http://dw-dev.socialgamenet.com/api/?class=actor&method=wakeup&params=%s"
-        march: "http://dw-dev.socialgamenet.com/api/?class=actor&method=play&params=%s"
-        pve: "http://dw-dev.socialgamenet.com/api/?class=actor&method=pve&params=%s"
-    }
-
-    beanstalk: {
-    }
-
-    mysql: {
-        connect_timeout: "4s"
-        slow_threshold: "1s"
-        many_wakeups_threshold: 300
-
-        breaker: {
-            failure_allowance: 5
-            retry_timeout: 10
+    poller: {
+        beanstalk: {
         }
 
-        query: {
-            job: "SELECT uid,job_id,city_id,event_type,time_start,time_end,trace FROM Job WHERE unix_timestamp(time_end)<=? ORDER BY time_end ASC"
-            march: "SELECT uid,march_id,opp_uid,end_x,end_y,type,state,end_time FROM March WHERE state!='done' AND unix_timestamp(end_time)<=? ORDER BY end_time ASC, end_x, end_y"
-            pve: "SELECT uid,march_id,state,end_time FROM PVEMarch WHERE unix_timestamp(end_time)<=? AND state!='done' ORDER BY end_time ASC"
-        }
+        mysql: {
+            connect_timeout: "4s"
+            slow_threshold: "1s"
+            many_wakeups_threshold: 300
 
-        servers: [
-            {
-                pool: "UserShard1"
-                host: "127.0.0.1"
-                port: 3306
-                username: "hellofarm"
-                password: "halfquestfarm4321"
-                db: "UserShard1"
+            breaker: {
+                failure_allowance: 5
+                retry_timeout: 10
             }
-        ]
+
+            query: {
+                job: "SELECT uid,job_id,city_id,event_type,time_start,time_end,trace FROM Job WHERE unix_timestamp(time_end)<=? ORDER BY time_end ASC"
+                march: "SELECT uid,march_id,opp_uid,end_x,end_y,type,state,end_time FROM March WHERE state!='done' AND unix_timestamp(end_time)<=? ORDER BY end_time ASC, end_x, end_y"
+                pve: "SELECT uid,march_id,state,end_time FROM PVEMarch WHERE unix_timestamp(end_time)<=? AND state!='done' ORDER BY end_time ASC"
+            }
+
+            servers: [
+                {
+                    pool: "UserShard1"
+                    host: "192.168.23.163"
+                    port: 3306
+                    username: "hellofarm"
+                    password: "halfquestfarm4321"
+                    db: "UserShard1"
+                }
+            ]
+        }
     }
+
+    worker: {
+        php: {
+            dry_run: false
+            timeout: "5s"
+            debug_locking: false
+            max_flight_entries: 100000
+            lock_expires: "10s"
+            job: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=wakeup&params=%s"
+            march: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=play&params=%s"
+            pve: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=pve&params=%s"
+        }
+
+        pnb: {
+        }
+    }
+
 }
