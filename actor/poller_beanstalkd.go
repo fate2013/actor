@@ -21,7 +21,7 @@ func (this *BeanstalkdPoller) Poll(ch chan<- Wakeable) {
 		id   uint64
 		body []byte
 		err  error
-		push = new(Push)
+		push *Push
 	)
 	for {
 		id, body, err = this.conn.Reserve(time.Hour * 100) // TODO
@@ -30,6 +30,7 @@ func (this *BeanstalkdPoller) Poll(ch chan<- Wakeable) {
 			continue
 		}
 
+		push = new(Push) // TODO mem pool
 		push.Uid = int64(id)
 		push.Body = body
 

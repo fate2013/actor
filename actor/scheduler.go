@@ -34,36 +34,6 @@ func NewScheduler(cf *config.ConfigActor) *Scheduler {
 	this.phpWorker = NewPhpWorker(&cf.Worker.Php)
 	this.pnbWorker = NewPnbWorker(&cf.Worker.Pnb)
 
-	return this
-}
-
-func (this *Scheduler) Outstandings() int {
-	return len(this.backlog)
-}
-
-func (this *Scheduler) Stat() map[string]interface{} {
-	return map[string]interface{}{
-		"backlog": this.Outstandings(),
-	}
-}
-
-func (this *Scheduler) Stop() {
-	for _, p := range this.beanstalkPollers {
-		p.Stop()
-	}
-	for _, p := range this.mysqlPollers {
-		p.Stop()
-	}
-
-	close(this.stopCh)
-}
-
-func (this *Scheduler) Run() {
-	this.phpWorker.Start()
-	this.pnbWorker.Start()
-
-	go this.runWorker()
-
 	var err error
 	var pollersN int
 	for pool, my := range this.config.Poller.Mysql.Servers {
@@ -101,14 +71,40 @@ func (this *Scheduler) Run() {
 	if pollersN == 0 {
 		panic("Zero poller")
 	}
+
+	return this
 }
 
-func (this *Scheduler) runWorker() {
+func (this *Scheduler) Outstandings() int {
+	return len(this.backlog)
+}
+
+func (this *Scheduler) Stat() map[string]interface{} {
+	return map[string]interface{}{
+		"backlog": this.Outstandings(),
+	}
+}
+
+func (this *Scheduler) Stop() {
+	for _, p := range this.beanstalkPollers {
+		p.Stop()
+	}
+	for _, p := range this.mysqlPollers {
+		p.Stop()
+	}
+
+	close(this.stopCh)
+}
+
+func (this *Scheduler) Run() {
+	this.phpWorker.Start()
+	this.pnbWorker.Start()
+
 	for {
 		select {
 		case w, open := <-this.backlog:
 			if !open {
-				log.Critical("scheduler chan closed")
+				log.Critical("Scheduler chan closed")
 				return
 			}
 
@@ -131,7 +127,7 @@ func (this *Scheduler) runWorker() {
 			}
 
 		case <-this.stopCh:
-			log.Info("scheduler stopped")
+			log.Info("Scheduler stopped")
 			return
 
 		}
