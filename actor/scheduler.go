@@ -97,8 +97,8 @@ func (this *Scheduler) Stop() {
 }
 
 func (this *Scheduler) Run() {
-	this.phpWorker.Start()
-	this.pnbWorker.Start()
+	go this.phpWorker.Start()
+	go this.pnbWorker.Start()
 
 	for {
 		select {

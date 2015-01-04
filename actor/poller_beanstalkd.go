@@ -33,6 +33,8 @@ func (this *BeanstalkdPoller) Poll(ch chan<- Wakeable) {
 		push = new(Push) // TODO mem pool
 		push.Uid = int64(id)
 		push.Body = body
+		push.conn = this.conn
+		push.id = id
 
 		ch <- push
 	}

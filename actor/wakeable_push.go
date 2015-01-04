@@ -1,10 +1,14 @@
 package actor
 
 import (
+	"github.com/kr/beanstalk"
 	"time"
 )
 
 type Push struct {
+	conn *beanstalk.Conn
+	id   uint64
+
 	Uid  int64
 	Body []byte
 }
