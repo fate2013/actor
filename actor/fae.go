@@ -4,6 +4,7 @@ import (
 	"github.com/funkygao/fae/servant/gen-go/fun/rpc"
 	"github.com/funkygao/fae/servant/proxy"
 	"github.com/funkygao/golib/ip"
+	log "github.com/funkygao/log4go"
 	"strconv"
 	"sync/atomic"
 )
@@ -25,6 +26,8 @@ func NewFaeExecutor() *FaeExecutor {
 func (this *FaeExecutor) Start() {
 	go this.client.StartMonitorCluster()
 	this.client.AwaitClusterTopologyReady()
+
+	log.Info("fae cluster ready")
 }
 
 func (this *FaeExecutor) Context(reason string) *rpc.Context {
