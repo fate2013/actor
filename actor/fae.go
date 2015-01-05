@@ -23,7 +23,7 @@ func NewFaeExecutor() *FaeExecutor {
 	return this
 }
 
-func (this *FaeExecutor) Start() {
+func (this *FaeExecutor) StartCluster() {
 	go this.client.StartMonitorCluster()
 	this.client.AwaitClusterTopologyReady()
 

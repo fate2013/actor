@@ -6,5 +6,5 @@ var (
 
 func init() {
 	fae = NewFaeExecutor()
-	fae.Start()
+	fae.StartCluster()
 }
