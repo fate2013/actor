@@ -10,7 +10,7 @@ import (
 )
 
 type FaeExecutor struct {
-	client *proxy.Proxy
+	proxy *proxy.Proxy
 
 	myIp string
 	txn  int64
@@ -18,14 +18,14 @@ type FaeExecutor struct {
 
 func NewFaeExecutor() *FaeExecutor {
 	this := new(FaeExecutor)
-	this.client = proxy.NewWithDefaultConfig()
+	this.proxy = proxy.NewWithDefaultConfig()
 	this.myIp = ip.LocalIpv4Addrs()[0]
 	return this
 }
 
 func (this *FaeExecutor) StartCluster() {
-	go this.client.StartMonitorCluster()
-	this.client.AwaitClusterTopologyReady()
+	go this.proxy.StartMonitorCluster()
+	this.proxy.AwaitClusterTopologyReady()
 
 	log.Info("fae cluster ready")
 }

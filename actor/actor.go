@@ -59,10 +59,11 @@ func (this *Actor) ServeForever() {
 		} else {
 			etclib.BootService(this.config.EtcdSelfAddr, etclib.SERVICE_ACTOR)
 		}
-
-		// TODO watch other actor nodes
-
 	}
+
+	// after zk connected, start fae proxy
+	fae = NewFaeExecutor()
+	fae.StartCluster()
 
 	this.statsRunner.Run()
 }
