@@ -24,13 +24,13 @@ func (this *March) LockKey() string {
 	return fmt.Sprintf("m:%d:%d:%d", this.K, this.X1, this.Y1)
 }
 
+func (this *March) OppUidKey() string {
+	return fmt.Sprintf("mo:%d", this.OppUid.Int64)
+}
+
 func (this *March) Marshal() []byte {
 	b, _ := json.Marshal(*this)
 	return b
-}
-
-func (this *March) GetUid() int64 {
-	return this.Uid
 }
 
 func (this *March) Ignored() bool {
@@ -47,7 +47,7 @@ func (this *March) DueTime() time.Time {
 	return this.EndTime
 }
 
-func (this March) String() string {
+func (this *March) String() string {
 	return fmt.Sprintf("March{uid:%d, opp:%d, mid:%d, type:%s, state:%s, (%d, %d)}",
 		this.Uid, this.OppUid.Int64,
 		this.MarchId, this.Type.String, this.State, this.X1, this.Y1)

@@ -74,10 +74,12 @@ func (this *WorkerPhp) callPhp(url string) (resp *http.Response, err error) {
 
 func (this *WorkerPhp) tryWake(w Wakeable) (success bool) {
 	var (
-		params = string(w.Marshal())
-		url    string
-		locker = NewLocker()
+		params  = string(w.Marshal())
+		url     string
+		lockKey string
+		locker  = NewLocker()
 	)
+
 	defer locker.ReleaseAll()
 
 	switch w := w.(type) {
@@ -86,18 +88,28 @@ func (this *WorkerPhp) tryWake(w Wakeable) (success bool) {
 
 	case *Job:
 		url = fmt.Sprintf(this.config.Job, params)
-		if !locker.Lock(w.LockKey()) {
-			return
-		}
+		lockKey = w.LockKey()
 
 	case *March:
 		url = fmt.Sprintf(this.config.March, params)
-		if !locker.Lock(w.LockKey()) {
+		lockKey = w.LockKey()
+
+		// lock the attackee
+		if !w.IsOpponentSelf() &&
+			w.OppUid.Valid &&
+			w.OppUid.Int64 > 0 &&
+			!locker.Lock(w.OppUidKey()) {
+			log.Warn("lock[%s] fails", w.OppUidKey())
 			return
 		}
 	}
 
-	log.Debug("%s", url)
+	if lockKey != "" && !locker.Lock(lockKey) {
+		log.Warn("lock[%s] fails", lockKey)
+		return
+	}
+
+	log.Debug("calling %s", url)
 
 	t0 := time.Now()
 	res, err := this.callPhp(url)
@@ -122,13 +134,11 @@ func (this *WorkerPhp) tryWake(w Wakeable) (success bool) {
 
 	if payload[0] == '{' {
 		// php.Application json payload means Exception thrown
-		log.Error("payload:%s, %+v %d %s",
-			string(payload), w,
-			res.StatusCode, time.Since(t0))
+		log.Error("payload:%s, %+v %s",
+			string(payload), w, time.Since(t0))
 	} else {
-		log.Debug("payload:%s, %+v %d %s",
-			string(payload), w,
-			res.StatusCode, time.Since(t0))
+		log.Debug("payload:%s, %+v %s",
+			string(payload), w, time.Since(t0))
 		success = true
 	}
 

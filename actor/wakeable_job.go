@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// TODO PendingJob of a user, wakeup all pending jobs
 type Job struct {
 	Uid   int64 `json:"uid"`
 	JobId int64 `json:"job_id"`
@@ -27,18 +28,14 @@ func (this *Job) DueTime() time.Time {
 }
 
 func (this *Job) LockKey() string {
-	return fmt.Sprintf("j:%d", this.Uid)
+	return fmt.Sprintf("j:%d", this.Uid) // FIXME
 }
 
 func (this *Job) Ignored() bool {
 	return false
 }
 
-func (this *Job) GetUid() int64 {
-	return this.Uid
-}
-
-func (this Job) String() string {
+func (this *Job) String() string {
 	return fmt.Sprintf("Job{uid:%d, jid:%d, type:%d}",
 		this.Uid, this.JobId, this.Type)
 }

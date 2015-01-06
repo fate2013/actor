@@ -118,9 +118,9 @@ func (this *MysqlPoller) doPoll(typ string, ch chan<- Wakeable) {
 		}
 
 		if len(ws) > this.manyWakeupsThreshold {
-			log.Warn("many wakes[%s]^%d: %+v", typ, len(ws), ws)
+			log.Warn("too many wakes[%s] #%d: %+v", typ, len(ws), ws)
 		} else {
-			log.Debug("wakes[%s]^%d: %+v", typ, len(ws), ws)
+			log.Debug("wakes[%s] #%d: %+v", typ, len(ws), ws)
 		}
 
 		for _, w := range ws {

@@ -7,9 +7,8 @@ import (
 )
 
 type Pve struct {
-	Uid     int64 `json:"uid"`
-	MarchId int64 `json:"march_id"`
-
+	Uid     int64     `json:"uid"`
+	MarchId int64     `json:"march_id"`
 	State   string    `json:"-"`
 	EndTime time.Time `json:"-"`
 }
@@ -25,10 +24,6 @@ func (this *Pve) Ignored() bool {
 
 func (this *Pve) DueTime() time.Time {
 	return this.EndTime
-}
-
-func (this *Pve) GetUid() int64 {
-	return this.Uid
 }
 
 func (this Pve) String() string {

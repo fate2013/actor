@@ -28,7 +28,3 @@ func (this *Push) Marshal() []byte {
 func (this *Push) Ignored() bool {
 	return false
 }
-
-func (this *Push) GetUid() int64 {
-	return this.Uid
-}

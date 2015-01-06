@@ -4,6 +4,12 @@ import (
 	log "github.com/funkygao/log4go"
 )
 
+const (
+	LOCKER_REASON = "actor.sched"
+	LOCKER_LOCK   = "lock"
+	LOCKER_UNLOCK = "unlock"
+)
+
 type Locker []string
 
 func NewLocker() Locker {
@@ -12,13 +18,14 @@ func NewLocker() Locker {
 }
 
 func (this *Locker) Lock(key string) (success bool) {
-	svt, err := fae.proxy.Servant("localhost:9001")
+	svt, err := fae.proxy.ServantByKey(key)
 	if err != nil {
+		log.Error("fae.lock[%s]: %s", key, err.Error())
 		return false
 	}
 
-	// FIXME
-	if success, _ = svt.GmLock(fae.Context("actor"), "lock", key); success {
+	log.Debug("fae.lock[%s]: %s", key, svt.Addr())
+	if success, _ = svt.GmLock(fae.Context(LOCKER_REASON), LOCKER_LOCK, key); success {
 		*this = append(*this, key)
 	}
 
@@ -29,14 +36,17 @@ func (this *Locker) Lock(key string) (success bool) {
 
 func (this *Locker) ReleaseAll() {
 	for _, key := range *this {
-		svt, err := fae.proxy.Servant("localhost:9001")
+		svt, err := fae.proxy.ServantByKey(key)
 		if err != nil {
-			log.Error("fae.servant[%s]: %s", key, err.Error())
+			log.Error("fae.unlock[%s]: %s", key, err.Error())
 			continue
 		}
 
-		if err = svt.GmUnlock(fae.Context("actor"), "unlock", key); err != nil {
+		if err = svt.GmUnlock(fae.Context(LOCKER_REASON),
+			LOCKER_UNLOCK, key); err != nil {
 			log.Error("fae.unlock[%s]: %s", key, err.Error())
+		} else {
+			log.Debug("fae.unlock[%s]: %s", key, svt.Addr())
 		}
 
 		svt.Recycle()
