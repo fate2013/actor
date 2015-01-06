@@ -13,7 +13,7 @@
                V
     -----------------------------------
                |        |        |
-              php      pubnub   RTM
+              php    pubnub     RTM
 
 */
 package actor
