@@ -223,5 +223,6 @@ func (this *MysqlPoller) Query(stmt *sql.Stmt,
 }
 
 func (this *MysqlPoller) Stop() {
+	this.mysql.Close()
 	close(this.stopChan)
 }
