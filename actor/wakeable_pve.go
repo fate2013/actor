@@ -26,7 +26,7 @@ func (this *Pve) DueTime() time.Time {
 	return this.EndTime
 }
 
-func (this Pve) String() string {
+func (this *Pve) String() string {
 	return fmt.Sprintf("Pve{uid:%d, mid:%d, state:%s}",
 		this.Uid, this.MarchId, this.State)
 }

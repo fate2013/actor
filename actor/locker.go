@@ -5,12 +5,6 @@ import (
 	log "github.com/funkygao/log4go"
 )
 
-const (
-	LOCKER_REASON = "actor.sched"
-	LOCKER_LOCK   = "lock"
-	LOCKER_UNLOCK = "unlock"
-)
-
 type Locker []string
 
 func NewLocker() Locker {
