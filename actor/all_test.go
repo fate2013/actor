@@ -90,24 +90,6 @@ func BenchmarkBreakerSucceed(b *testing.B) {
 	}
 }
 
-func BenchmarkFlightTakeoff(b *testing.B) {
-	b.ReportAllocs()
-	f := NewFlight(100000, false, time.Duration(2)*time.Second)
-	job := Job{Uid: 534343, JobId: 5677, TimeEnd: time.Now()}
-	for i := 0; i < b.N; i++ {
-		f.Takeoff(job.GetUid())
-	}
-}
-
-func BenchmarkFlightLand(b *testing.B) {
-	b.ReportAllocs()
-	f := NewFlight(100000, false, time.Duration(2)*time.Second)
-	job := Job{Uid: 534343, JobId: 5677, TimeEnd: time.Now()}
-	for i := 0; i < b.N; i++ {
-		f.Land(job.GetUid())
-	}
-}
-
 func BenchmarkPhpPayloadPartialDecode(b *testing.B) {
 	b.ReportAllocs()
 	payload := []byte(`{"ok":0,"msg":"0:Unknown event: . -- #0 \/sgn\/htdocs\/dev-dev\/dragon-server-code\/v2\/classes\/Services\/ActorService.php(20): Event\\EventEngine::fire(NULL, Array)\n#1 \/sgn\/htdocs\/dev-dev\/dragon-server-code\/v2\/classes\/System\/Application.php(160): Services\\ActorService->play(Array)\n#2 \/sgn\/htdocs\/dev-dev\/dragon-server-code\/docroot\/api\/index.php(12): System\\Application->execute()\n#3 {main}"}`)
@@ -135,14 +117,4 @@ func TestJobEncode(t *testing.T) {
 	job := Job{Uid: 534343, JobId: 5677, TimeEnd: time.Now()}
 	body, _ := json.Marshal(job)
 	assert.Equal(t, `{"uid":534343,"job_id":5677}`, string(body))
-}
-
-func TestMarchGeoHash(t *testing.T) {
-	march := March{Uid: 22323, MarchId: 34343434343, X1: 2323, Y1: 343}
-	hash := march.GeoHash()
-	assert.Equal(t, 9515351, hash)
-
-	x, y := march.DecodeGeoHash(hash)
-	assert.Equal(t, int16(2323), x)
-	assert.Equal(t, int16(343), y)
 }
