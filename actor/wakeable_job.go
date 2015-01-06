@@ -8,9 +8,8 @@ import (
 
 // TODO PendingJob of a user, wakeup all pending jobs
 type Job struct {
-	Uid   int64 `json:"uid"`
-	JobId int64 `json:"job_id"`
-
+	Uid       int64     `json:"uid"`
+	JobId     int64     `json:"job_id"`
 	CityId    int64     `json:"-"` // ignored json field, json:"myname,omitempty"
 	Type      uint16    `json:"-"`
 	TimeStart time.Time `json:"-"`
@@ -25,10 +24,6 @@ func (this *Job) Marshal() []byte {
 
 func (this *Job) DueTime() time.Time {
 	return this.TimeEnd
-}
-
-func (this *Job) LockKey() string {
-	return fmt.Sprintf("j:%d", this.Uid) // FIXME
 }
 
 func (this *Job) Ignored() bool {

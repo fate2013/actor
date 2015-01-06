@@ -74,27 +74,30 @@ func (this *WorkerPhp) callPhp(url string) (resp *http.Response, err error) {
 
 func (this *WorkerPhp) tryWake(w Wakeable) (success bool) {
 	var (
-		params  = string(w.Marshal())
-		url     string
-		lockKey string
-		locker  = NewLocker()
+		callbackUrl string
+		params      = string(w.Marshal())
+		locker      = NewLocker()
 	)
 
 	defer locker.ReleaseAll()
 
 	switch w := w.(type) {
 	case *Pve:
-		url = fmt.Sprintf(this.config.Pve, params)
+		callbackUrl = fmt.Sprintf(this.config.Pve, params)
 
 	case *Job:
-		url = fmt.Sprintf(this.config.Job, params)
+		callbackUrl = fmt.Sprintf(this.config.Job, params)
 		if !locker.LockUser(w.Uid) {
 			return
 		}
 
 	case *March:
-		url = fmt.Sprintf(this.config.March, params)
-		lockKey = w.LockKey()
+		callbackUrl = fmt.Sprintf(this.config.March, params)
+		if !locker.LockAttackee(w.K, w.X1, w.Y1) {
+			return
+		}
+
+		// TODO lock attacker?
 
 		// lock the attackee
 		if !w.IsOpponentSelf() &&
@@ -105,15 +108,10 @@ func (this *WorkerPhp) tryWake(w Wakeable) (success bool) {
 		}
 	}
 
-	if lockKey != "" && !locker.Lock(lockKey) {
-		log.Warn("lock[%s] fails", lockKey)
-		return
-	}
-
-	log.Debug("calling %s", url)
+	log.Debug("calling: %s", callbackUrl)
 
 	t0 := time.Now()
-	res, err := this.callPhp(url)
+	res, err := this.callPhp(callbackUrl)
 	if err != nil {
 		log.Error("http: %s", err.Error())
 
