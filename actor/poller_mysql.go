@@ -170,7 +170,7 @@ func (this *MysqlPoller) fetchWakeables(typ string, dueTime time.Time) (ws []Wak
 		for rows.Next() {
 			var w March
 			err = rows.Scan(&w.Uid, &w.MarchId, &w.OppUid,
-				&w.X1, &w.Y1, &w.Type,
+				&w.K, &w.X1, &w.Y1, &w.Type,
 				&w.State, &w.EndTime)
 			if err != nil {
 				log.Error("db scan: %s", err.Error())

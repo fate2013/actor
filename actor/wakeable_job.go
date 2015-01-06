@@ -26,6 +26,10 @@ func (this *Job) DueTime() time.Time {
 	return this.TimeEnd
 }
 
+func (this *Job) LockKey() string {
+	return fmt.Sprintf("j:%d", this.Uid)
+}
+
 func (this *Job) Ignored() bool {
 	return false
 }

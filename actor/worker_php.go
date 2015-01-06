@@ -76,23 +76,25 @@ func (this *WorkerPhp) tryWake(w Wakeable) (success bool) {
 	var (
 		params = string(w.Marshal())
 		url    string
+		locker = NewLocker()
 	)
-	switch w.(type) {
+	defer locker.ReleaseAll()
+
+	switch w := w.(type) {
 	case *Pve:
 		url = fmt.Sprintf(this.config.Pve, params)
 
 	case *Job:
 		url = fmt.Sprintf(this.config.Job, params)
+		if !locker.Lock(w.LockKey()) {
+			return
+		}
 
 	case *March:
 		url = fmt.Sprintf(this.config.March, params)
-	}
-
-	if this.config.DryRun {
-		log.Debug("dry run: %s", url)
-
-		success = true
-		return
+		if !locker.Lock(w.LockKey()) {
+			return
+		}
 	}
 
 	log.Debug("%s", url)
