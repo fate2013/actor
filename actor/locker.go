@@ -19,14 +19,14 @@ func NewLocker() Locker {
 }
 
 func (this *Locker) LockUser(uid int64) bool {
-	return this.Lock(lockkey.User(uid))
+	return this.lock(lockkey.User(uid))
 }
 
 func (this *Locker) LockAttackee(k, x, y int16) bool {
-	return this.Lock(lockkey.Attackee(k, x, y))
+	return this.lock(lockkey.Attackee(k, x, y))
 }
 
-func (this *Locker) Lock(key string) (success bool) {
+func (this *Locker) lock(key string) (success bool) {
 	svt, err := fae.proxy.ServantByKey(key)
 	if err != nil {
 		log.Error("fae.lock[%s]: %s", key, err.Error())
