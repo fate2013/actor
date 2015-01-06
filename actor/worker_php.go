@@ -88,7 +88,9 @@ func (this *WorkerPhp) tryWake(w Wakeable) (success bool) {
 
 	case *Job:
 		url = fmt.Sprintf(this.config.Job, params)
-		lockKey = w.LockKey()
+		if !locker.LockUser(w.Uid) {
+			return
+		}
 
 	case *March:
 		url = fmt.Sprintf(this.config.March, params)
@@ -98,8 +100,7 @@ func (this *WorkerPhp) tryWake(w Wakeable) (success bool) {
 		if !w.IsOpponentSelf() &&
 			w.OppUid.Valid &&
 			w.OppUid.Int64 > 0 &&
-			!locker.Lock(w.OppUidKey()) {
-			log.Warn("lock[%s] fails", w.OppUidKey())
+			!locker.LockUser(w.OppUid.Int64) {
 			return
 		}
 	}

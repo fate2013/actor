@@ -1,6 +1,7 @@
 package actor
 
 import (
+	"github.com/funkygao/lockkey"
 	log "github.com/funkygao/log4go"
 )
 
@@ -15,6 +16,10 @@ type Locker []string
 func NewLocker() Locker {
 	this := make([]string, 0)
 	return this
+}
+
+func (this *Locker) LockUser(uid int64) bool {
+	return this.Lock(lockkey.User(uid))
 }
 
 func (this *Locker) Lock(key string) (success bool) {

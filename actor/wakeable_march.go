@@ -24,10 +24,6 @@ func (this *March) LockKey() string {
 	return fmt.Sprintf("m:%d:%d:%d", this.K, this.X1, this.Y1)
 }
 
-func (this *March) OppUidKey() string {
-	return fmt.Sprintf("mo:%d", this.OppUid.Int64)
-}
-
 func (this *March) Marshal() []byte {
 	b, _ := json.Marshal(*this)
 	return b
