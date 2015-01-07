@@ -20,7 +20,7 @@ if [[ $1 = "-install" ]]; then
     exit
 fi
 
-VER=0.1.3b
+VER=0.1.3rc
 ID=$(git rev-parse HEAD | cut -c1-7)
 
 cd daemon/actord
