@@ -2,6 +2,7 @@ package actor
 
 import (
 	"fmt"
+	"github.com/funkygao/actor/config"
 	log "github.com/funkygao/log4go"
 	"github.com/funkygao/metrics"
 	"io/ioutil"
@@ -11,24 +12,15 @@ import (
 	"time"
 )
 
-type PhpWorker struct {
-	config        *ConfigWorker
-	apiListenAddr string
+type WorkerPhp struct {
+	config *config.ConfigWorkerPhp
 
 	latency metrics.Histogram
-
-	userFlight *Flight // key is uid
-	tileFlight *Flight // key is geohash
 }
 
-func NewPhpWorker(apiListenAddr string, config *ConfigWorker) *PhpWorker {
-	this := new(PhpWorker)
+func NewPhpWorker(config *config.ConfigWorkerPhp) *WorkerPhp {
+	this := new(WorkerPhp)
 	this.config = config
-	this.apiListenAddr = apiListenAddr
-	this.userFlight = NewFlight(config.MaxFlightEntries,
-		config.DebugLocking, config.LockExpires)
-	this.tileFlight = NewFlight(config.MaxFlightEntries,
-		config.DebugLocking, config.LockExpires)
 	this.latency = metrics.NewHistogram(
 		metrics.NewExpDecaySample(1028, 0.015))
 	metrics.Register("latency.php", this.latency)
@@ -36,23 +28,11 @@ func NewPhpWorker(apiListenAddr string, config *ConfigWorker) *PhpWorker {
 	return this
 }
 
-func (this *PhpWorker) Start() {
-	api := NewHttpApiRunner(this.apiListenAddr, this.userFlight, this.tileFlight)
-	api.Run()
+func (this *WorkerPhp) Start() {
+
 }
 
-func (this PhpWorker) Flights() map[string]interface{} {
-	return map[string]interface{}{
-		"user.items": this.userFlight.items.Len(),
-		"tile.items": this.tileFlight.items.Len(),
-	}
-}
-
-func (this *PhpWorker) FlightCount() int {
-	return this.userFlight.Len() + this.tileFlight.Len()
-}
-
-func (this *PhpWorker) Wake(w Wakeable) {
+func (this *WorkerPhp) Wake(w Wakeable) {
 	var (
 		maxRetries  = 3
 		randbaseMs  = 50
@@ -82,96 +62,63 @@ func (this *PhpWorker) Wake(w Wakeable) {
 	log.Warn("Quit after %dms: %+v", totalWaitMs, w)
 }
 
-func (this *PhpWorker) dialTimeout(network, addr string) (net.Conn, error) {
+func (this *WorkerPhp) dialTimeout(network, addr string) (net.Conn, error) {
 	return net.DialTimeout(network, addr, this.config.Timeout)
 }
 
 // callback with timeout
-func (this *PhpWorker) callPhp(url string) (resp *http.Response, err error) {
+func (this *WorkerPhp) callPhp(url string) (resp *http.Response, err error) {
 	client := http.Client{Transport: &http.Transport{Dial: this.dialTimeout}}
 	return client.Get(url)
 }
 
-func (this *PhpWorker) tryWake(w Wakeable) (success bool) {
+func (this *WorkerPhp) tryWake(w Wakeable) (success bool) {
 	var (
-		params = string(w.Marshal())
-		url    string
+		callbackUrl string
+		params      = string(w.Marshal())
+		locker      = NewLocker()
 	)
+
+	defer locker.ReleaseAll()
+
 	switch w := w.(type) {
 	case *Pve:
-		url = fmt.Sprintf(this.config.Pve, params)
+		callbackUrl = fmt.Sprintf(this.config.Pve, params)
 
 	case *Job:
-		url = fmt.Sprintf(this.config.Job, params)
-
-	case *March:
-		url = fmt.Sprintf(this.config.March, params)
-		if !this.tileFlight.Takeoff(w.TileKey()) {
+		callbackUrl = fmt.Sprintf(this.config.Job, params)
+		if !locker.LockUser(w.Uid) {
 			return
 		}
 
-		// FIXME not atomic
-		// lock opponent user
+	case *March:
+		callbackUrl = fmt.Sprintf(this.config.March, params)
+		if !locker.LockAttackee(w.K, w.X1, w.Y1) {
+			return
+		}
+
+		// TODO lock attacker?
+
+		// lock the attackee
 		if !w.IsOpponentSelf() &&
 			w.OppUid.Valid &&
 			w.OppUid.Int64 > 0 &&
-			!this.userFlight.Takeoff(User{Uid: w.OppUid.Int64}) {
-			this.tileFlight.Land(w.TileKey())
+			!locker.LockUser(w.OppUid.Int64) {
 			return
 		}
 	}
 
-	// FIXME atomic for both tile and user flight
-	if !this.userFlight.Takeoff(User{Uid: w.GetUid()}) {
-		if m, ok := w.(*March); ok {
-			this.tileFlight.Land(m.TileKey())
-
-			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
-				this.userFlight.Land(User{Uid: m.OppUid.Int64})
-			}
-		}
-
-		return
-	}
-
-	if this.config.DryRun {
-		log.Debug("dry run: %s", url)
-
-		this.userFlight.Land(User{Uid: w.GetUid()})
-
-		if m, ok := w.(*March); ok {
-			this.tileFlight.Land(m.TileKey())
-			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
-				this.userFlight.Land(User{Uid: m.OppUid.Int64})
-			}
-		}
-
-		success = true
-		return
-	}
-
-	log.Debug("%s", url)
+	log.Debug("calling: %s", callbackUrl)
 
 	t0 := time.Now()
-	res, err := this.callPhp(url)
+	res, err := this.callPhp(callbackUrl)
 	if err != nil {
 		log.Error("http: %s", err.Error())
 
-		this.userFlight.Land(User{Uid: w.GetUid()})
-
-		if m, ok := w.(*March); ok {
-			this.tileFlight.Land(m.TileKey())
-			if m.OppUid.Valid && m.OppUid.Int64 > 0 {
-				this.userFlight.Land(User{Uid: m.OppUid.Int64})
-			}
-		}
-
 		return
 	}
 
-	defer func() {
-		res.Body.Close()
-	}()
+	defer res.Body.Close()
 
 	this.latency.Update(time.Since(t0).Nanoseconds() / 1e6)
 
@@ -186,23 +133,12 @@ func (this *PhpWorker) tryWake(w Wakeable) (success bool) {
 
 	if payload[0] == '{' {
 		// php.Application json payload means Exception thrown
-		log.Error("payload:%s, %+v %d %s",
-			string(payload), w,
-			res.StatusCode, time.Since(t0))
+		log.Error("payload:%s, %+v %s",
+			string(payload), w, time.Since(t0))
 	} else {
-		log.Debug("payload:%s, %+v %d %s",
-			string(payload), w,
-			res.StatusCode, time.Since(t0))
+		log.Debug("payload:%s, %+v %s",
+			string(payload), w, time.Since(t0))
 		success = true
-	}
-
-	this.userFlight.Land(User{Uid: w.GetUid()})
-
-	if m, ok := w.(*March); ok {
-		this.tileFlight.Land(m.TileKey())
-		if !m.IsOpponentSelf() && m.OppUid.Valid && m.OppUid.Int64 > 0 {
-			this.userFlight.Land(User{Uid: m.OppUid.Int64})
-		}
 	}
 
 	return

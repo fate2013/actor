@@ -2,6 +2,7 @@ package actor
 
 import (
 	"database/sql"
+	"github.com/funkygao/actor/config"
 	"github.com/funkygao/golib/breaker"
 	log "github.com/funkygao/log4go"
 	"github.com/funkygao/metrics"
@@ -28,7 +29,8 @@ type MysqlPoller struct {
 
 func NewMysqlPoller(interval time.Duration,
 	slowQueryThreshold time.Duration, manyWakeupsThreshold int,
-	my *ConfigMysqlInstance, query *ConfigMysqlQuery, bc *ConfigBreaker) (*MysqlPoller, error) {
+	my *config.ConfigMysqlInstance, query *config.ConfigMysqlQuery,
+	bc *config.ConfigBreaker) (*MysqlPoller, error) {
 	this := new(MysqlPoller)
 	this.interval = interval
 	this.slowQueryThreshold = slowQueryThreshold
@@ -87,24 +89,24 @@ func NewMysqlPoller(interval time.Duration,
 
 func (this *MysqlPoller) Poll(ch chan<- Wakeable) {
 	if this.jobQueryStmt != nil {
-		go this.poll("job", ch)
+		go this.doPoll("job", ch)
 		defer this.jobQueryStmt.Close()
 	}
 
 	if this.marchQueryStmt != nil {
-		go this.poll("march", ch)
+		go this.doPoll("march", ch)
 		defer this.marchQueryStmt.Close()
 	}
 
 	if this.pveQueryStmt != nil {
-		go this.poll("pve", ch)
+		go this.doPoll("pve", ch)
 		defer this.pveQueryStmt.Close()
 	}
 
 	<-this.stopChan
 }
 
-func (this *MysqlPoller) poll(typ string, ch chan<- Wakeable) {
+func (this *MysqlPoller) doPoll(typ string, ch chan<- Wakeable) {
 	ticker := time.NewTicker(this.interval)
 	defer ticker.Stop()
 
@@ -116,9 +118,9 @@ func (this *MysqlPoller) poll(typ string, ch chan<- Wakeable) {
 		}
 
 		if len(ws) > this.manyWakeupsThreshold {
-			log.Warn("many wakes[%s]^%d: %+v", typ, len(ws), ws)
+			log.Warn("too many wakes[%s] #%d: %+v", typ, len(ws), ws)
 		} else {
-			log.Debug("wakes[%s]^%d: %+v", typ, len(ws), ws)
+			log.Debug("wakes[%s] #%d: %+v", typ, len(ws), ws)
 		}
 
 		for _, w := range ws {
@@ -168,7 +170,7 @@ func (this *MysqlPoller) fetchWakeables(typ string, dueTime time.Time) (ws []Wak
 		for rows.Next() {
 			var w March
 			err = rows.Scan(&w.Uid, &w.MarchId, &w.OppUid,
-				&w.X1, &w.Y1, &w.Type,
+				&w.K, &w.X1, &w.Y1, &w.Type,
 				&w.State, &w.EndTime)
 			if err != nil {
 				log.Error("db scan: %s", err.Error())
@@ -221,5 +223,6 @@ func (this *MysqlPoller) Query(stmt *sql.Stmt,
 }
 
 func (this *MysqlPoller) Stop() {
+	this.mysql.Close()
 	close(this.stopChan)
 }

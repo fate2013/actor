@@ -14,32 +14,15 @@ type March struct {
 	Type    sql.NullString `json:"type"`
 	OppUid  sql.NullInt64  `json:"-"`
 	State   string         `json:"-"`
+	K       int16          `json:"-"` // kingdom id
 	X1      int16          `json:"-"`
 	Y1      int16          `json:"-"`
 	EndTime time.Time      `json:"-"`
 }
 
-func (this *March) GeoHash() int {
-	return int(this.X1)<<GEOHASH_SHIFT | int(this.Y1)
-}
-
-func (this *March) DecodeGeoHash(hash int) (x, y int16) {
-	x = int16(hash >> GEOHASH_SHIFT)
-	y = int16(((1 << GEOHASH_SHIFT) - 1) & hash)
-	return
-}
-
-func (this *March) TileKey() Tile {
-	return Tile{Geohash: this.GeoHash()}
-}
-
 func (this *March) Marshal() []byte {
 	b, _ := json.Marshal(*this)
 	return b
-}
-
-func (this *March) GetUid() int64 {
-	return this.Uid
 }
 
 func (this *March) Ignored() bool {
@@ -56,7 +39,7 @@ func (this *March) DueTime() time.Time {
 	return this.EndTime
 }
 
-func (this March) String() string {
+func (this *March) String() string {
 	return fmt.Sprintf("March{uid:%d, opp:%d, mid:%d, type:%s, state:%s, (%d, %d)}",
 		this.Uid, this.OppUid.Int64,
 		this.MarchId, this.Type.String, this.State, this.X1, this.Y1)

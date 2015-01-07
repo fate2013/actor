@@ -16,3 +16,9 @@ const (
 	MARCH_ENCAMP = "encamping"
 	MARCH_DONE   = "done"
 )
+
+const (
+	LOCKER_REASON = "actor.sched"
+	LOCKER_LOCK   = "lock"
+	LOCKER_UNLOCK = "unlock"
+)

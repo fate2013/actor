@@ -6,10 +6,10 @@ import (
 	"time"
 )
 
+// TODO PendingJob of a user, wakeup all pending jobs
 type Job struct {
-	Uid   int64 `json:"uid"`
-	JobId int64 `json:"job_id"`
-
+	Uid       int64     `json:"uid"`
+	JobId     int64     `json:"job_id"`
 	CityId    int64     `json:"-"` // ignored json field, json:"myname,omitempty"
 	Type      uint16    `json:"-"`
 	TimeStart time.Time `json:"-"`
@@ -30,11 +30,7 @@ func (this *Job) Ignored() bool {
 	return false
 }
 
-func (this *Job) GetUid() int64 {
-	return this.Uid
-}
-
-func (this Job) String() string {
+func (this *Job) String() string {
 	return fmt.Sprintf("Job{uid:%d, jid:%d, type:%d}",
 		this.Uid, this.JobId, this.Type)
 }

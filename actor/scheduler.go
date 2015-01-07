@@ -1,30 +1,69 @@
 package actor
 
 import (
+	"github.com/funkygao/actor/config"
 	log "github.com/funkygao/log4go"
 	"time"
 )
 
-// serial scheduler
 type Scheduler struct {
-	interval time.Duration
-	stopCh   chan bool
+	config *config.ConfigActor
+
+	stopCh chan bool
 
 	// Poller -> WakeableChannel -> Worker
 	backlog chan Wakeable
 
-	pollers map[string]Poller // key is db pool name
-	worker  Worker
+	mysqlPollers     map[string]Poller // key is db pool name
+	beanstalkPollers map[string]Poller // key is tube
+
+	phpWorker Worker
+	pnbWorker Worker
 }
 
-func NewScheduler(interval time.Duration, backlogSize int,
-	workerConf *ConfigWorker, httpApiListenAddr string) *Scheduler {
+func NewScheduler(cf *config.ConfigActor) *Scheduler {
 	this := new(Scheduler)
-	this.interval = interval
+	this.config = cf
 	this.stopCh = make(chan bool)
-	this.backlog = make(chan Wakeable, backlogSize)
-	this.pollers = make(map[string]Poller)
-	this.worker = NewPhpWorker(httpApiListenAddr, workerConf)
+	this.backlog = make(chan Wakeable, cf.SchedulerBacklog)
+
+	this.mysqlPollers = make(map[string]Poller)
+	this.beanstalkPollers = make(map[string]Poller)
+
+	this.phpWorker = NewPhpWorker(&cf.Worker.Php)
+	this.pnbWorker = NewPnbWorker(&cf.Worker.Pnb)
+
+	var err error
+	for pool, my := range this.config.Poller.Mysql.Servers {
+		this.mysqlPollers[pool], err = NewMysqlPoller(
+			this.config.ScheduleInterval,
+			this.config.Poller.Mysql.SlowThreshold,
+			this.config.Poller.Mysql.ManyWakeupsThreshold,
+			my,
+			&this.config.Poller.Mysql.Query,
+			&this.config.Poller.Mysql.Breaker)
+		if err != nil {
+			log.Error("poller[%s]: %s", pool, err)
+			continue
+		}
+
+		log.Info("Started poller[mysql]: %s", pool)
+
+		go this.mysqlPollers[pool].Poll(this.backlog)
+	}
+
+	for tube, beanstalk := range this.config.Poller.Beanstalk.Servers {
+		this.beanstalkPollers[tube], err = NewBeanstalkdPoller(beanstalk.ServerAddr)
+		if err != nil {
+			log.Error("poller[%s]: %s", tube, err)
+			continue
+		}
+
+		log.Info("Started poller[beanstalk]: %s", tube)
+
+		go this.beanstalkPollers[tube].Poll(this.backlog)
+	}
+
 	return this
 }
 
@@ -34,57 +73,30 @@ func (this *Scheduler) Outstandings() int {
 
 func (this *Scheduler) Stat() map[string]interface{} {
 	return map[string]interface{}{
-		"worker_flights": this.worker.Flights(),
-		"backlog":        len(this.backlog),
+		"backlog": this.Outstandings(),
 	}
 }
 
-func (this *Scheduler) FlightCount() int {
-	return this.worker.FlightCount()
-}
-
 func (this *Scheduler) Stop() {
-	for _, p := range this.pollers {
+	for _, p := range this.beanstalkPollers {
+		p.Stop()
+	}
+	for _, p := range this.mysqlPollers {
 		p.Stop()
 	}
 
 	close(this.stopCh)
 }
 
-func (this *Scheduler) Run(myconf *ConfigMysql) {
-	this.worker.Start()
-	go this.runWorker()
+func (this *Scheduler) Run() {
+	go this.phpWorker.Start()
+	go this.pnbWorker.Start()
 
-	var err error
-	var pollersN int
-	for pool, my := range myconf.Servers {
-		this.pollers[pool], err = NewMysqlPoller(this.interval,
-			myconf.SlowThreshold, myconf.ManyWakeupsThreshold,
-			my, &myconf.Query, &myconf.Breaker)
-		if err != nil {
-			log.Error("poller[%s]: %s", pool, err)
-			continue
-		}
-
-		log.Debug("started poller[%s]", pool)
-
-		pollersN++
-		go this.pollers[pool].Poll(this.backlog)
-	}
-
-	if pollersN == 0 {
-		panic("Zero poller")
-	}
-
-	log.Info("scheduler started with %d pollers", pollersN)
-}
-
-func (this *Scheduler) runWorker() {
 	for {
 		select {
 		case w, open := <-this.backlog:
 			if !open {
-				log.Critical("scheduler chan closed")
+				log.Critical("Scheduler chan closed")
 				return
 			}
 
@@ -94,14 +106,20 @@ func (this *Scheduler) runWorker() {
 			}
 
 			elapsed := time.Since(w.DueTime())
-			if elapsed.Seconds() > this.interval.Seconds()+1 {
+			if elapsed.Seconds() > this.config.ScheduleInterval.Seconds()+1 {
 				log.Debug("late %s for %+v", elapsed, w)
 			}
 
-			go this.worker.Wake(w)
+			if _, ok := w.(*Push); ok {
+				// pnb worker
+				go this.pnbWorker.Wake(w)
+			} else {
+				// php worker
+				go this.phpWorker.Wake(w)
+			}
 
 		case <-this.stopCh:
-			log.Info("scheduler stopped")
+			log.Info("Scheduler stopped")
 			return
 
 		}

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/funkygao/dragon/actor"
+	"github.com/funkygao/actor/actor"
 	"github.com/funkygao/golib/locking"
 	"github.com/funkygao/golib/server"
 	"github.com/funkygao/golib/signal"
@@ -41,7 +41,7 @@ func init() {
 
 	if options.lockFile != "" {
 		if locking.InstanceLocked(options.lockFile) {
-			fmt.Fprintf(os.Stderr, "Another dragon is running, exit...\n")
+			fmt.Fprintf(os.Stderr, "Another actor is running, exit...\n")
 			os.Exit(1)
 		}
 

@@ -3,6 +3,7 @@ package actor
 import (
 	log "github.com/funkygao/log4go"
 	"github.com/kr/beanstalk"
+	"time"
 )
 
 type BeanstalkdPoller struct {
@@ -20,17 +21,20 @@ func (this *BeanstalkdPoller) Poll(ch chan<- Wakeable) {
 		id   uint64
 		body []byte
 		err  error
-		push = new(Push)
+		push *Push
 	)
 	for {
-		id, body, err = this.conn.Reserve(0)
+		id, body, err = this.conn.Reserve(time.Hour * 100) // TODO
 		if err != nil {
 			log.Error("beanstalk.reserve: %v", err)
 			continue
 		}
 
+		push = new(Push) // TODO mem pool
 		push.Uid = int64(id)
 		push.Body = body
+		push.conn = this.conn
+		push.id = id
 
 		ch <- push
 	}

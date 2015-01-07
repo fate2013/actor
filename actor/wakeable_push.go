@@ -1,10 +1,14 @@
 package actor
 
 import (
+	"github.com/kr/beanstalk"
 	"time"
 )
 
 type Push struct {
+	conn *beanstalk.Conn
+	id   uint64
+
 	Uid  int64
 	Body []byte
 }
@@ -23,8 +27,4 @@ func (this *Push) Marshal() []byte {
 
 func (this *Push) Ignored() bool {
 	return false
-}
-
-func (this *Push) GetUid() int64 {
-	return this.Uid
 }
