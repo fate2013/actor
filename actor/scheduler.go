@@ -11,6 +11,8 @@ type Scheduler struct {
 
 	stopCh chan bool
 
+	jobN, marchN, pnbN int64
+
 	// Poller -> WakeableChannel -> Worker
 	backlog chan Wakeable
 
@@ -74,6 +76,9 @@ func (this *Scheduler) Outstandings() int {
 func (this *Scheduler) Stat() map[string]interface{} {
 	return map[string]interface{}{
 		"backlog": this.Outstandings(),
+		"jobN":    this.jobN,
+		"marchN":  this.marchN,
+		"pnbN":    this.pnbN,
 	}
 }
 
@@ -110,11 +115,20 @@ func (this *Scheduler) Run() {
 				log.Debug("late %s for %+v", elapsed, w)
 			}
 
-			if _, ok := w.(*Push); ok {
-				// pnb worker
+			switch w := w.(type) {
+			case *Push:
+				this.pnbN++
+
 				go this.pnbWorker.Wake(w)
-			} else {
-				// php worker
+
+			case *Job:
+				this.jobN++
+
+				go this.phpWorker.Wake(w)
+
+			case *March:
+				this.marchN++
+
 				go this.phpWorker.Wake(w)
 			}
 

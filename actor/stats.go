@@ -165,14 +165,6 @@ func (this *StatsRunner) handleHttpQuery(w http.ResponseWriter, req *http.Reques
 		return nil, server.ErrHttp404
 	}
 
-	output["links"] = []string{
-		"/s/ping",
-		"/s/ver",
-		"/s/conf",
-		"s/sys",
-		"/s/stat",
-		"/s/trace",
-	}
 	if this.actor.config.ProfListenAddr != "" {
 		output["pprof"] = "http://" +
 			this.actor.config.ProfListenAddr + "/debug/pprof/"
