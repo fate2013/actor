@@ -50,7 +50,7 @@ actor
 
 ### TODO
 
-* 1个人，2个job，同时到期，如何解决concurrent update, ActorService.wakeupAllPendingJobs
+* limit mysql pool to 1
 * A encamp，然后1万人同时到，轮流打他，那么这个阶段，A啥也干不了。城外人的锁应该特殊处理
 * mysql ping within mysql max idle time, my.cf wait_timeout show variables like '%timeout%'
 * metrics of php request handling
