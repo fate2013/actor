@@ -13,14 +13,14 @@ func NewLocker() Locker {
 }
 
 func (this *Locker) LockUser(uid int64) bool {
-	return this.lock(lockkey.User(uid))
+	return this.acquireLock(lockkey.User(uid))
 }
 
 func (this *Locker) LockAttackee(k, x, y int16) bool {
-	return this.lock(lockkey.Attackee(k, x, y))
+	return this.acquireLock(lockkey.Attackee(k, x, y))
 }
 
-func (this *Locker) lock(key string) (success bool) {
+func (this *Locker) acquireLock(key string) (success bool) {
 	svt, err := fae.proxy.ServantByKey(key)
 	if err != nil {
 		log.Error("fae.lock[%s]: %s", key, err.Error())
@@ -28,7 +28,7 @@ func (this *Locker) lock(key string) (success bool) {
 	}
 
 	log.Debug("fae.lock[%s]: %s", key, svt.Addr())
-	if success, _ = svt.GmLock(fae.Context(LOCKER_REASON), LOCKER_LOCK, key); success {
+	if success, _ = svt.GmLock(fae.NewContext(LOCKER_REASON), LOCKER_LOCK, key); success {
 		*this = append(*this, key)
 	}
 
@@ -45,7 +45,7 @@ func (this *Locker) ReleaseAll() {
 			continue
 		}
 
-		if err = svt.GmUnlock(fae.Context(LOCKER_REASON),
+		if err = svt.GmUnlock(fae.NewContext(LOCKER_REASON),
 			LOCKER_UNLOCK, key); err != nil {
 			log.Error("fae.unlock[%s]: %s", key, err.Error())
 		} else {

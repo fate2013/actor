@@ -30,7 +30,7 @@ func (this *FaeExecutor) StartCluster() {
 	log.Info("fae cluster ready")
 }
 
-func (this *FaeExecutor) Context(reason string) *rpc.Context {
+func (this *FaeExecutor) NewContext(reason string) *rpc.Context {
 	ctx := rpc.NewContext()
 	ctx.Reason = reason
 	rid := atomic.AddInt64(&this.txn, 1)
