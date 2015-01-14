@@ -55,7 +55,7 @@ func NewScheduler(cf *config.ConfigActor) *Scheduler {
 	}
 
 	for tube, beanstalk := range this.config.Poller.Beanstalk.Servers {
-		this.beanstalkPollers[tube], err = NewBeanstalkdPoller(beanstalk.ServerAddr)
+		this.beanstalkPollers[tube], err = NewBeanstalkdPoller(beanstalk.ServerAddr, tube)
 		if err != nil {
 			log.Error("poller[%s]: %s", tube, err)
 			continue
