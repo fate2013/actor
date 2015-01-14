@@ -3,7 +3,8 @@ package actor
 import (
 	"github.com/funkygao/actor/config"
 	log "github.com/funkygao/log4go"
-	"github.com/pubnub/go/messaging"
+    "github.com/fate2013/go/messaging"
+    "strings"
 )
 
 type WorkerPnb struct {
@@ -39,21 +40,37 @@ func (this *WorkerPnb) Wake(w Wakeable) {
 
 // TODO how to get channel and msg body from beanstalk msg
 func (this *WorkerPnb) doPublish(push *Push) {
+    log.Debug("push.body: %s", push.Body)
 	pnb := messaging.NewPubnub(this.config.PublishKey,
 		this.config.SubscribeKey, this.config.SecretKey,
 		this.config.CipherKey, this.config.UseSsl, "")
-	successChannel := make(chan []byte)
-	errorChannel := make(chan []byte)
-	channel := "pnb_chan"
-	go pnb.Publish(channel, push.Body, successChannel, errorChannel)
-	select {
-	case msg := <-successChannel:
-		log.Debug("pnb: %s", string(msg))
-		push.conn.Delete(push.id) // ack success
+    log.Debug("ID : %d", push.id)
+    msg, channels := this.getChannels(string(push.Body))
+    log.Debug("message : %s", msg)
+    log.Debug("push to : %s", channels)
+    for _, channel := range channels {
+        go func(channel string) {
+            successChannel := make(chan []byte)
+            errorChannel := make(chan []byte)
+            log.Debug("channel : %s", channel)
+            go pnb.Publish(channel, msg, successChannel, errorChannel)
+            select {
+            case msg := <-successChannel:
+                //push.conn.Delete(push.id) // ack success
+                log.Debug("pnb: %s", string(msg))
 
-	case err := <-errorChannel:
-		push.conn.Bury(push.id, 1) // ack fail
-		log.Error("pnb: %s", string(err))
-	}
+            case err := <-errorChannel:
+                //push.conn.Bury(push.id, 1) // ack fail
+                log.Error("pnb: %s", string(err))
+            }
+        }(channel)
+    }
 
+}
+
+func (this *WorkerPnb) getChannels(body string) (msg string, channels []string) {
+    endChannelPos := int64(strings.Index(body, "|"))
+    channels = strings.Split(string(body[:endChannelPos]), ",")
+    msg = string(body[endChannelPos+1:])
+    return
 }
