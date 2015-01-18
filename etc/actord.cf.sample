@@ -88,6 +88,17 @@
             cipher_key: ""
             use_ssl: false
         }
+
+        rtm: {
+            max_procs: 50
+            backlog: 200
+
+            primary_hosts => []
+            backup_hosts => []
+            timeout => 1000,
+            project_id   => 0,
+            secret_key => "",
+        }
     }
 
 }

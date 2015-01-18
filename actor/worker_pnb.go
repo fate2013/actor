@@ -3,8 +3,7 @@ package actor
 import (
 	"github.com/funkygao/actor/config"
 	log "github.com/funkygao/log4go"
-    "github.com/fate2013/go/messaging"
-    "strings"
+    "github.com/fate2013/pubnub-go/messaging"
 )
 
 type WorkerPnb struct {
@@ -40,12 +39,11 @@ func (this *WorkerPnb) Wake(w Wakeable) {
 
 // TODO how to get channel and msg body from beanstalk msg
 func (this *WorkerPnb) doPublish(push *Push) {
-    log.Debug("push.body: %s", push.Body)
+    log.Debug("push.body in pnb: ID[%d], body[%s]", push.id, push.Body)
 	pnb := messaging.NewPubnub(this.config.PublishKey,
 		this.config.SubscribeKey, this.config.SecretKey,
 		this.config.CipherKey, this.config.UseSsl, "")
-    log.Debug("ID : %d", push.id)
-    msg, channels := this.getChannels(string(push.Body))
+    msg, channels := push.SplitMsgAndChannels(string(push.Body))
     log.Debug("message : %s", msg)
     log.Debug("push to : %s", channels)
     for _, channel := range channels {
@@ -68,9 +66,3 @@ func (this *WorkerPnb) doPublish(push *Push) {
 
 }
 
-func (this *WorkerPnb) getChannels(body string) (msg string, channels []string) {
-    endChannelPos := int64(strings.Index(body, "|"))
-    channels = strings.Split(string(body[:endChannelPos]), ",")
-    msg = string(body[endChannelPos+1:])
-    return
-}

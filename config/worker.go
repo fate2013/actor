@@ -7,6 +7,7 @@ import (
 type ConfigWorker struct {
 	Php ConfigWorkerPhp
 	Pnb ConfigWorkerPnb
+    Rtm ConfigWorkerRtm
 }
 
 func (this *ConfigWorker) loadConfig(cf *conf.Conf) {
@@ -21,4 +22,10 @@ func (this *ConfigWorker) loadConfig(cf *conf.Conf) {
 		panic(err)
 	}
 	this.Pnb.loadConfig(section)
+
+    section, err := cf.Section("rtm")
+    if err != nil {
+        panic(err)
+    }
+    this.Rtm.loadConfig(section)
 }
