@@ -27,10 +27,15 @@ func (this *Locker) acquireLock(key string) (success bool) {
 		return false
 	}
 
-	if success, _ = svt.GmLock(fae.NewContext(LOCKER_REASON), LOCKER_LOCK, key); success {
+	if success, err = svt.GmLock(fae.NewContext(LOCKER_REASON), LOCKER_LOCK, key); success {
 		*this = append(*this, key)
 	}
-	log.Debug("fae.lock[%s]: %s ok:%+v", key, svt.Addr(), success)
+	if err != nil {
+		log.Error("fae.lock[%s]: %s {ok^%+v err^%s}", key, svt.Addr(), success, err)
+		svt.Close()
+	} else {
+		log.Debug("fae.lock[%s]: %s {ok^%+v}", key, svt.Addr(), success)
+	}
 
 	svt.Recycle()
 
