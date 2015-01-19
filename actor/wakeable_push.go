@@ -3,6 +3,7 @@ package actor
 import (
 	"github.com/kr/beanstalk"
 	"time"
+    "strings"
 )
 
 type Push struct {
@@ -27,4 +28,11 @@ func (this *Push) Marshal() []byte {
 
 func (this *Push) Ignored() bool {
 	return false
+}
+
+func (this *Push) SplitMsgAndChannels(body string) (msg string, channels []string) {
+    endChannelPos := int64(strings.Index(body, "|"))
+    channels = strings.Split(string(body[:endChannelPos]), ",")
+    msg = string(body[endChannelPos+1:])
+    return
 }
