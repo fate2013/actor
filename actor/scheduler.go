@@ -21,7 +21,7 @@ type Scheduler struct {
 
 	phpWorker Worker
 	pnbWorker Worker
-    rtmWorker Worker
+	rtmWorker Worker
 }
 
 func NewScheduler(cf *config.ConfigActor) *Scheduler {
@@ -35,7 +35,7 @@ func NewScheduler(cf *config.ConfigActor) *Scheduler {
 
 	this.phpWorker = NewPhpWorker(&cf.Worker.Php)
 	this.pnbWorker = NewPnbWorker(&cf.Worker.Pnb)
-    this.rtmWorker = NewRtmWorker(&cf.Worker.Rtm)
+	this.rtmWorker = NewRtmWorker(&cf.Worker.Rtm)
 
 	var err error
 	for pool, my := range this.config.Poller.Mysql.Servers {
@@ -122,10 +122,10 @@ func (this *Scheduler) Run() {
 			case *Push:
 				this.pnbN++
 
-                // TODO -- only use one driver
-                wRtm := w
+				// TODO -- only use one driver
+				wRtm := w
 				go this.pnbWorker.Wake(w)
-                go this.rtmWorker.Wake(wRtm)
+				go this.rtmWorker.Wake(wRtm)
 
 			case *Job:
 				this.jobN++
