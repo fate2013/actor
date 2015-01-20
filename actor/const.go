@@ -18,7 +18,7 @@ const (
 )
 
 const (
-	LOCKER_REASON = "actor.sched"
+	LOCKER_REASON = "actor.lock"
 	LOCKER_LOCK   = "lock"
 	LOCKER_UNLOCK = "unlock"
 )
