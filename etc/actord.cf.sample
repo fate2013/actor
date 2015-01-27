@@ -15,7 +15,7 @@
     sched_backlog: 5000
 
     poller: {
-        beanstalk_offline: {
+        beanstalk: {
             breaker: {
                 failure_allowance: 5
                 retry_timeout: "10s"
@@ -32,6 +32,10 @@
                 }
                 {
                     tube: "mail"
+                    server: "127.0.0.1:11300"
+                }
+                {
+                    tube: "alliance"
                     server: "127.0.0.1:11300"
                 }
             ]
@@ -73,9 +77,9 @@
             debug_locking: false
             max_flight_entries: 100000
             lock_expires: "10s"
-            job: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=wakeAll&params=%s"
-            march: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=play&params=%s"
-            pve: "http://dw-gaopeng.socialgamenet.com/api/?class=actor&method=pve&params=%s"
+            job: "http://dw-dev.socialgamenet.com/api/?class=actor&method=wakeAll&params=%s"
+            march: "http://dw-dev.socialgamenet.com/api/?class=actor&method=play&params=%s"
+            pve: "http://dw-dev.socialgamenet.com/api/?class=actor&method=pve&params=%s"
         }
 
         pnb: {
@@ -93,11 +97,11 @@
             max_procs: 50
             backlog: 200
 
-            primary_hosts => []
-            backup_hosts => []
-            timeout => 1000,
-            project_id   => 0,
-            secret_key => "",
+            primary_hosts: []
+            backup_hosts: []
+            timeout: 1000,
+            project_id: 0,
+            secret_key: "",
         }
     }
 
