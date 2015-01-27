@@ -2,8 +2,9 @@ package actor
 
 import (
 	"github.com/kr/beanstalk"
+	"strconv"
+	"strings"
 	"time"
-    "strings"
 )
 
 type Push struct {
@@ -30,9 +31,11 @@ func (this *Push) Ignored() bool {
 	return false
 }
 
-func (this *Push) SplitMsgAndChannels(body string) (msg string, channels []string) {
-    endChannelPos := int64(strings.Index(body, "|"))
-    channels = strings.Split(string(body[:endChannelPos]), ",")
-    msg = string(body[endChannelPos+1:])
-    return
+func (this *Push) Unmarshal(body string) (msg string, from int64, channels []string) {
+	arrBody := strings.SplitN(body, "|", 3)
+	strChannels := arrBody[0]
+	from, _ = strconv.ParseInt(arrBody[1], 0, 0)
+	channels = strings.Split(strChannels, ",")
+	msg = string(arrBody[2])
+	return
 }

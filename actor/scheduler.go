@@ -97,7 +97,7 @@ func (this *Scheduler) Stop() {
 
 func (this *Scheduler) Run() {
 	go this.phpWorker.Start()
-	go this.pnbWorker.Start()
+	//go this.pnbWorker.Start()
 	go this.rtmWorker.Start()
 
 	for {
@@ -123,9 +123,9 @@ func (this *Scheduler) Run() {
 				this.pnbN++
 
 				// TODO -- only use one driver
-				wRtm := w
-				go this.pnbWorker.Wake(w)
-				go this.rtmWorker.Wake(wRtm)
+				//wRtm := w
+				//go this.pnbWorker.Wake(w)
+				go this.rtmWorker.Wake(w)
 
 			case *Job:
 				this.jobN++

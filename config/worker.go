@@ -12,20 +12,28 @@ type ConfigWorker struct {
 
 func (this *ConfigWorker) loadConfig(cf *conf.Conf) {
 	section, err := cf.Section("php")
-	if err != nil {
+	if err == nil {
+		this.Php.loadConfig(section)
+	} else {
 		panic(err)
 	}
-	this.Php.loadConfig(section)
 
+	pnbExists := false
 	section, err = cf.Section("pnb")
-	if err != nil {
-		panic(err)
+	if err == nil {
+		this.Pnb.loadConfig(section)
+		pnbExists = true
 	}
-	this.Pnb.loadConfig(section)
 
+	rtmExists := false
 	section, err = cf.Section("rtm")
-	if err != nil {
-		panic(err)
+	if err == nil {
+		this.Rtm.loadConfig(section)
+		rtmExists = true
 	}
-	this.Rtm.loadConfig(section)
+
+	if !rtmExists && !pnbExists {
+		panic("None of rtm and pnb")
+	}
+
 }

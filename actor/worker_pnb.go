@@ -1,9 +1,9 @@
 package actor
 
 import (
+	"github.com/fate2013/pubnub-go/messaging"
 	"github.com/funkygao/actor/config"
 	log "github.com/funkygao/log4go"
-    "github.com/fate2013/pubnub-go/messaging"
 )
 
 type WorkerPnb struct {
@@ -39,30 +39,29 @@ func (this *WorkerPnb) Wake(w Wakeable) {
 
 // TODO how to get channel and msg body from beanstalk msg
 func (this *WorkerPnb) doPublish(push *Push) {
-    log.Debug("push.body in pnb: ID[%d], body[%s]", push.id, push.Body)
+	log.Debug("push.body in pnb: ID[%d], body[%s]", push.id, push.Body)
 	pnb := messaging.NewPubnub(this.config.PublishKey,
 		this.config.SubscribeKey, this.config.SecretKey,
 		this.config.CipherKey, this.config.UseSsl, "")
-    msg, channels := push.SplitMsgAndChannels(string(push.Body))
-    log.Debug("message : %s", msg)
-    log.Debug("push to : %s", channels)
-    for _, channel := range channels {
-        go func(channel string) {
-            successChannel := make(chan []byte)
-            errorChannel := make(chan []byte)
-            log.Debug("channel : %s", channel)
-            go pnb.Publish(channel, msg, successChannel, errorChannel)
-            select {
-            case msg := <-successChannel:
-                //push.conn.Delete(push.id) // ack success
-                log.Debug("pnb: %s", string(msg))
+	msg, _, channels := push.Unmarshal(string(push.Body))
+	log.Debug("message : %s", msg)
+	log.Debug("push to : %s", channels)
+	for _, channel := range channels {
+		go func(channel string) {
+			successChannel := make(chan []byte)
+			errorChannel := make(chan []byte)
+			log.Debug("channel : %s", channel)
+			go pnb.Publish(channel, msg, successChannel, errorChannel)
+			select {
+			case msg := <-successChannel:
+				//push.conn.Delete(push.id) // ack success
+				log.Debug("pnb: %s", string(msg))
 
-            case err := <-errorChannel:
-                //push.conn.Bury(push.id, 1) // ack fail
-                log.Error("pnb: %s", string(err))
-            }
-        }(channel)
-    }
+			case err := <-errorChannel:
+				//push.conn.Bury(push.id, 1) // ack fail
+				log.Error("pnb: %s", string(err))
+			}
+		}(channel)
+	}
 
 }
-
